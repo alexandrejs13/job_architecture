@@ -3,56 +3,51 @@ import pandas as pd
 from utils.data_loader import load_data
 
 # ================================================
-# 🔧 Configurações iniciais
+# Configurações
 # ================================================
 st.set_page_config(page_title="Job Profile Description", layout="wide")
 
-st.markdown(
-    """
-    <style>
-    .main {
-        max-width: 1800px;
-        margin: 0 auto;
-        padding: 1rem 2rem;
-    }
-    .stSelectbox label, .stMultiSelect label {
-        font-weight: 600 !important;
-        color: #333;
-    }
-    .section-title {
-        font-size: 1.4rem !important;
-        font-weight: 700 !important;
-        color: #1d4ed8;
-        margin-top: 1.5rem;
-        margin-bottom: 0.8rem;
-    }
-    .card {
-        background: #f9fafb;
-        border-radius: 10px;
-        padding: 1rem 1.2rem;
-        margin-bottom: 0.6rem;
-        box-shadow: 0px 2px 6px rgba(0,0,0,0.08);
-        border-left: 4px solid #2563eb;
-        line-height: 1.5;
-        font-size: 0.95rem;
-    }
-    .title-icon {
-        font-size: 1.1rem;
-        margin-right: 0.4rem;
-    }
-    .grid-container {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1.2rem;
-        align-items: start;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+st.markdown("""
+<style>
+.main {
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+}
+.stSelectbox label, .stMultiSelect label {
+    font-weight: 600 !important;
+    color: #333;
+}
+.section-title {
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    color: #1d4ed8;
+    margin-top: 1.2rem;
+    margin-bottom: 0.4rem;
+    text-align: left;
+}
+.card {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 0.8rem;
+    box-shadow: 0px 1px 4px rgba(0,0,0,0.08);
+    border-left: 4px solid #2563eb;
+    font-size: 0.94rem;
+    line-height: 1.5;
+    text-align: justify;
+}
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+    align-items: start;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # ================================================
-# 🧭 Carregamento de dados
+# Carregamento de dados
 # ================================================
 data = load_data()
 if not data or "job_profile" not in data:
@@ -60,43 +55,44 @@ if not data or "job_profile" not in data:
     st.stop()
 
 df = data["job_profile"].copy()
-
-# Normaliza colunas
 df.columns = [c.strip() for c in df.columns]
+df = df.applymap(lambda x: str(x).strip() if isinstance(x, str) else x)
 df.fillna("", inplace=True)
 
 # ================================================
-# 🧱 Layout: filtros superiores
+# Filtros
 # ================================================
 st.markdown("## 📋 Job Profile Description")
 
 col1, col2, col3 = st.columns([1.1, 2.5, 1.2])
 
-with col1:
-    families = sorted(df["Job Family"].dropna().unique())
-    selected_family = st.selectbox("Família", families)
+families = sorted(df["Job Family"].dropna().unique())
+selected_family = col1.selectbox("Família", families)
 
-with col2:
-    filtered_sub = df[df["Job Family"] == selected_family]
-    sub_families = sorted(filtered_sub["Sub Job Family"].dropna().unique())
-    selected_subfamily = st.selectbox("Subfamília", sub_families)
+filtered_sub = df[df["Job Family"].str.lower().str.strip() == selected_family.lower().strip()]
+sub_families = sorted(filtered_sub["Sub Job Family"].dropna().unique())
+selected_subfamily = col2.selectbox("Subfamília", sub_families)
 
-with col3:
-    paths = sorted(df["Career Path"].dropna().unique())
-    selected_path = st.selectbox("Trilha de Carreira", paths)
+paths = sorted(filtered_sub["Career Path"].dropna().unique())
+selected_path = col3.selectbox("Trilha de Carreira", paths)
 
 career_df_sorted = df[
-    (df["Job Family"] == selected_family)
-    & (df["Sub Job Family"] == selected_subfamily)
-    & (df["Career Path"] == selected_path)
+    (df["Job Family"].str.lower().str.strip() == selected_family.lower().strip()) &
+    (df["Sub Job Family"].str.lower().str.strip() == selected_subfamily.lower().strip()) &
+    (df["Career Path"].str.lower().str.strip() == selected_path.lower().strip())
 ]
 
 # ================================================
-# 🎯 Seleção de cargos
+# Seleção de cargos
 # ================================================
+if career_df_sorted.empty:
+    st.warning("Nenhum cargo encontrado para os filtros selecionados.")
+    st.stop()
+
 career_df_sorted["Display"] = career_df_sorted.apply(
     lambda x: f"{x['Global Grade']} — {x['Job Profile']}", axis=1
 )
+
 st.markdown("<div style='margin-top:-10px'></div>", unsafe_allow_html=True)
 selected_roles = st.multiselect(
     "Selecione até 3 cargos para comparar:",
@@ -113,7 +109,7 @@ rows = [
 ]
 
 # ================================================
-# 🧩 Funções utilitárias
+# Funções auxiliares
 # ================================================
 def safe_get(row, cols):
     if isinstance(cols, str):
@@ -129,48 +125,36 @@ def format_paragraphs(text):
     parts = [p.strip() for p in str(text).split("\n") if p.strip()]
     return "<br>".join(parts)
 
-def cell_card(icon, title, body):
-    return f"""
-    <div class='card'>
-        <div class='section-title'><span class='title-icon'>{icon}</span>{title}</div>
-        <div>{body}</div>
-    </div>
-    """
-
 grid_class = "grid-container"
 
 # ================================================
-# 🧱 Renderização das seções comparativas
+# Renderização comparativa com títulos alinhados
 # ================================================
 SECTIONS = [
-    ("🧭", "Sub Job Family Description", lambda r: safe_get(r, "Sub Job Family Description")),
-    ("🧠", "Job Profile Description",   lambda r: safe_get(r, "Job Profile Description")),
-    ("🎯", "Role Description",          lambda r: safe_get(r, "Role Description")),
-    ("🏅", "Grade Differentiator",      lambda r: safe_get(r, [
-        "Grade Differentiator",
-        "Grade Differentiation",
-        "Grade Differentiatior",
+    ("Sub Job Family Description", lambda r: safe_get(r, "Sub Job Family Description")),
+    ("Job Profile Description",   lambda r: safe_get(r, "Job Profile Description")),
+    ("Role Description",          lambda r: safe_get(r, "Role Description")),
+    ("Grade Differentiator",      lambda r: safe_get(r, [
+        "Grade Differentiator", "Grade Differentiation", "Grade Differentiatior"
     ])),
-    ("📊", "KPIs / Specific Parameters", lambda r: safe_get(r, [
-        "Specific parameters KPIs",
-        "Specific parameters / KPIs"
+    ("KPIs / Specific Parameters", lambda r: safe_get(r, [
+        "Specific parameters KPIs", "Specific parameters / KPIs"
     ])),
-    ("🎓", "Qualifications",            lambda r: safe_get(r, "Qualifications")),
+    ("Qualifications",            lambda r: safe_get(r, "Qualifications")),
 ]
 
-# 🔹 Adiciona Competencies dinamicamente, apenas se existirem
 competency_cols = [c for c in career_df_sorted.columns if c.strip().lower().startswith("competency")]
 if competency_cols:
     SECTIONS.extend([
-        ("💡", "Competency 1", lambda r: safe_get(r, "Competency 1")),
-        ("💡", "Competency 2", lambda r: safe_get(r, "Competency 2")),
-        ("💡", "Competency 3", lambda r: safe_get(r, "Competency 3")),
+        ("Competency 1", lambda r: safe_get(r, "Competency 1")),
+        ("Competency 2", lambda r: safe_get(r, "Competency 2")),
+        ("Competency 3", lambda r: safe_get(r, "Competency 3")),
     ])
 
 # ================================================
-# 🔍 Exibe seções com dados válidos
+# Exibição das seções
 # ================================================
-for emoji, title, getter in SECTIONS:
+for title, getter in SECTIONS:
     has_content = any(
         getter(r) and getter(r).strip() not in ["", "-", "nan", "NaN", "None"]
         for r in rows if r is not None
@@ -178,9 +162,9 @@ for emoji, title, getter in SECTIONS:
     if not has_content:
         continue
 
+    st.markdown(f"<div class='section-title'>{title}</div>", unsafe_allow_html=True)
     html_cells = []
     for r in rows:
         raw = getter(r)
-        html_cells.append("<div>" + cell_card(emoji, title, format_paragraphs(raw)) + "</div>")
-
+        html_cells.append(f"<div class='card'>{format_paragraphs(raw)}</div>")
     st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
