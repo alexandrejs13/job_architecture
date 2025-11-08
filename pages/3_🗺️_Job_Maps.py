@@ -50,29 +50,52 @@ div[data-baseweb="select"] > div {
   width: max-content;
 }
 
-/* ====== NOVO GRID VISUAL ====== */
+/* Bordas (Grid visual) */
 .jobmap-grid > div {
   border: 1px solid #ddd;
   box-sizing: border-box;
 }
 
-/* Cabeçalhos */
+/* Cabeçalhos principais */
 .header-family {
   font-weight: 800;
   color: #fff;
-  padding: 6px 4px;
-  text-align: center;
+  padding: 8px;
   border-right: 2px solid #fff;
   white-space: normal;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 .header-subfamily {
   font-weight: 700;
   background: #f0f2ff;
-  padding: 6px;
+  padding: 8px;
   white-space: normal;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
-/* Grade fixa à esquerda */
+/* Coluna GG */
+.grade-header {
+  font-weight: 800;
+  font-size: 0.95rem;
+  background: #1E56E0;
+  color: #fff;
+  padding: 8px;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  border-right: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .grade-cell {
   font-weight: 700;
   background: #eef3ff;
@@ -81,6 +104,9 @@ div[data-baseweb="select"] > div {
   position: sticky;
   left: 0;
   z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Card */
@@ -179,11 +205,8 @@ fam_colors = {f: palette[i % len(palette)] for i, f in enumerate(families)}
 grades = sorted(filtered["Global Grade"].unique(), key=lambda x: int(x) if x.isdigit() else x)
 subfam_map = {f: sorted(filtered[filtered["Job Family"] == f]["Sub Job Family"].unique().tolist()) for f in families}
 
-st.markdown("---")
-st.markdown("### 📊 Mapa de Cargos Completo (Corporativo)")
-
-# Montar grid com cabeçalho duplo (Family / SubFamily)
-col_sizes = [80]  # primeira coluna (GG)
+# Layout geral
+col_sizes = [100]
 for f in families:
     col_sizes += [140 for _ in subfam_map[f]]
 grid_template = f"grid-template-columns: {' '.join(str(x)+'px' for x in col_sizes)};"
@@ -192,7 +215,7 @@ html = "<div class='map-wrapper'>"
 
 # Cabeçalho 1 (Família)
 html += f"<div class='jobmap-grid' style='{grid_template}'>"
-html += "<div style='background:#fff;'></div>"
+html += "<div class='grade-header' rowspan='2'>GG</div>"
 for f in families:
     span = len(subfam_map[f])
     color = fam_colors[f]
@@ -207,7 +230,7 @@ for f in families:
         html += f"<div class='header-subfamily'>{sf}</div>"
 html += "</div>"
 
-# Linhas de Grades
+# Linhas (GG + cards)
 for g in grades:
     html += f"<div class='jobmap-grid grade-row' style='{grid_template}'>"
     html += f"<div class='grade-cell'>GG {g}</div>"
@@ -225,7 +248,7 @@ for g in grades:
                 html += "<div></div>"
     html += "</div>"
 
-html += "</div>"  # fecha wrapper
+html += "</div>"
 
 st.markdown(html, unsafe_allow_html=True)
 
