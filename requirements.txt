@@ -4,3 +4,4 @@ numpy
 sentence-transformers
 scikit-learn
 openpyxl
+reportlab==4.2.2
