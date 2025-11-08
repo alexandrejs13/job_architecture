@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
-import io, base64, random
+import random
 
 # ===========================================================
-# CONFIG
+# CONFIGURAÇÃO DA PÁGINA
 # ===========================================================
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 
@@ -15,7 +15,7 @@ st.markdown("""
   margin: 0 auto !important;
 }
 
-/* ======= HEADER ======= */
+/* ======= TÍTULO ======= */
 h1 {
   color: #1E56E0 !important;
   font-weight: 800 !important;
@@ -35,7 +35,7 @@ h1 {
   white-space: nowrap;
 }
 
-/* ======= GRID ======= */
+/* ======= GRID PRINCIPAL ======= */
 .jobmap-grid {
   display: grid;
   border-collapse: collapse;
@@ -75,38 +75,45 @@ h1 {
   text-align: center;
 }
 
-/* ======= COLUNAS GG (ESQUERDA E DIREITA) ======= */
-.grade-header-left, .grade-header-right {
+/* ======= COLUNA “GG” FIXA À ESQUERDA ======= */
+.grade-header {
   font-weight: 800;
   font-size: 0.95rem;
   background: #1E56E0;
   color: #fff;
   padding: 8px;
+  border-right: 2px solid #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   position: sticky;
   top: 0;
+  left: 0;
   z-index: 40 !important;
 }
-.grade-header-left { left: 0; border-right: 2px solid #fff; }
-.grade-header-right { right: 0; border-left: 2px solid #fff; }
-
-.grade-cell-left, .grade-cell-right {
+.grade-cell {
   font-weight: 700;
   background: #eef3ff;
   border-right: 2px solid #1E56E0;
   padding: 6px 8px;
   position: sticky;
+  left: 0;
   z-index: 30 !important;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.grade-cell-left { left: 0; }
-.grade-cell-right { right: 0; border-left: 2px solid #1E56E0; }
+.grade-cell::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background: rgba(0,0,0,0.05);
+}
 
-/* ======= CARDS ======= */
+/* ======= CÉLULAS DE CARGO ======= */
 .job-card {
   background: #fafafa;
   border-left: 4px solid #1E56E0;
@@ -195,43 +202,45 @@ fam_colors = {f: palette[i % len(palette)] for i, f in enumerate(families)}
 # ===========================================================
 # GRADE HORIZONTAL
 # ===========================================================
-grades = sorted(filtered["Global Grade"].unique(),
-                key=lambda x: int(x) if x.isdigit() else x,
-                reverse=True)
+grades = sorted(
+    filtered["Global Grade"].unique(),
+    key=lambda x: int(x) if x.isdigit() else x,
+    reverse=True
+)
 
-subfam_map = {f: sorted(filtered[filtered["Job Family"] == f]["Sub Job Family"].unique().tolist()) for f in families}
+subfam_map = {
+    f: sorted(filtered[filtered["Job Family"] == f]["Sub Job Family"].unique().tolist())
+    for f in families
+}
 
 col_sizes = [100]
 for f in families:
     col_sizes += [140 for _ in subfam_map[f]]
-col_sizes.append(100)  # coluna GG à direita
 grid_template = f"grid-template-columns: {' '.join(str(x)+'px' for x in col_sizes)};"
 
 html = "<div class='map-wrapper'>"
 
 # Cabeçalho 1 (Família)
 html += f"<div class='jobmap-grid' style='{grid_template}; z-index:5;'>"
-html += "<div class='grade-header-left'>GG</div>"
+html += "<div class='grade-header'>GG</div>"
 for f in families:
     span = len(subfam_map[f])
     color = fam_colors[f]
     html += f"<div class='header-family' style='grid-column: span {span}; background:{color};'>{f}</div>"
-html += "<div class='grade-header-right'>GG</div>"
 html += "</div>"
 
 # Cabeçalho 2 (Subfamily)
 html += f"<div class='jobmap-grid' style='{grid_template}; z-index:4;'>"
-html += "<div class='grade-cell-left' style='background:#eef3ff;'></div>"
+html += "<div class='grade-cell' style='background:#eef3ff;'></div>"
 for f in families:
     for sf in subfam_map[f]:
         html += f"<div class='header-subfamily'>{sf}</div>"
-html += "<div class='grade-cell-right' style='background:#eef3ff;'></div>"
 html += "</div>"
 
 # Linhas (Grades)
 for g in grades:
     html += f"<div class='jobmap-grid grade-row' style='{grid_template}; z-index:1;'>"
-    html += f"<div class='grade-cell-left'>GG {g}</div>"
+    html += f"<div class='grade-cell'>GG {g}</div>"
     for f in families:
         fam_df = filtered[filtered["Job Family"] == f]
         for sf in subfam_map[f]:
@@ -244,7 +253,6 @@ for g in grades:
                 html += f"<div>{cards}</div>"
             else:
                 html += "<div></div>"
-    html += f"<div class='grade-cell-right'>GG {g}</div>"
     html += "</div>"
 
 html += "</div>"
