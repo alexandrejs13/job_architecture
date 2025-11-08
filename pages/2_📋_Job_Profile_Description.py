@@ -7,7 +7,7 @@ from utils.ui_components import section
 # Funções utilitárias
 # ===========================================================
 def safe_get(row, keys, default=""):
-    """Busca um valor no DataFrame ignorando variação de maiúsculas e espaços."""
+    """Busca um valor no DataFrame ignorando variações de maiúsculas e espaços."""
     for k in keys if isinstance(keys, list) else [keys]:
         for col in row.index:
             if col.strip().lower() == k.strip().lower():
@@ -126,6 +126,22 @@ div[data-baseweb="tag"] span {
   font-size: 0.88rem !important;
 }
 div[data-baseweb="select"] > div { min-height:44px !important; height:auto !important; }
+
+/* ===== Fix absoluto de alinhamento entre seções ===== */
+.ja-sec { margin: 0 !important; }
+.ja-sec-h { margin: 0 0 4px 0 !important; }
+.ja-card {
+  padding: 10px 14px !important;
+  margin: 0 !important;
+}
+.ja-grid { 
+  gap: 12px 12px !important; 
+  margin: 2px 0 14px 0 !important;
+}
+.ja-ic { width: 24px !important; }
+.ja-grid, .ja-sec, .ja-sec-h, .ja-card, .ja-class, .ja-ttl, .ja-ic, .ja-p {
+  box-sizing: border-box !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
