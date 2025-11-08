@@ -1,5 +1,5 @@
 # ==============================================================
-# 🧩 Job Match — correção final: garante Subfamily sempre existente
+# 🧩 Job Match — compatível com colunas: Job Family / Sub Job Family / Job Profile
 # ==============================================================
 
 import streamlit as st
@@ -11,7 +11,7 @@ from sentence_transformers import SentenceTransformer, util
 st.set_page_config(page_title="🧩 Job Match", layout="wide")
 
 # -------------------------------
-# Função utilitária de normalização
+# Função utilitária
 # -------------------------------
 def _norm(s: str) -> str:
     if not isinstance(s, str):
@@ -24,33 +24,8 @@ def _norm(s: str) -> str:
     s = re.sub(r"[^a-z0-9]", "", s)
     return s
 
-COL_MAP_CANON = {
-    "jobfamily": "Family",
-    "subjobfamily": "Subfamily",
-    "subfamily": "Subfamily",
-    "subjobfamilydescription": "Sub Job Family Description",
-    "jobprofile": "Job Title",
-    "jobtitle": "Job Title",
-    "globalgrade": "Grade",
-    "grade": "Grade",
-    "careerpath": "Career Path",
-    "jobprofiledescription": "Job Profile Description",
-    "roledescription": "Role Description",
-    "gradedifferentiator": "Grade Differentiator",
-    "gradedifferentiatior": "Grade Differentiator",
-    "specificparameterskpis": "KPIs/Specific Parameters",
-    "specificparameters": "KPIs/Specific Parameters",
-    "qualifications": "Qualifications",
-}
-
-OBRIGATORIAS = [
-    "Family", "Subfamily", "Job Title", "Grade",
-    "Job Profile Description", "Role Description",
-    "Grade Differentiator", "KPIs/Specific Parameters", "Qualifications"
-]
-
 # -------------------------------
-# Carregamento da base
+# Carregamento seguro da base
 # -------------------------------
 @st.cache_data(show_spinner=False)
 def load_data():
@@ -63,38 +38,51 @@ def load_data():
 
     df = df.fillna("")
 
-    # Normaliza e renomeia colunas conhecidas
-    norm2orig = {_norm(c): c for c in df.columns}
+    # Normaliza cabeçalhos
+    cols_norm = {_norm(c): c for c in df.columns}
+
+    # Renomeia conforme seu cabeçalho real
     rename_map = {}
-    for norm_src, canon_dst in COL_MAP_CANON.items():
-        if norm_src in norm2orig:
-            rename_map[norm2orig[norm_src]] = canon_dst
-    if rename_map:
-        df.rename(columns=rename_map, inplace=True)
+    if "jobfamily" in cols_norm:
+        rename_map[cols_norm["jobfamily"]] = "Family"
+    if "subjobfamily" in cols_norm:
+        rename_map[cols_norm["subjobfamily"]] = "Subfamily"
+    if "jobprofile" in cols_norm:
+        rename_map[cols_norm["jobprofile"]] = "Job Title"
 
-    # Garante colunas obrigatórias (cria se não existirem)
-    for col in OBRIGATORIAS:
-        if col not in df.columns:
-            df[col] = ""
+    # Campos textuais adicionais
+    extras = {
+        "jobprofiledescription": "Job Profile Description",
+        "roledescription": "Role Description",
+        "gradedifferentiator": "Grade Differentiator",
+        "gradedifferentiatior": "Grade Differentiator",
+        "specificparameterskpis": "KPIs/Specific Parameters",
+        "specificparameters": "KPIs/Specific Parameters",
+        "qualifications": "Qualifications",
+        "globalgrade": "Grade",
+        "grade": "Grade",
+    }
+    for norm_src, canon in extras.items():
+        if norm_src in cols_norm:
+            rename_map[cols_norm[norm_src]] = canon
 
-    # Normaliza Family/Subfamily
+    df.rename(columns=rename_map, inplace=True)
+
+    # Garante colunas principais
+    obrig = [
+        "Family", "Subfamily", "Job Title", "Grade",
+        "Job Profile Description", "Role Description",
+        "Grade Differentiator", "KPIs/Specific Parameters", "Qualifications"
+    ]
+    for c in obrig:
+        if c not in df.columns:
+            df[c] = ""
+
+    # Normaliza texto
     df["Family"] = df["Family"].astype(str).str.strip().str.title()
     df["Subfamily"] = df["Subfamily"].astype(str).str.strip().str.title()
 
-    # Fallback: se Subfamily está vazia, tenta preencher pela descrição
-    if df["Subfamily"].eq("").all():
-        for alt in ["Sub Job Family Description", "Sub Job Family"]:
-            if alt in df.columns:
-                df["Subfamily"] = (
-                    df[alt].astype(str)
-                    .str.extract(r"^([A-Za-z\s\-]+)")[0]
-                    .fillna("")
-                    .str.strip()
-                    .str.title()
-                )
-                break
-
-    # Concatenação semântica
+    # Monta campo semântico
     df["Merged_Text"] = (
         "Job Title: " + df["Job Title"].fillna("") +
         " | Family: " + df["Family"].fillna("") +
@@ -105,7 +93,6 @@ def load_data():
         " | Grade Differentiator: " + df["Grade Differentiator"].fillna("") +
         " | KPIs: " + df["KPIs/Specific Parameters"].fillna("")
     )
-
     return df
 
 
@@ -122,7 +109,7 @@ model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
 
 st.markdown("## 🧩 Job Match")
 
-# Filtros (Family e Subfamily)
+# Selects
 c1, c2 = st.columns(2)
 with c1:
     families = sorted(df.loc[df["Family"].ne(""), "Family"].unique().tolist())
@@ -130,17 +117,12 @@ with c1:
 
 with c2:
     if family_selected:
-        subs = (
-            df.loc[(df["Family"] == family_selected) & (df["Subfamily"].ne("")), "Subfamily"]
-            .drop_duplicates()
-            .sort_values()
-            .tolist()
-        )
-        subfamily_selected = st.selectbox("Selecione a Subfamily", [""] + subs) if subs else ""
+        subs = df.loc[(df["Family"] == family_selected) & (df["Subfamily"].ne("")), "Subfamily"].unique().tolist()
+        subs = sorted(subs)
+        subfamily_selected = st.selectbox("Selecione a Subfamily", [""] + subs)
     else:
         subfamily_selected = ""
 
-# Texto explicativo e entrada
 st.write("""
 Descubra o **cargo mais compatível** com suas responsabilidades e área de atuação.  
 O sistema identifica automaticamente o **nível de senioridade** e o **escopo** com base na descrição das suas atividades.
@@ -153,7 +135,7 @@ descricao = st.text_area(
 )
 
 # ==============================================================
-# Busca e exibição
+# Busca e resultado
 # ==============================================================
 
 if st.button("🔍 Identificar Cargo"):
@@ -180,8 +162,7 @@ if st.button("🔍 Identificar Cargo"):
     st.markdown("### 🎯 Cargo mais compatível encontrado")
     with st.container():
         st.markdown(f"### **GG {best['Grade']} — {best['Job Title']}**")
-        st.markdown(f"**Family:** {best['Family']} | **Subfamily:** {best['Subfamily']}")
-        st.markdown(f"**Similaridade:** {best_score:.1f}%")
+        st.markdown(f"**Family:** {best['Family']} | **Subfamily:** {best['Subfamily']}  \n**Similaridade:** {best_score:.1f}%")
 
         st.markdown("#### 🧠 Job Profile Description")
         st.info(best["Job Profile Description"] or "—")
@@ -199,4 +180,4 @@ if st.button("🔍 Identificar Cargo"):
         st.info(best["Qualifications"] or "—")
 
 else:
-    st.info("Preencha os campos e clique em **🔍 Identificar Cargo**.")
+    st.info("Preencha as informações e clique em **🔍 Identificar Cargo**.")
