@@ -1,14 +1,15 @@
 # ==============================================================
-# 🧩 Job Match — Versão Blindada
+# 🧩 Job Match — Versão Corrigida (Family/Subfamily fix + layout limpo)
 # ==============================================================
 
 import streamlit as st
 import pandas as pd
 import numpy as np
-import csv
+import re
 from sentence_transformers import SentenceTransformer, util
 
 st.set_page_config(page_title="🧩 Job Match", layout="wide")
+
 
 # ==============================================================
 # 1️⃣ Função para carregar base
@@ -25,55 +26,36 @@ def load_data():
 
     df = df.fillna("")
 
-    # Normaliza os nomes das colunas (sem espaços, hifens, sublinhados)
-    df.columns = (
-        df.columns.str.strip()
-        .str.replace("-", " ")
-        .str.replace("_", " ")
-        .str.replace("  ", " ")
-        .str.lower()
-    )
+    # Normaliza nomes das colunas
+    normalized_cols = {re.sub(r'[^a-zA-Z0-9]', '', c.strip().lower()): c for c in df.columns}
 
-    # Define possíveis nomes equivalentes
-    family_aliases = ["family", "job family", "jobfamily"]
-    subfamily_aliases = ["subfamily", "sub family", "sub-family", "job subfamily", "job sub-family"]
-
-    def find_col(possibles):
-        for col in df.columns:
-            if any(alias in col for alias in possibles):
-                return col
+    def match_col(possibles):
+        for key, val in normalized_cols.items():
+            for p in possibles:
+                if re.search(p, key):
+                    return val
         return None
 
-    # Detecta colunas
-    family_col = find_col(family_aliases)
-    subfamily_col = find_col(subfamily_aliases)
+    # Detecta Family/Subfamily independentemente da grafia
+    family_col = match_col(["family", "jobfamily"])
+    subfamily_col = match_col(["subfamily", "subfamily", "subjobfamily"])
 
-    # Mapeia colunas detectadas
-    rename_map = {}
+    # Cria ou renomeia colunas
     if family_col:
-        rename_map[family_col] = "Family"
+        df.rename(columns={family_col: "Family"}, inplace=True)
     else:
         df["Family"] = ""
 
     if subfamily_col:
-        rename_map[subfamily_col] = "Subfamily"
+        df.rename(columns={subfamily_col: "Subfamily"}, inplace=True)
     else:
         df["Subfamily"] = ""
 
-    # Renomeia as existentes
-    if rename_map:
-        df.rename(columns=rename_map, inplace=True)
-
-    # Normaliza colunas criadas
-    if "Family" not in df.columns:
-        df["Family"] = ""
-    if "Subfamily" not in df.columns:
-        df["Subfamily"] = ""
-
+    # Normaliza capitalização
     df["Family"] = df["Family"].astype(str).str.strip().str.title()
     df["Subfamily"] = df["Subfamily"].astype(str).str.strip().str.title()
 
-    # Colunas obrigatórias
+    # Garante colunas obrigatórias
     obrigatorias = [
         "Job Title", "Grade", "Sub Job Family Description", "Job Profile Description",
         "Role Description", "Grade Differentiator", "KPIs/Specific Parameters", "Qualifications"
@@ -115,10 +97,8 @@ model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
 st.markdown("## 🧩 Job Match")
 st.write("""
 Descubra o **cargo mais compatível** com suas responsabilidades e área de atuação.  
-O sistema identifica automaticamente o **nível de senioridade** e o **escopo** com base no conteúdo da sua descrição.
+O sistema identifica automaticamente o **nível de senioridade** e o **escopo** com base na descrição das suas atividades.
 """)
-
-st.markdown("### 🧰 Parâmetros de busca")
 
 col1, col2 = st.columns(2)
 
@@ -128,19 +108,19 @@ with col1:
 
 with col2:
     if family_selected:
-        subs = sorted(df[df["Family"] == family_selected]["Subfamily"].unique())
-        if subs:
-            subfamily_selected = st.selectbox("Selecione a Subfamily", [""] + subs)
+        sub_opts = sorted(df[df["Family"] == family_selected]["Subfamily"].unique())
+        if len(sub_opts) > 0:
+            subfamily_selected = st.selectbox("Selecione a Subfamily", [""] + sub_opts)
         else:
             subfamily_selected = ""
     else:
         subfamily_selected = ""
 
-st.markdown("### ✍️ Descreva brevemente suas atividades:")
+# Caixa de texto padrão estilo Streamlit
 descricao = st.text_area(
-    "Exemplo: Apoio no processamento de folha de pagamento, controle de ponto e benefícios...",
-    height=120,
-    label_visibility="collapsed"
+    "✍️ Descreva brevemente suas atividades:",
+    placeholder="Exemplo: Apoio no processamento de folha de pagamento, controle de ponto e benefícios...",
+    height=120
 )
 
 # ==============================================================
