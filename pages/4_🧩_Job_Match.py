@@ -18,9 +18,8 @@ st.markdown("""
 O sistema identifica automaticamente o <b>nível de senioridade</b> e o <b>escopo</b> com base no conteúdo da sua descrição.</p>
 """, unsafe_allow_html=True)
 
-
 # ------------------------------------------------------------
-# 📂 CARREGAMENTO DE BASE ROBUSTO
+# 📂 CARREGAMENTO DE BASE ROBUSTO + NORMALIZAÇÃO DE COLUNAS
 # ------------------------------------------------------------
 @st.cache_data(show_spinner=False)
 def load_data():
@@ -51,36 +50,57 @@ def load_data():
 
     df = df.fillna("")
 
-    # Normaliza colunas esperadas
-    rename_map = {
-        "Job title": "Job Title",
+    # ✅ Normalização ampla — cobre dezenas de variações de escrita
+    rename_patterns = {
         "job title": "Job Title",
-        "Sub-family": "Subfamily",
-        "Sub Family": "Subfamily",
-        "Grade Differentiation": "Grade Differentiator",
-        "KPIs / Specific Parameters": "KPIs/Specific Parameters",
-        "KPIs/ Specific Parameters": "KPIs/Specific Parameters",
+        "title": "Job Title",
+        "job": "Job Title",
+        "family": "Family",
+        "job family": "Family",
+        "sub-family": "Subfamily",
+        "sub family": "Subfamily",
+        "subfamily": "Subfamily",
+        "grade differentiation": "Grade Differentiator",
+        "grade differentiator": "Grade Differentiator",
+        "grade": "Grade",
+        "kpis": "KPIs/Specific Parameters",
+        "specific parameters": "KPIs/Specific Parameters",
+        "qualifications": "Qualifications",
+        "role description": "Role Description",
+        "sub job family description": "Sub Job Family Description",
+        "job profile description": "Job Profile Description",
     }
-    df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns}, inplace=True)
 
+    # Detecta e renomeia independentemente de maiúsculas/minúsculas
+    df.rename(
+        columns={
+            c: rename_patterns.get(c.strip().lower(), c)
+            for c in df.columns
+        },
+        inplace=True,
+    )
+
+    # Garante todas as colunas exigidas
     required_cols = [
-        "Job Title","Family","Subfamily","Grade",
-        "Sub Job Family Description","Job Profile Description","Role Description",
-        "Grade Differentiator","KPIs/Specific Parameters","Qualifications"
+        "Job Title", "Family", "Subfamily", "Grade",
+        "Sub Job Family Description", "Job Profile Description",
+        "Role Description", "Grade Differentiator",
+        "KPIs/Specific Parameters", "Qualifications"
     ]
     for c in required_cols:
         if c not in df.columns:
             df[c] = ""
 
+    # Cria coluna unificada para cálculo semântico
     df["Merged_Text"] = (
-        "Job Title: "+df["Job Title"]+
-        " | Family: "+df["Family"]+
-        " | Subfamily: "+df["Subfamily"]+
-        " | Grade: "+df["Grade"]+
-        " | Job Profile Description: "+df["Job Profile Description"]+
-        " | Role Description: "+df["Role Description"]+
-        " | Grade Differentiator: "+df["Grade Differentiator"]+
-        " | KPIs: "+df["KPIs/Specific Parameters"]
+        "Job Title: " + df["Job Title"] +
+        " | Family: " + df["Family"] +
+        " | Subfamily: " + df["Subfamily"] +
+        " | Grade: " + df["Grade"] +
+        " | Job Profile Description: " + df["Job Profile Description"] +
+        " | Role Description: " + df["Role Description"] +
+        " | Grade Differentiator: " + df["Grade Differentiator"] +
+        " | KPIs: " + df["KPIs/Specific Parameters"]
     )
 
     return df
@@ -89,9 +109,12 @@ def load_data():
 try:
     df = load_data()
 except Exception as e:
-    st.error(f"Erro ao carregar base: {e}")
+    st.error(f"❌ Erro ao carregar base: {e}")
     st.stop()
 
+# Mostra colunas detectadas (apenas para debug inicial)
+with st.expander("🧩 Colunas detectadas na base (verificação única):"):
+    st.write(list(df.columns))
 
 # ------------------------------------------------------------
 # 🧠 EMBEDDINGS
@@ -101,7 +124,6 @@ def load_model():
     return SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
 model = load_model()
-
 
 # ------------------------------------------------------------
 # 🧭 INTERFACE
@@ -135,7 +157,7 @@ if st.button("🔍 Identificar Cargo"):
         st.warning("Nenhum cargo encontrado para a Family/Subfamily selecionadas.")
         st.stop()
 
-    # 🔹 Calcula similaridade
+    # 🔹 Similaridade
     model_embeddings = model.encode(subset["Merged_Text"].tolist(), convert_to_tensor=True)
     query_embedding = model.encode(descricao, convert_to_tensor=True)
     scores = util.cos_sim(query_embedding, model_embeddings)[0].cpu().numpy()
@@ -150,7 +172,7 @@ if st.button("🔍 Identificar Cargo"):
     job_title = best["Job Title"]
 
     # ------------------------------------------------------------
-    # 🎯 RESULTADO
+    # 🎯 RESULTADO FINAL
     # ------------------------------------------------------------
     st.markdown("## 🎯 Cargo mais compatível encontrado:")
 
