@@ -1,5 +1,5 @@
 # ==============================================================
-# 🧩 Job Match — versão blindada (corrige duplicatas e espaços)
+# 🧩 Job Match — versão final estável e blindada
 # ==============================================================
 
 import streamlit as st
@@ -18,12 +18,12 @@ def load_data():
     except Exception:
         df = pd.read_csv(path, sep=";", engine="python", dtype=str, on_bad_lines="skip")
 
-    # --- Remove espaços e duplicatas no cabeçalho ---
+    # --- Limpeza inicial ---
     df.columns = df.columns.str.strip()
     df = df.loc[:, ~df.columns.duplicated(keep="first")]
     df = df.fillna("")
 
-    # --- Renomeia colunas relevantes ---
+    # --- Renomeia conforme cabeçalhos reais ---
     rename_map = {}
     for c in df.columns:
         c_norm = c.strip().lower()
@@ -48,7 +48,7 @@ def load_data():
 
     df.rename(columns=rename_map, inplace=True)
 
-    # --- Garante que todas as colunas existam ---
+    # --- Garante colunas obrigatórias ---
     obrig = [
         "Family", "Subfamily", "Job Title", "Grade",
         "Job Profile Description", "Role Description",
@@ -62,17 +62,21 @@ def load_data():
     df["Family"] = df["Family"].astype(str).str.strip().str.title()
     df["Subfamily"] = df["Subfamily"].astype(str).str.strip().str.title()
 
-    # --- Campo semântico seguro ---
+    # --- Concatenação segura ---
     def safe_concat(row):
         parts = []
-        for col in ["Job Title", "Family", "Subfamily", "Grade", 
-                    "Job Profile Description", "Role Description", 
-                    "Grade Differentiator", "KPIs/Specific Parameters", "Qualifications"]:
-            if col in row and pd.notna(row[col]) and str(row[col]).strip():
-                parts.append(f"{col}: {str(row[col]).strip()}")
+        for col in [
+            "Job Title", "Family", "Subfamily", "Grade",
+            "Job Profile Description", "Role Description",
+            "Grade Differentiator", "KPIs/Specific Parameters", "Qualifications"
+        ]:
+            val = row.get(col, "")
+            if isinstance(val, str) and val.strip():
+                parts.append(f"{col}: {val.strip()}")
         return " | ".join(parts)
 
-    df["Merged_Text"] = df.apply(safe_concat, axis=1)
+    df["Merged_Text"] = df.apply(lambda r: safe_concat(r), axis=1)
+
     return df
 
 # ==============================================================
@@ -105,7 +109,11 @@ with c2:
             .sort_values()
             .tolist()
         )
-        subfamily_selected = st.selectbox("Selecione a Subfamily", [""] + subs)
+        if len(subs) > 0:
+            subfamily_selected = st.selectbox("Selecione a Subfamily", [""] + subs)
+        else:
+            subfamily_selected = ""
+            st.warning("⚠️ Nenhuma Subfamily encontrada para essa Family.")
     else:
         subfamily_selected = ""
 
