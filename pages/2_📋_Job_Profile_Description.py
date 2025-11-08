@@ -10,8 +10,8 @@ if "job_profile" not in data:
 else:
     df = data["job_profile"]
 
-    # === LINHA DE FILTROS PRINCIPAIS (com tamanhos personalizados) ===
-    col1, col2, col3 = st.columns([1, 1.8, 0.8])  # Subfamília mais larga, trilha menor
+    # === LINHA DE FILTROS PRINCIPAIS (tamanhos proporcionais) ===
+    col1, col2, col3 = st.columns([1, 2, 0.8])  # Subfamília mais larga, trilha menor
 
     with col1:
         families = sorted(df["Job Family"].dropna().unique())
@@ -31,11 +31,16 @@ else:
 
     career_df = sub_df[sub_df["Career Path"] == career]
 
-    # === CSS para mostrar texto completo e ajustar largura dos cards ===
+    # === CSS: ajuste de espaçamento e chips com GG + cargo ===
     st.markdown(
         """
         <style>
-        /* Permite visualizar o texto completo dentro dos selectboxes após a seleção */
+        /* Reduz distância entre filtros e multiselect */
+        div[data-testid="stVerticalBlock"] > div:nth-child(3) {
+            margin-top: -25px !important;
+        }
+
+        /* Mostra texto completo dentro dos selects */
         div[data-baseweb="select"] > div {
             white-space: normal !important;
             height: auto !important;
@@ -45,7 +50,7 @@ else:
             white-space: normal !important;
         }
 
-        /* Ajusta os cards descritivos para largura do conteúdo */
+        /* Ajuste visual dos cards descritivos */
         .description-card {
             background-color: #f9f9f9;
             padding: 10px 14px;
@@ -53,27 +58,33 @@ else:
             border-left: 4px solid #1E56E0;
             font-size: 0.9rem;
             line-height: 1.5;
-            display: inline-block; /* <-- largura se ajusta ao conteúdo */
+            display: inline-block;
             max-width: 95%;
             margin-bottom: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Chips de seleção (GG + cargo) */
+        div[data-baseweb="tag"] span {
+            font-weight: 600 !important;
+            font-size: 0.88rem !important;
+            text-transform: none !important;
         }
         </style>
         """,
         unsafe_allow_html=True
     )
 
-    # === SELETOR DE CARGOS (MULTISELECT) ===
-    st.markdown("<div style='margin-top:-10px'></div>", unsafe_allow_html=True)
-
+    # === MULTISELECT (com GG + cargo no texto) ===
     def format_profile(row):
         grade = row.get("Global Grade", "")
         title = row.get("Job Profile", "")
-        diff = f" — GG{int(grade)}" if str(grade).strip() and str(grade).isdigit() else ""
-        return f"{title}{diff}"
+        return f"GG{int(grade)} — {title}" if str(grade).isdigit() else title
 
     career_df_sorted = career_df.sort_values(by="Global Grade", ascending=False)
     pick_options = career_df_sorted.apply(format_profile, axis=1).tolist()
+
+    st.markdown("<div style='margin-top:-15px'></div>", unsafe_allow_html=True)
 
     selected_labels = st.multiselect(
         "Selecione até 3 cargos para comparar:",
@@ -81,6 +92,7 @@ else:
         max_selections=3
     )
 
+    # === BLOCO DE RESULTADO ===
     if selected_labels:
         st.markdown("---")
         st.markdown("### 🧾 Comparativo de Cargos Selecionados")
@@ -89,7 +101,16 @@ else:
 
         for idx, label in enumerate(selected_labels):
             with cols[idx]:
-                selected_row = career_df_sorted.iloc[pick_options.index(label)]
+                # Localiza o cargo selecionado
+                label_grade = label.split(" — ")[0].replace("GG", "").strip()
+                label_title = label.split(" — ")[1].strip() if "—" in label else label
+                selected_row = career_df_sorted[
+                    (career_df_sorted["Job Profile"] == label_title)
+                    & (career_df_sorted["Global Grade"].astype(str) == label_grade)
+                ]
+                if selected_row.empty:
+                    continue
+                selected_row = selected_row.iloc[0]
 
                 # --- Cabeçalho do Cargo ---
                 st.markdown(f"#### {selected_row['Job Profile']}")
