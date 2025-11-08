@@ -3,9 +3,9 @@ import streamlit as st
 from utils.data_loader import load_data
 from utils.ui_components import section
 
-# ----------------------------------
+# -----------------------------
 # Utilidades
-# ----------------------------------
+# -----------------------------
 def safe_get(row, keys, default=""):
     """Retorna o primeiro campo válido na lista (ignora diferenças de caixa/espaço)."""
     for k in keys if isinstance(keys, list) else [keys]:
@@ -17,7 +17,7 @@ def safe_get(row, keys, default=""):
     return default
 
 def format_paragraphs(text):
-    """Quebra em parágrafos simples (sem bullets)."""
+    """Converte em parágrafos simples (sem bullets)."""
     if not text:
         return "-"
     parts = re.split(r"\n+|•|\r", text.strip())
@@ -26,24 +26,40 @@ def format_paragraphs(text):
         for p in parts if len(p.strip()) > 2
     )
 
-def render_section(emoji, title, html_text):
-    """Bloco padronizado (título + cartão) 100% alinhado."""
-    st.markdown(
-        f"""
-        <div class="ja-sec">
-          <div class="ja-sec-h">
-            <span class="ja-ic">{emoji}</span>
-            <span class="ja-ttl">{title}</span>
-          </div>
-          <div class="ja-card">{html_text}</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+def header_badge(title, grade):
+    return f"""
+    <div class="ja-hd">
+      <div class="ja-hd-title">{title}</div>
+      <div class="ja-hd-grade">GG {grade}</div>
+    </div>
+    """
 
-# ----------------------------------
+def class_box(row):
+    return f"""
+    <div class="ja-class">
+      <b>Família:</b> {row['Job Family']}<br>
+      <b>Subfamília:</b> {row['Sub Job Family']}<br>
+      <b>Carreira:</b> {row['Career Path']}<br>
+      <b>Função:</b> {row['Function Code']}<br>
+      <b>Disciplina:</b> {row['Discipline Code']}<br>
+      <b>Código:</b> {row['Full Job Code']}
+    </div>
+    """
+
+def cell_card(emoji, title, html_text):
+    return f"""
+    <div class="ja-sec">
+      <div class="ja-sec-h">
+        <span class="ja-ic">{emoji}</span>
+        <span class="ja-ttl">{title}</span>
+      </div>
+      <div class="ja-card">{html_text}</div>
+    </div>
+    """
+
+# -----------------------------
 # Página
-# ----------------------------------
+# -----------------------------
 data = load_data()
 section("📋 Job Profile Description")
 
@@ -53,49 +69,51 @@ if "job_profile" not in data:
 
 df = data["job_profile"]
 
-# ---------- CSS de alinhamento rígido ----------
+# ---------- CSS ----------
 st.markdown("""
 <style>
 /* Tipografia base */
 .ja-p { margin: 0 0 6px 0; text-align: justify; }
 
-/* Cabeçalho da seção: ícone largura fixa e texto alinhado */
+/* Header do cargo (nome + grade) */
+.ja-hd { display:flex; align-items:baseline; gap:10px; margin:0 0 6px 0; }
+.ja-hd-title { font-size:1.05rem; font-weight:700; }
+.ja-hd-grade { color:#1E56E0; font-weight:700; }
+
+/* Caixa de classificação */
+.ja-class {
+  background:#fff; border:1px solid #e0e4f0; border-radius:8px;
+  padding:10px; display:inline-block; width:100%;
+}
+
+/* Título da seção — ícone largura fixa para alinhar */
 .ja-sec { margin-bottom: 14px; }
 .ja-sec-h {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display:flex; align-items:center; gap:8px;
   margin: 8px 0 6px 0;
 }
-.ja-ic {
-  width: 24px; /* fixa o espaço do ícone para todos os títulos */
-  display: inline-block;
-  text-align: center;
-  line-height: 1;
-}
-.ja-ttl {
-  font-weight: 700;
-  color: #1E56E0;
-  font-size: 0.98rem;
-}
+.ja-ic { width:24px; display:inline-block; text-align:center; line-height:1; }
+.ja-ttl { font-weight:700; color:#1E56E0; font-size:0.98rem; }
 
-/* Cartão padronizado para todas as seções */
+/* Cartão */
 .ja-card {
-  background-color: #f9f9f9;
-  padding: 12px 14px;
-  border-radius: 8px;
-  border-left: 4px solid #1E56E0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  width: 100%;
-  display: inline-block;
+  background:#f9f9f9; padding:12px 14px; border-radius:8px;
+  border-left:4px solid #1E56E0; box-shadow:0 1px 3px rgba(0,0,0,0.05);
+  width:100%; display:inline-block;
 }
 
-/* Select/multiselect proximidade visual */
-.compare-box { margin-top: -18px; }
-.compare-box .compare-label { margin: 4px 0 6px 0; font-weight: 600; color: #2b2d42; }
+/* GRID por seção (alinha colunas obrigatoriamente) */
+.ja-grid { display:grid; gap:16px; margin: 4px 0 18px 0; }
+.ja-grid.cols-1 { grid-template-columns: repeat(1, 1fr); }
+.ja-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.ja-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
 
-/* Tags do multiselect não cortarem texto */
-div[data-baseweb="tag"] { max-width: none !important; }
+/* Multiselect próximo aos filtros */
+.compare-box { margin-top:-18px; }
+.compare-box .compare-label { margin:4px 0 6px 0; font-weight:600; color:#2b2d42; }
+
+/* Tags do multiselect sem cortar texto */
+div[data-baseweb="tag"] { max-width:none !important; }
 div[data-baseweb="tag"] span {
   white-space: normal !important;
   word-break: break-word !important;
@@ -103,13 +121,7 @@ div[data-baseweb="tag"] span {
   font-weight: 600 !important;
   font-size: 0.88rem !important;
 }
-div[data-baseweb="select"] > div { min-height: 44px !important; height: auto !important; }
-
-/* Caixa de classificação (topo do cargo) */
-.ja-class {
-  background:#fff; border:1px solid #e0e4f0; border-radius:8px;
-  padding:10px; display:inline-block; width:100%;
-}
+div[data-baseweb="select"] > div { min-height:44px !important; height:auto !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -144,68 +156,80 @@ st.markdown('<div class="compare-label">Selecione até 3 cargos para comparar:</
 selected_labels = st.multiselect("", options=pick_options, max_selections=3, label_visibility="collapsed")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ---------- Render comparativo ----------
+# ---------- Coleta dos perfis selecionados ----------
 if selected_labels:
     st.markdown("---")
     st.markdown("### 🧾 Comparativo de Cargos Selecionados")
 
-    cols = st.columns(len(selected_labels))
-    for idx, label in enumerate(selected_labels):
-        with cols[idx]:
-            parts = re.split(r"\s*[–—-]\s*", label)
-            label_grade = parts[0].replace("GG", "").strip() if parts else ""
-            label_title = parts[1].strip() if len(parts) > 1 else label.strip()
+    # Constrói lista de rows na mesma ordem da seleção
+    rows = []
+    for label in selected_labels:
+        parts = re.split(r"\s*[–—-]\s*", label)
+        label_grade = parts[0].replace("GG", "").strip() if parts else ""
+        label_title = parts[1].strip() if len(parts) > 1 else label.strip()
 
-            sel = career_df_sorted[
-                career_df_sorted["Job Profile"].str.strip().str.lower() == label_title.lower()
-            ]
-            if label_grade:
-                sel = sel[ sel["Global Grade"].astype(str).str.strip() == label_grade ]
-            if sel.empty:
-                st.warning(f"Cargo não encontrado: {label}")
-                continue
+        sel = career_df_sorted[
+            career_df_sorted["Job Profile"].str.strip().str.lower() == label_title.lower()
+        ]
+        if label_grade:
+            sel = sel[ sel["Global Grade"].astype(str).str.strip() == label_grade ]
+        if sel.empty:
+            rows.append(None)
+        else:
+            rows.append(sel.iloc[0])
 
-            row = sel.iloc[0]
+    n = len(rows)
+    grid_class = f"ja-grid cols-{n}"
 
-            # Cabeçalho do cargo
-            st.markdown(f"#### {row['Job Profile']}")
-            st.markdown(f"<p style='color:#1E56E0; font-weight:bold;'>GG {row['Global Grade']}</p>", unsafe_allow_html=True)
+    # ===== Linha 1: cabeçalho (título + grade)
+    html_cells = []
+    for r in rows:
+        if r is None:
+            html_cells.append("<div></div>")
+        else:
+            html_cells.append(f"<div>{header_badge(r['Job Profile'], r['Global Grade'])}</div>")
+    st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
 
-            # Classificação do cargo (sempre igual)
-            st.markdown(
-                f"""
-                <div class="ja-class">
-                    <b>Família:</b> {row['Job Family']}<br>
-                    <b>Subfamília:</b> {row['Sub Job Family']}<br>
-                    <b>Carreira:</b> {row['Career Path']}<br>
-                    <b>Função:</b> {row['Function Code']}<br>
-                    <b>Disciplina:</b> {row['Discipline Code']}<br>
-                    <b>Código:</b> {row['Full Job Code']}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+    # ===== Linha 2: classificação (família, códigos etc.)
+    html_cells = []
+    for r in rows:
+        if r is None:
+            html_cells.append("<div></div>")
+        else:
+            html_cells.append(f"<div>{class_box(r)}</div>")
+    st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
 
-            # Seções padronizadas (com detecção robusta do Grade Differentiator)
-            sections = [
-                ("🧭", "Sub Job Family Description", safe_get(row, "Sub Job Family Description")),
-                ("🧠", "Job Profile Description",   safe_get(row, "Job Profile Description")),
-                ("🎯", "Role Description",          safe_get(row, "Role Description")),
-                ("🏅", "Grade Differentiator",      safe_get(row, [
-                                                      "Grade Differentiator",
-                                                      "Grade Differentiation",
-                                                      "Grade Differentiatior",   # sua coluna
-                                                      " Grade Differentiator",
-                                                      "Grade Differentiator ",
-                                                      "Grade Differentiators"
-                                                    ])),
-                ("📊", "KPIs / Specific Parameters", safe_get(row, ["Specific parameters KPIs", "Specific parameters / KPIs"])),
-                ("💡", "Competency 1",               safe_get(row, "Competency 1")),
-                ("💡", "Competency 2",               safe_get(row, "Competency 2")),
-                ("💡", "Competency 3",               safe_get(row, "Competency 3")),
-                ("🎓", "Qualifications",              safe_get(row, "Qualifications")),
-            ]
+    # ===== Demais linhas: seções alinhadas por grid =====
+    SECTIONS = [
+        ("🧭", "Sub Job Family Description", lambda r: safe_get(r, "Sub Job Family Description")),
+        ("🧠", "Job Profile Description",   lambda r: safe_get(r, "Job Profile Description")),
+        ("🎯", "Role Description",          lambda r: safe_get(r, "Role Description")),
+        ("🏅", "Grade Differentiator",      lambda r: safe_get(r, [
+                                               "Grade Differentiator",
+                                               "Grade Differentiation",
+                                               "Grade Differentiatior",  # como está no seu CSV
+                                               " Grade Differentiator", "Grade Differentiator ",
+                                               "Grade Differentiators"
+                                             ])),
+        ("📊", "KPIs / Specific Parameters", lambda r: safe_get(r, ["Specific parameters KPIs",
+                                                                   "Specific parameters / KPIs"])),
+        ("💡", "Competency 1",              lambda r: safe_get(r, "Competency 1")),
+        ("💡", "Competency 2",              lambda r: safe_get(r, "Competency 2")),
+        ("💡", "Competency 3",              lambda r: safe_get(r, "Competency 3")),
+        ("🎓", "Qualifications",            lambda r: safe_get(r, "Qualifications")),
+    ]
 
-            for emoji, title, raw in sections:
+    for emoji, title, getter in SECTIONS:
+        html_cells = []
+        for r in rows:
+            if r is None:
+                html_cells.append("<div></div>")
+            else:
+                raw = getter(r)
                 if raw:
-                    render_section(emoji, title, format_paragraphs(raw))
+                    html_cells.append(
+                        "<div>" + cell_card(emoji, title, format_paragraphs(raw)) + "</div>"
+                    )
+                else:
+                    html_cells.append("<div></div>")
+        st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
