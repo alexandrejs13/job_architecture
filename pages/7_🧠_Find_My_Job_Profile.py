@@ -53,11 +53,13 @@ with st.spinner("🔄 Preparando base semântica..."):
 query = st.text_input("✏️ Descreva suas atividades ou responsabilidades:",
                       placeholder="Ex: Gestão de folha de pagamento, benefícios e relações sindicais...")
 
+selected_jobs = []  # Armazena IDs dos cargos selecionados
+
 if query:
     with st.spinner("🔍 Buscando cargos compatíveis..."):
         query_emb = model.encode(query, convert_to_tensor=True)
         scores = util.cos_sim(query_emb, embeddings)[0]
-        top_k = min(5, len(df))
+        top_k = min(8, len(df))
         best_idx = np.argsort(scores)[-top_k:][::-1]
 
         st.markdown("## 🎯 Cargos mais compatíveis:")
@@ -81,47 +83,79 @@ if query:
             kpi = cargo.get("KPIs / Specific Parameters", "")
             qualif = cargo.get("Qualifications", "")
 
-            # Card completo unificado
-            st.markdown(
-                f"""
-                <div style="background-color:#fafbff; border-left:6px solid #2e6ef7; 
-                            border-radius:12px; padding:20px 24px; margin-bottom:18px;
-                            box-shadow:0 2px 4px rgba(0,0,0,0.05);">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div style="font-weight:700; font-size:18px; color:#1f3a93;">
-                            🟦 GG {gg} — {titulo}
+            # Checkbox para comparar
+            col1, col2 = st.columns([0.05, 0.95])
+            with col1:
+                check = st.checkbox("", key=f"check_{idx}")
+            with col2:
+                st.markdown(
+                    f"""
+                    <div style="background-color:#fafbff; border-left:6px solid #2e6ef7; 
+                                border-radius:12px; padding:20px 24px; margin-bottom:18px;
+                                box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="font-weight:700; font-size:18px; color:#1f3a93;">
+                                🟦 GG {gg} — {titulo}
+                            </div>
+                            <div style="font-weight:600; font-size:15px; color:#333;">
+                                Similaridade: {sim:.1f}%
+                            </div>
                         </div>
-                        <div style="font-weight:600; font-size:15px; color:#333;">
-                            Similaridade: {sim:.1f}%
+                        <div style="color:#444; font-size:15px; margin-top:4px;">
+                            <b>{familia} / {subfamilia}</b>
                         </div>
-                    </div>
-                    <div style="color:#444; font-size:15px; margin-top:4px;">
-                        <b>{familia} / {subfamilia}</b>
-                    </div>
 
-                    <details style="background:#fff; border-radius:8px; padding:12px; border:1px solid #ddd; margin-top:12px;">
-                        <summary style="cursor:pointer; font-weight:500; color:#2e6ef7; font-size:15px;">
-                            📋 Ver detalhes
-                        </summary>
-                        <div style="margin-top:10px; font-size:14px; color:#333;">
-                            <p><b>Família:</b> {familia}<br>
-                               <b>Subfamília:</b> {subfamilia}<br>
-                               <b>Carreira:</b> {carreira}<br>
-                               <b>Função:</b> {funcao}<br>
-                               <b>Código:</b> {codigo}</p>
+                        <details style="background:#fff; border-radius:8px; padding:12px; border:1px solid #ddd; margin-top:12px;">
+                            <summary style="cursor:pointer; font-weight:500; color:#2e6ef7; font-size:15px;">
+                                📋 Ver detalhes
+                            </summary>
+                            <div style="margin-top:10px; font-size:14px; color:#333;">
+                                <p><b>Família:</b> {familia}<br>
+                                   <b>Subfamília:</b> {subfamilia}<br>
+                                   <b>Carreira:</b> {carreira}<br>
+                                   <b>Função:</b> {funcao}<br>
+                                   <b>Código:</b> {codigo}</p>
 
-                            <p><b>🧩 Sub Job Family Description</b><br>{subjob}</p>
-                            <p><b>🧠 Job Profile Description</b><br>{profile}</p>
-                            <p><b>🎯 Role Description</b><br>{role}</p>
-                            <p><b>⚙️ Grade Differentiator</b><br>{diff}</p>
-                            <p><b>📊 KPIs / Specific Parameters</b><br>{kpi}</p>
-                            <p><b>🎓 Qualifications</b><br>{qualif}</p>
-                        </div>
-                    </details>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+                                <p><b>🧩 Sub Job Family Description</b><br>{subjob}</p>
+                                <p><b>🧠 Job Profile Description</b><br>{profile}</p>
+                                <p><b>🎯 Role Description</b><br>{role}</p>
+                                <p><b>⚙️ Grade Differentiator</b><br>{diff}</p>
+                                <p><b>📊 KPIs / Specific Parameters</b><br>{kpi}</p>
+                                <p><b>🎓 Qualifications</b><br>{qualif}</p>
+                            </div>
+                        </details>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            if check:
+                selected_jobs.append(cargo)
+
+        # Botão para comparar
+        if selected_jobs:
+            st.markdown("### 🧾 Comparar cargos selecionados")
+            if st.button("🔍 Exibir comparação lado a lado"):
+                st.markdown("---")
+                st.markdown("## 📊 Comparativo entre cargos selecionados")
+
+                cols = st.columns(len(selected_jobs))
+                for i, c in enumerate(selected_jobs):
+                    with cols[i]:
+                        st.markdown(
+                            f"""
+                            <div style="background:#fdfdff; border-left:5px solid #2e6ef7; 
+                                        border-radius:10px; padding:14px; margin-bottom:10px;">
+                                <b>GG {c.get("Global Grade","")}</b><br>
+                                <b>{c.get("Job Title","")}</b><br>
+                                <small>{c.get("Family","")} / {c.get("Sub Family","")}</small><br><br>
+                                <b>Role Description</b><br>{c.get("Role Description","")}<br><br>
+                                <b>Grade Differentiator</b><br>{c.get("Grade Differentiator","")}<br><br>
+                                <b>Qualifications</b><br>{c.get("Qualifications","")}
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
 
 else:
     st.info("💡 Digite uma descrição acima para encontrar o cargo correspondente.")
