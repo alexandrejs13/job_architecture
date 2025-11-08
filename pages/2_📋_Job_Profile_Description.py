@@ -43,4 +43,35 @@ else:
     # === BLOCO DE CLASSIFICAÇÃO ===
     st.markdown("---")
     st.markdown(f"## 🧾 {selected_row['Job Profile']}")
-    st.write(f"
+    st.write(f"**Família:** {selected_row['Job Family']}")
+    st.write(f"**Subfamília:** {selected_row['Sub Job Family']}")
+    st.write(f"**Trilha de Carreira:** {selected_row['Career Path']}")
+    st.write(f"**Nível Global:** {selected_row['Global Grade']}")
+    st.write(f"**Função:** {selected_row['Function Code']}")
+    st.write(f"**Disciplina:** {selected_row['Discipline Code']}")
+    st.write(f"**Código Completo:** {selected_row['Full Job Code']}")
+
+    st.markdown("---")
+
+    # === SEÇÕES DE DESCRIÇÃO ===
+    description_sections = [
+        ("Sub Job Family Description", "🧭 Sub Job Family Description"),
+        ("Job Profile Description", "🧠 Job Profile Description"),
+        ("Role Description", "🎯 Role Description"),
+        ("Grade Differentiation", "🏅 Grade Differentiation"),
+        ("Specific parameters / KPIs", "📊 Specific Parameters / KPIs"),
+        ("Competency", "💡 Competency"),
+        ("Qualifications", "🎓 Qualifications")
+    ]
+
+    for col, title in description_sections:
+        if col in selected_row and str(selected_row[col]).strip() and str(selected_row[col]).lower() != "nan":
+            st.markdown(f"### {title}")
+            st.markdown(
+                f"""
+                <div style='
+                    background-color:#f9f9f9;
+                    padding:12px;
+                    border-radius:8px;
+                    border-left:4px solid #1E56E0;
+                    line-height:1.6;
