@@ -10,7 +10,7 @@ if "job_profile" not in data:
 else:
     df = data["job_profile"]
 
-    # === FILTROS ===
+    # === SELEÇÃO DE FAMÍLIA ===
     families = sorted(df["Job Family"].dropna().unique())
     fam = st.selectbox("Selecione a Família:", families)
 
@@ -20,50 +20,27 @@ else:
 
     sub_df = filtered[filtered["Sub Job Family"] == sub]
 
+    # === SELEÇÃO DE CARREIRA ===
+    career_options = sorted(sub_df["Career Path"].dropna().unique())
+    career = st.selectbox("Selecione a Trilha de Carreira:", career_options)
+
+    career_df = sub_df[sub_df["Career Path"] == career]
+
     # === LISTA DE CARGOS ===
     def format_profile(row):
         grade = row.get("Global Grade", "")
-        path = row.get("Career Path", "")
         title = row.get("Job Profile", "")
-        diff = f" — GG{int(grade)} ({path})" if str(grade).strip() else ""
+        diff = f" — GG{int(grade)}" if str(grade).strip() and str(grade).isdigit() else ""
         return f"{title}{diff}"
 
-    pick_options = sub_df.apply(format_profile, axis=1).tolist()
+    career_df_sorted = career_df.sort_values(by="Global Grade", ascending=False)
+    pick_options = career_df_sorted.apply(format_profile, axis=1).tolist()
     selected_label = st.selectbox("Selecione o Cargo:", pick_options)
 
-    # === IDENTIFICA LINHA CORRESPONDENTE ===
-    selected_row = sub_df.iloc[pick_options.index(selected_label)]
+    # === LOCALIZA LINHA DO CARGO ===
+    selected_row = career_df_sorted.iloc[pick_options.index(selected_label)]
 
     # === BLOCO DE CLASSIFICAÇÃO ===
     st.markdown("---")
     st.markdown(f"## 🧾 {selected_row['Job Profile']}")
-    st.write(f"**Família:** {selected_row['Job Family']}")
-    st.write(f"**Subfamília:** {selected_row['Sub Job Family']}")
-    st.write(f"**Carreira:** {selected_row['Career Path']}")
-    st.write(f"**Nível Global:** {selected_row['Global Grade']}")
-    st.write(f"**Função:** {selected_row['Function Code']}")
-    st.write(f"**Disciplina:** {selected_row['Discipline Code']}")
-    st.write(f"**Código Completo:** {selected_row['Full Job Code']}")
-
-    st.markdown("---")
-
-    # === DESCRIÇÕES EM SEQUÊNCIA ===
-    description_sections = [
-        ("Sub Job Family Description", "🧭 Sub Job Family Description"),
-        ("Job Profile Description", "🧠 Job Profile Description"),
-        ("Role Description", "🎯 Role Description"),
-        ("Grade Differentiation", "🏅 Grade Differentiation"),
-        ("Specific parameters / KPIs", "📊 Specific Parameters / KPIs"),
-        ("Competency", "💡 Competency"),
-        ("Qualifications", "🎓 Qualifications")
-    ]
-
-    for col, title in description_sections:
-        if col in selected_row and str(selected_row[col]).strip() and str(selected_row[col]).lower() != "nan":
-            st.markdown(f"### {title}")
-            st.markdown(
-                f"<div style='background-color:#f9f9f9; padding:12px; border-radius:8px; "
-                f"border-left: 4px solid #1E56E0; line-height:1.5;'>{selected_row[col]}</div>",
-                unsafe_allow_html=True
-            )
-            st.markdown("---")
+    st.write(f"
