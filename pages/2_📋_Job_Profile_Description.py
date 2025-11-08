@@ -56,6 +56,7 @@ def cell_card(emoji, title, html_text):
 # Página principal
 # ===========================================================
 st.set_page_config(layout="wide")
+
 data = load_data()
 section("📋 Job Profile Description")
 
@@ -66,16 +67,22 @@ if "job_profile" not in data:
 df = data["job_profile"]
 
 # ===========================================================
-# CSS — layout fixo e textos centralizados
+# CSS — responsivo, igualar larguras e alinhar à esquerda
 # ===========================================================
 st.markdown("""
 <style>
 
-/* ====== TRAVA DE LARGURA ====== */
+/* ====== LAYOUT PRINCIPAL ====== */
 .block-container {
   max-width: 1500px !important;
-  min-width: 1500px !important;
+  min-width: 900px !important;
   margin: 0 auto !important;
+  padding: 1rem 2rem;
+}
+
+/* Escala responsiva */
+html, body, [class*="css"] {
+  font-size: calc(13px + 0.2vw) !important;
 }
 
 /* Barra lateral fixa */
@@ -88,11 +95,11 @@ st.markdown("""
   width: 320px !important;
 }
 
-/* ====== ESTILO PADRÃO ====== */
+/* ====== TEXTOS ====== */
 .ja-p {
   margin: 0 0 6px 0;
-  text-align: center;               /* centraliza o texto */
-  line-height: 1.5;
+  text-align: left;
+  line-height: 1.55;
 }
 .ja-hd {
   display:flex;
@@ -100,9 +107,10 @@ st.markdown("""
   justify-content:center;
   gap:10px;
   margin:0 0 6px 0;
+  text-align:center;
 }
 .ja-hd-title {
-  font-size:1.05rem;
+  font-size:1.1rem;
   font-weight:700;
 }
 .ja-hd-grade {
@@ -113,18 +121,19 @@ st.markdown("""
   background:#fff;
   border:1px solid #e0e4f0;
   border-radius:8px;
-  padding:10px;
+  padding:12px 16px;
   width:100%;
-  display:inline-block;
-  text-align:center;
+  text-align:left;
+  box-sizing:border-box;
+  min-height:150px;
 }
 
-/* Títulos e cartões */
-.ja-sec { margin: 0 !important; text-align:center; }
+/* ====== SEÇÕES E CARDS ====== */
+.ja-sec { margin: 0 !important; text-align:left; }
 .ja-sec-h {
   display:flex;
   align-items:center;
-  justify-content:center;
+  justify-content:flex-start;
   gap:8px;
   margin:0 0 4px 0 !important;
 }
@@ -136,28 +145,30 @@ st.markdown("""
 }
 .ja-card {
   background:#f9f9f9;
-  padding:14px 20px;
+  padding:14px 18px;
   border-radius:8px;
   border-left:4px solid #1E56E0;
   box-shadow:0 1px 3px rgba(0,0,0,0.05);
-  width:90%;
-  margin:0 auto;
-  text-align:center;
+  width:100%;
+  text-align:left;
   display:block;
+  min-height:140px;
+  box-sizing:border-box;
 }
 
-/* GRID fixo */
+/* ====== GRID ====== */
 .ja-grid {
   display:grid;
-  gap:12px 12px;
-  justify-items:center;
-  margin:2px 0 14px 0 !important;
+  gap:18px 18px;
+  justify-items:stretch;
+  align-items:start;
+  margin:8px 0 18px 0 !important;
 }
-.ja-grid.cols-1 { grid-template-columns: repeat(1, 1fr); }
-.ja-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
-.ja-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.ja-grid.cols-1 { grid-template-columns: repeat(1, minmax(300px, 1fr)); }
+.ja-grid.cols-2 { grid-template-columns: repeat(2, minmax(400px, 1fr)); }
+.ja-grid.cols-3 { grid-template-columns: repeat(3, minmax(420px, 1fr)); }
 
-/* Multiselect */
+/* ====== MULTISELECT ====== */
 .compare-box { margin-top:-18px; }
 .compare-box .compare-label {
   margin:4px 0 6px 0;
@@ -170,13 +181,12 @@ div[data-baseweb="tag"] span {
   word-break: break-word !important;
   line-height: 1.25 !important;
   font-weight: 600 !important;
-  font-size: 0.88rem !important;
+  font-size: 0.9rem !important;
 }
 div[data-baseweb="select"] > div {
   min-height:44px !important;
   height:auto !important;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -200,7 +210,7 @@ with col3:
 career_df = sub_df[sub_df["Career Path"] == career]
 
 # ===========================================================
-# Multiselect de cargos
+# Multiselect
 # ===========================================================
 def option_label(row):
     g = row.get("Global Grade", "")
@@ -254,10 +264,10 @@ if selected_labels:
             "Grade Differentiator", "Grade Differentiation",
             "Grade Differentiatior", "Grade Differentiators"
         ])),
-        ("🎓", "Qualifications",            lambda r: safe_get(r, "Qualifications")),
         ("📊", "KPIs / Specific Parameters", lambda r: safe_get(r, [
             "Specific parameters KPIs", "Specific parameters / KPIs"
         ])),
+        ("🎓", "Qualifications",            lambda r: safe_get(r, "Qualifications")),
     ]
 
     for emoji, title, getter in SECTIONS:
