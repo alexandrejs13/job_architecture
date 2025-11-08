@@ -4,6 +4,105 @@ import streamlit as st
 from utils.data_loader import load_data
 from utils.ui_components import section
 
+# -----------------------------
+# Utilidades
+# -----------------------------
+def safe_get(row, keys, default=""):
+    """Retorna o primeiro campo existente na ordem de keys."""
+    for k in keys:
+        if k in row and str(row[k]).strip() and str(row[k]).strip().lower() != "nan":
+            return str(row[k])
+    return default
+
+def grade_int(x):
+    try:
+        return int(str(x).strip())
+    except:
+        return None
+
+def bulletify(text):
+    """Transforma parágrafos ou frases longas em bullets."""
+    if not text:
+        return "-"
+    parts = re.split(r"[•\-–—]\s*|\n", text.strip())
+    clean = [p.strip() for p in parts if len(p.strip()) > 3]
+    return "<ul>" + "".join(f"<li>{p}</li>" for p in clean) + "</ul>"
+
+def analyze_grade_signals(row):
+    text = " ".join([
+        safe_get(row, ["Role Description"]),
+        safe_get(row, ["Grade Differentiation", "Grade Differentiator"]),
+        safe_get(row, ["Competency"]),
+        safe_get(row, ["Qualifications"]),
+        safe_get(row, ["Job Profile Description"])
+    ]).lower()
+    score = 0
+    signals = {
+        "liderança": 3, "gestão de equipe": 2, "coordena": 2, "autonomia": 2,
+        "estratégico": 3, "tático": 2, "operacional": 1, "regional": 2, "global": 3,
+        "budget": 2, "orçamento": 2, "p&l": 3, "governança": 3, "políticas": 2
+    }
+    for k, v in signals.items():
+        if k in text:
+            score += v
+    if len(text) > 800:
+        score += 1
+    return score
+
+def executive_delta_summary(rows):
+    """Gera um resumo executivo claro do porquê as grades diferem."""
+    if not rows:
+        return ""
+    rows_sorted = sorted(rows, key=lambda r: grade_int(r.get("Global Grade")))
+    enriched = []
+    for r in rows_sorted:
+        g = grade_int(r.get("Global Grade"))
+        score = analyze_grade_signals(r)
+        enriched.append({
+            "grade": g,
+            "title": r.get("Job Profile", ""),
+            "score": score,
+            "role": safe_get(r, ["Role Description"]),
+            "diff": safe_get(r, ["Grade Differentiation", "Grade Differentiator"]),
+            "comp": safe_get(r, ["Competency"])
+        })
+
+    bullets = []
+    for i, item in enumerate(enriched):
+        lane = []
+        text = (item["role"] + " " + item["diff"] + " " + item["comp"]).lower()
+        if "lider" in text or "gest" in text or "people" in text:
+            lane.append("liderança de pessoas ou gestão de equipe")
+        if any(k in text for k in ["estratég", "polític", "governança"]):
+            lane.append("atuação estratégica e definição de diretrizes")
+        if any(k in text for k in ["regional", "global", "corporativo"]):
+            lane.append("escopo ampliado (regional/global)")
+        if any(k in text for k in ["budget", "p&l", "orçamento"]):
+            lane.append("responsabilidade financeira e orçamentária")
+        if any(k in text for k in ["portfólio", "transformação", "programa"]):
+            lane.append("gestão de programas e transformação organizacional")
+        lane_txt = "; ".join(dict.fromkeys(lane)) if lane else "escopo e responsabilidades proporcionais ao nível"
+        bullets.append(f"- **GG{item['grade']} – {item['title']}**: {lane_txt} (sinais de senioridade: {item['score']}).")
+
+    comp_lines = []
+    for a, b in zip(enriched, enriched[1:]):
+        if b["score"] > a["score"]:
+            comp_lines.append(
+                f"- **Progressão GG{a['grade']} → GG{b['grade']}**: amplia **escopo** (local → regional/global), "
+                f"**autonomia** (tático → estratégico), **liderança** (individual → gestão de times) "
+                f"e **impacto** (operações → políticas e programas)."
+            )
+
+    summary = "#### 🔍 Resumo executivo das diferenças de grade\n"
+    summary += "Os perfis evidenciam progressão consistente de **escopo**, **autonomia**, **liderança**, **complexidade** e **impacto**.\n\n"
+    summary += "\n".join(bullets)
+    if comp_lines:
+        summary += "\n\n" + "\n".join(comp_lines)
+    return summary
+
+# -----------------------------
+# Página principal
+# -----------------------------
 data = load_data()
 section("📋 Job Profile Description")
 
@@ -12,7 +111,6 @@ if "job_profile" not in data:
 else:
     df = data["job_profile"]
 
-    # ===== CSS =====
     st.markdown(
         """
         <style>
@@ -71,12 +169,7 @@ else:
 
     st.markdown('<div class="compare-box">', unsafe_allow_html=True)
     st.markdown('<div class="compare-label">Selecione até 3 cargos para comparar:</div>', unsafe_allow_html=True)
-    selected_labels = st.multiselect(
-        "",
-        options=pick_options,
-        max_selections=3,
-        label_visibility="collapsed"
-    )
+    selected_labels = st.multiselect("", options=pick_options, max_selections=3, label_visibility="collapsed")
     st.markdown('</div>', unsafe_allow_html=True)
 
     # ===== RESULTADO =====
@@ -89,16 +182,14 @@ else:
 
         for idx, label in enumerate(selected_labels):
             with cols[idx]:
-                # --- Extrai grade e nome, aceita vários tipos de travessão ---
                 parts = re.split(r"\s*[–—-]\s*", label)
                 label_grade = parts[0].replace("GG", "").strip() if parts else ""
                 label_title = parts[1].strip() if len(parts) > 1 else label.strip()
 
-                # --- Localiza o cargo ---
                 selected_row_df = career_df_sorted[
                     career_df_sorted["Job Profile"].str.strip().str.lower() == label_title.lower()
                 ]
-                if label_grade and "Global Grade" in career_df_sorted.columns:
+                if label_grade:
                     selected_row_df = selected_row_df[
                         selected_row_df["Global Grade"].astype(str).str.strip() == label_grade
                     ]
@@ -108,14 +199,10 @@ else:
                 selected_row = selected_row_df.iloc[0]
                 selected_data.append(selected_row)
 
-                # --- Cabeçalho ---
                 st.markdown(f"#### {selected_row['Job Profile']}")
-                st.markdown(
-                    f"<p style='color:#1E56E0; font-weight:bold;'>GG {selected_row['Global Grade']}</p>",
-                    unsafe_allow_html=True
-                )
+                st.markdown(f"<p style='color:#1E56E0; font-weight:bold;'>GG {selected_row['Global Grade']}</p>", unsafe_allow_html=True)
 
-                # --- Bloco Classificação ---
+                # Classificação
                 st.markdown(
                     f"""
                     <div style='background-color:#ffffff; padding:10px; border-radius:8px; border:1px solid #e0e4f0; display:inline-block; width:100%;'>
@@ -130,43 +217,24 @@ else:
                     unsafe_allow_html=True
                 )
 
-                # --- Seções descritivas ---
-                desc_sections = [
+                # Seções principais
+                sections = [
                     ("Sub Job Family Description", "🧭 Sub Job Family Description"),
                     ("Job Profile Description", "🧠 Job Profile Description"),
                     ("Role Description", "🎯 Role Description"),
-                    ("Grade Differentiation", "🏅 Grade Differentiation"),  # incluído na ordem certa
+                    ("Grade Differentiation", "🏅 Grade Differentiator"),
                     ("Specific parameters / KPIs", "📊 KPIs / Specific Parameters"),
                     ("Competency", "💡 Competency"),
                     ("Qualifications", "🎓 Qualifications")
                 ]
+                for key, title in sections:
+                    val = safe_get(selected_row, [key])
+                    if val:
+                        formatted = bulletify(val) if key in ["Role Description", "Grade Differentiation"] else val
+                        st.markdown(f"**{title}**")
+                        st.markdown(f"<div class='description-card'>{formatted}</div>", unsafe_allow_html=True)
 
-                for c, t in desc_sections:
-                    if c in selected_row and str(selected_row[c]).strip().lower() != "nan":
-                        st.markdown(f"**{t}**")
-                        st.markdown(
-                            f"<div class='description-card'>{selected_row[c]}</div>",
-                            unsafe_allow_html=True
-                        )
-
-        # ===== RESUMO DE DIFERENCIAÇÕES =====
+        # ===== Resumo executivo =====
         if len(selected_data) > 1:
             st.markdown("---")
-            st.markdown("### 🔍 Resumo de Diferenciações entre os Cargos")
-
-            resumo = ""
-            desc_sections = [
-                ("Job Profile Description", "Job Profile"),
-                ("Role Description", "Role"),
-                ("Grade Differentiation", "Grade Differentiation"),
-                ("Competency", "Competency"),
-                ("Qualifications", "Qualifications")
-            ]
-            for c, t in desc_sections:
-                texts = [str(r[c]) for r in selected_data if c in r and str(r[c]).strip().lower() != "nan"]
-                if len(set(texts)) > 1:
-                    diff = difflib.unified_diff(texts[0].split(), texts[-1].split(), lineterm="")
-                    resumo += f"- **{t}:** diferenças observadas no conteúdo e escopo.<br/>"
-            if not resumo:
-                resumo = "Os cargos apresentam descrições muito semelhantes, com variações sutis em nível de responsabilidade e complexidade."
-            st.markdown(f"<div class='description-card'>{resumo}</div>", unsafe_allow_html=True)
+            st.markdown(executive_delta_summary(selected_data), unsafe_allow_html=True)
