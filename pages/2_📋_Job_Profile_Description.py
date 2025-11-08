@@ -4,7 +4,12 @@ from utils.data_loader import load_data
 from utils.ui_components import section
 
 # ===========================================================
-# CSS (colocado após os imports para evitar NameError)
+# ✅ A PRIMEIRA LINHA EXECUTÁVEL DO STREAMLIT
+# ===========================================================
+st.set_page_config(layout="wide")
+
+# ===========================================================
+# CSS — mantido idêntico ao modelo que estava perfeito
 # ===========================================================
 st.markdown("""
 <style>
@@ -14,7 +19,7 @@ st.markdown("""
   max-width: 1200px !important;
   min-width: 900px !important;
   margin: 0 auto !important;
-  padding: 2.5rem 1.5rem 2rem 1.5rem; /* espaço superior extra */
+  padding: 2.5rem 1.5rem 2rem 1.5rem;
   zoom: 0.9;
 }
 
@@ -148,6 +153,7 @@ div[data-baseweb="select"] > div {
   min-height:38px !important;
   height:auto !important;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -203,7 +209,6 @@ def cell_card(emoji, title, html_text):
 # ===========================================================
 # Página principal
 # ===========================================================
-st.set_page_config(layout="wide")
 data = load_data()
 section("📘 Job Profile Description")
 
