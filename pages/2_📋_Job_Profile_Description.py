@@ -67,11 +67,16 @@ else:
     for col, title in description_sections:
         if col in selected_row and str(selected_row[col]).strip() and str(selected_row[col]).lower() != "nan":
             st.markdown(f"### {title}")
-            st.markdown(
-                f"""
-                <div style='
-                    background-color:#f9f9f9;
-                    padding:12px;
-                    border-radius:8px;
-                    border-left:4px solid #1E56E0;
-                    line-height:1.6;
+            html_block = f"""
+<div style='
+    background-color:#f9f9f9;
+    padding:12px;
+    border-radius:8px;
+    border-left:4px solid #1E56E0;
+    line-height:1.6;
+    white-space:pre-wrap;'>
+    {selected_row[col]}
+</div>
+"""
+            st.markdown(html_block, unsafe_allow_html=True)
+            st.markdown("---")
