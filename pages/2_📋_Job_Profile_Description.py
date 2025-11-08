@@ -1,3 +1,4 @@
+import re
 import streamlit as st
 from utils.data_loader import load_data
 from utils.ui_components import section
@@ -10,40 +11,30 @@ if "job_profile" not in data:
 else:
     df = data["job_profile"]
 
-    # ===== CSS FINO: mover só o multiselect e corrigir chips =====
+    # ===== CSS visual e spacing =====
     st.markdown(
         """
         <style>
-        /* Mantém os 3 filtros onde estão; não mexemos neles */
-        /* ----- Apenas o bloco do multiselect (compare-box) ----- */
-        .compare-box {
-            margin-top: -18px;   /* aproxima do trio Família/Subfamília/Trilha */
-        }
+        .compare-box { margin-top: -18px; }
         .compare-box .compare-label {
             margin: 4px 0 6px 0;
             font-weight: 600;
             color: #2b2d42;
         }
-
-        /* Mostrar texto completo nas opções selecionadas (chips vermelhos) */
-        /* BaseWeb Tag (usado pelo Streamlit para multiselect) */
         div[data-baseweb="tag"] {
             max-width: none !important;
         }
         div[data-baseweb="tag"] span {
-            white-space: normal !important;   /* permite quebra de linha */
+            white-space: normal !important;
             word-break: break-word !important;
             line-height: 1.25 !important;
             font-weight: 600 !important;
             font-size: 0.88rem !important;
         }
-        /* Altura da área que contém os chips, para não "amassar" o texto */
         div[data-baseweb="select"] > div {
             min-height: 44px !important;
             height: auto !important;
         }
-
-        /* Cartões de descrição: largura conforme conteúdo, sem esticar a coluna */
         .description-card {
             background-color: #f9f9f9;
             padding: 10px 14px;
@@ -61,49 +52,41 @@ else:
         unsafe_allow_html=True
     )
 
-    # ===== LINHA DE FILTROS PRINCIPAIS (larguras proporcionais) =====
-    col1, col2, col3 = st.columns([1, 2, 0.8])  # Subfamília mais larga, Trilha menor
-
+    # ===== FILTROS =====
+    col1, col2, col3 = st.columns([1, 2, 0.8])
     with col1:
         families = sorted(df["Job Family"].dropna().unique())
-        fam = st.selectbox("Família", families, key="fam_select")
-
+        fam = st.selectbox("Família", families)
     filtered = df[df["Job Family"] == fam]
 
     with col2:
         subs = sorted(filtered["Sub Job Family"].dropna().unique())
-        sub = st.selectbox("Subfamília", subs, key="sub_select")
-
+        sub = st.selectbox("Subfamília", subs)
     sub_df = filtered[filtered["Sub Job Family"] == sub]
 
     with col3:
-        career_options = sorted(sub_df["Career Path"].dropna().unique())
-        career = st.selectbox("Trilha de Carreira", career_options, key="career_select")
-
+        careers = sorted(sub_df["Career Path"].dropna().unique())
+        career = st.selectbox("Trilha de Carreira", careers)
     career_df = sub_df[sub_df["Career Path"] == career]
 
-    # ===== MULTISELECT COLADO NOS FILTROS =====
-    # Formatação do texto das opções: "GGxx — Cargo"
+    # ===== MULTISELECT =====
     def format_profile(row):
-        grade = row.get("Global Grade", "")
-        title = row.get("Job Profile", "")
-        return f"GG{int(grade)} — {title}" if str(grade).isdigit() else title
+        g = row.get("Global Grade", "")
+        p = row.get("Job Profile", "")
+        return f"GG{int(g)} — {p}" if str(g).isdigit() else p
 
     career_df_sorted = career_df.sort_values(by="Global Grade", ascending=False)
     pick_options = career_df_sorted.apply(format_profile, axis=1).tolist()
 
-    # Wrapper com classe própria para ajustar apenas este bloco
     st.markdown('<div class="compare-box">', unsafe_allow_html=True)
     st.markdown('<div class="compare-label">Selecione até 3 cargos para comparar:</div>', unsafe_allow_html=True)
-
     selected_labels = st.multiselect(
-        label="",
+        "",
         options=pick_options,
         max_selections=3,
-        label_visibility="collapsed",
-        key="compare_multiselect"
+        label_visibility="collapsed"
     )
-    st.markdown('</div>', unsafe_allow_html=True)  # fecha compare-box
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # ===== RESULTADO =====
     if selected_labels:
@@ -114,30 +97,34 @@ else:
 
         for idx, label in enumerate(selected_labels):
             with cols[idx]:
-                # Recupera grade e cargo a partir do label "GGxx — Cargo"
-                if "—" in label:
-                    label_grade = label.split("—")[0].replace("GG", "").strip()
-                    label_title = label.split("—")[1].strip()
-                else:
-                    label_grade = ""
-                    label_title = label
+                # --- identifica grade e nome, aceitando vários tipos de travessão ---
+                parts = re.split(r"\s*[–—-]\s*", label)  # aceita hífen, en ou em dash
+                label_grade = parts[0].replace("GG", "").strip() if parts else ""
+                label_title = parts[1].strip() if len(parts) > 1 else label.strip()
 
+                # --- busca tolerante por espaços e maiúsculas/minúsculas ---
                 selected_row_df = career_df_sorted[
-                    (career_df_sorted["Job Profile"] == label_title)
-                    & (career_df_sorted["Global Grade"].astype(str) == label_grade if label_grade else True)
+                    career_df_sorted["Job Profile"].str.strip().str.lower() == label_title.lower()
                 ]
+                if label_grade and "Global Grade" in career_df_sorted.columns:
+                    selected_row_df = selected_row_df[
+                        selected_row_df["Global Grade"].astype(str).str.strip() == label_grade
+                    ]
+
                 if selected_row_df.empty:
+                    st.warning(f"Cargo não encontrado: {label}")
                     continue
+
                 selected_row = selected_row_df.iloc[0]
 
-                # Cabeçalho do Cargo
+                # --- Cabeçalho do Cargo ---
                 st.markdown(f"#### {selected_row['Job Profile']}")
                 st.markdown(
                     f"<p style='color:#1E56E0; font-weight:bold;'>GG {selected_row['Global Grade']}</p>",
                     unsafe_allow_html=True
                 )
 
-                # Bloco de Classificação
+                # --- Bloco de Classificação ---
                 st.markdown(
                     f"""
                     <div style='background-color:#ffffff; padding:10px; border-radius:8px; border:1px solid #e0e4f0; display:inline-block;'>
@@ -154,7 +141,7 @@ else:
 
                 st.markdown("<br>", unsafe_allow_html=True)
 
-                # Seções descritivas
+                # --- Seções descritivas ---
                 description_sections = [
                     ("Sub Job Family Description", "🧭 Sub Job Family Description"),
                     ("Job Profile Description", "🧠 Job Profile Description"),
