@@ -50,6 +50,12 @@ div[data-baseweb="select"] > div {
   width: max-content;
 }
 
+/* ====== NOVO GRID VISUAL ====== */
+.jobmap-grid > div {
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+}
+
 /* Cabeçalhos */
 .header-family {
   font-weight: 800;
@@ -63,7 +69,6 @@ div[data-baseweb="select"] > div {
   font-weight: 700;
   background: #f0f2ff;
   padding: 6px;
-  border-right: 1px solid #ddd;
   white-space: normal;
 }
 
@@ -72,7 +77,6 @@ div[data-baseweb="select"] > div {
   font-weight: 700;
   background: #eef3ff;
   border-right: 2px solid #1E56E0;
-  border-bottom: 1px solid #ccc;
   padding: 6px 8px;
   position: sticky;
   left: 0;
@@ -98,6 +102,11 @@ div[data-baseweb="select"] > div {
 }
 .job-card:hover {
   background: #f0f5ff;
+}
+
+/* Zebra rows */
+.grade-row:nth-child(even) {
+  background: #fcfcfc;
 }
 
 /* Responsividade */
@@ -129,7 +138,7 @@ if missing:
     st.stop()
 
 df = df.dropna(subset=["Job Family", "Sub Job Family", "Job Profile", "Global Grade"])
-df["Global Grade"] = df["Global Grade"].astype(str).str.replace(r"\.0$", "", regex=True)
+df["Global Grade"] = df["Global Grade"].astype(str).str.replace(r"\\.0$", "", regex=True)
 
 # ===========================================================
 # FILTROS
@@ -200,7 +209,7 @@ html += "</div>"
 
 # Linhas de Grades
 for g in grades:
-    html += f"<div class='jobmap-grid' style='{grid_template}'>"
+    html += f"<div class='jobmap-grid grade-row' style='{grid_template}'>"
     html += f"<div class='grade-cell'>GG {g}</div>"
     for f in families:
         fam_df = filtered[filtered["Job Family"] == f]
