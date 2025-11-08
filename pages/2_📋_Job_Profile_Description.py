@@ -1,13 +1,8 @@
 import re
+import difflib
 import streamlit as st
 from utils.data_loader import load_data
 from utils.ui_components import section
-from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.styles import ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib import colors
-import tempfile
-import difflib
 
 data = load_data()
 section("📋 Job Profile Description")
@@ -39,7 +34,7 @@ else:
             font-size: 0.9rem;
             line-height: 1.5;
             display: inline-block;
-            max-width: 95%;
+            width: 100%;
             margin-bottom: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
@@ -49,7 +44,7 @@ else:
     )
 
     # ===== FILTROS =====
-    col1, col2, col3 = st.columns([1, 2, 0.8])
+    col1, col2, col3 = st.columns([1.2, 2.2, 1])
     with col1:
         families = sorted(df["Job Family"].dropna().unique())
         fam = st.selectbox("Família", families)
@@ -94,10 +89,12 @@ else:
 
         for idx, label in enumerate(selected_labels):
             with cols[idx]:
+                # --- Extrai grade e nome, aceita vários tipos de travessão ---
                 parts = re.split(r"\s*[–—-]\s*", label)
                 label_grade = parts[0].replace("GG", "").strip() if parts else ""
                 label_title = parts[1].strip() if len(parts) > 1 else label.strip()
 
+                # --- Localiza o cargo ---
                 selected_row_df = career_df_sorted[
                     career_df_sorted["Job Profile"].str.strip().str.lower() == label_title.lower()
                 ]
@@ -111,15 +108,17 @@ else:
                 selected_row = selected_row_df.iloc[0]
                 selected_data.append(selected_row)
 
+                # --- Cabeçalho ---
                 st.markdown(f"#### {selected_row['Job Profile']}")
                 st.markdown(
                     f"<p style='color:#1E56E0; font-weight:bold;'>GG {selected_row['Global Grade']}</p>",
                     unsafe_allow_html=True
                 )
 
+                # --- Bloco Classificação ---
                 st.markdown(
                     f"""
-                    <div style='background-color:#ffffff; padding:10px; border-radius:8px; border:1px solid #e0e4f0; display:inline-block;'>
+                    <div style='background-color:#ffffff; padding:10px; border-radius:8px; border:1px solid #e0e4f0; display:inline-block; width:100%;'>
                         <b>Família:</b> {selected_row['Job Family']}<br>
                         <b>Subfamília:</b> {selected_row['Sub Job Family']}<br>
                         <b>Carreira:</b> {selected_row['Career Path']}<br>
@@ -131,11 +130,12 @@ else:
                     unsafe_allow_html=True
                 )
 
+                # --- Seções descritivas ---
                 desc_sections = [
                     ("Sub Job Family Description", "🧭 Sub Job Family Description"),
                     ("Job Profile Description", "🧠 Job Profile Description"),
                     ("Role Description", "🎯 Role Description"),
-                    ("Grade Differentiation", "🏅 Grade Differentiation"),
+                    ("Grade Differentiation", "🏅 Grade Differentiation"),  # incluído na ordem certa
                     ("Specific parameters / KPIs", "📊 KPIs / Specific Parameters"),
                     ("Competency", "💡 Competency"),
                     ("Qualifications", "🎓 Qualifications")
@@ -149,86 +149,24 @@ else:
                             unsafe_allow_html=True
                         )
 
-        # ===== BOTÃO DE PDF =====
-        st.markdown("---")
-        if st.button("📄 Gerar PDF dos cargos selecionados"):
-            tmp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-            orientation = landscape(A4) if len(selected_data) > 1 else A4
-            pdf = SimpleDocTemplate(tmp_pdf.name, pagesize=orientation, rightMargin=40, leftMargin=40, topMargin=50, bottomMargin=50)
-            elements = []
+        # ===== RESUMO DE DIFERENCIAÇÕES =====
+        if len(selected_data) > 1:
+            st.markdown("---")
+            st.markdown("### 🔍 Resumo de Diferenciações entre os Cargos")
 
-            title_style = ParagraphStyle(name="Title", fontSize=18, textColor="#1E56E0", spaceAfter=14)
-            header_style = ParagraphStyle(name="Header", fontSize=14, textColor="#1E56E0", spaceAfter=8)
-            normal = ParagraphStyle(name="Normal", fontSize=10, leading=14)
-            bold = ParagraphStyle(name="Bold", fontSize=10, leading=14, textColor="#1E56E0")
-
-            elements.append(Paragraph("Job Profile Description", title_style))
-            elements.append(Spacer(1, 12))
-
+            resumo = ""
             desc_sections = [
-                ("Sub Job Family Description", "Sub Job Family Description"),
-                ("Job Profile Description", "Job Profile Description"),
-                ("Role Description", "Role Description"),
+                ("Job Profile Description", "Job Profile"),
+                ("Role Description", "Role"),
                 ("Grade Differentiation", "Grade Differentiation"),
-                ("Specific parameters / KPIs", "KPIs / Specific Parameters"),
                 ("Competency", "Competency"),
                 ("Qualifications", "Qualifications")
             ]
-
-            # --- Conteúdo principal ---
-            if len(selected_data) == 1:
-                row = selected_data[0]
-                elements.append(Paragraph(f"<b>{row['Job Profile']}</b> (GG {row['Global Grade']})", header_style))
-                elements.append(Spacer(1, 10))
-                for c, t in desc_sections:
-                    if c in row and str(row[c]).strip().lower() != "nan":
-                        elements.append(Paragraph(f"<b>{t}</b>", bold))
-                        elements.append(Paragraph(str(row[c]), normal))
-                        elements.append(Spacer(1, 8))
-            else:
-                headers = [f"{r['Job Profile']}<br/>(GG {r['Global Grade']})" for r in selected_data]
-                table_data = [["Seção"] + headers]
-                for c, t in desc_sections:
-                    line = [t]
-                    for r in selected_data:
-                        val = str(r[c]) if c in r and str(r[c]).strip().lower() != "nan" else "-"
-                        line.append(val)
-                    table_data.append(line)
-
-                tbl = Table(table_data, repeatRows=1)
-                tbl.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#1E56E0")),
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, 0), 11),
-                    ('GRID', (0, 0), (-1, -1), 0.25, colors.grey),
-                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                    ('FONTSIZE', (0, 1), (-1, -1), 9),
-                ]))
-                elements.append(tbl)
-                elements.append(Spacer(1, 12))
-
-                # === Resumo automático ===
-                elements.append(Paragraph("<b>Resumo de Diferenciações entre os Cargos</b>", header_style))
-                resumo = ""
-                for c, t in desc_sections:
-                    texts = [str(r[c]) for r in selected_data if c in r and str(r[c]).strip().lower() != "nan"]
-                    if len(set(texts)) > 1:
-                        diff_words = difflib.unified_diff(
-                            texts[0].split(), texts[-1].split(), lineterm=""
-                        )
-                        resumo += f"<b>{t}:</b> Há diferenças claras no conteúdo, escopo ou ênfase entre os níveis.<br/>"
-                if not resumo:
-                    resumo = "Os cargos apresentam descrições muito semelhantes, variando apenas em senioridade e escopo."
-                elements.append(Paragraph(resumo, normal))
-
-            pdf.build(elements)
-
-            with open(tmp_pdf.name, "rb") as f:
-                st.download_button(
-                    label="⬇️ Baixar PDF formatado",
-                    data=f.read(),
-                    file_name="Job_Profiles.pdf",
-                    mime="application/pdf"
-                )
+            for c, t in desc_sections:
+                texts = [str(r[c]) for r in selected_data if c in r and str(r[c]).strip().lower() != "nan"]
+                if len(set(texts)) > 1:
+                    diff = difflib.unified_diff(texts[0].split(), texts[-1].split(), lineterm="")
+                    resumo += f"- **{t}:** diferenças observadas no conteúdo e escopo.<br/>"
+            if not resumo:
+                resumo = "Os cargos apresentam descrições muito semelhantes, com variações sutis em nível de responsabilidade e complexidade."
+            st.markdown(f"<div class='description-card'>{resumo}</div>", unsafe_allow_html=True)
