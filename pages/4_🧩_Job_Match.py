@@ -19,7 +19,7 @@ O sistema identifica automaticamente o <b>nível de senioridade</b> e o <b>escop
 """, unsafe_allow_html=True)
 
 # ------------------------------------------------------------
-# 📂 CARREGAMENTO DE BASE ROBUSTO + NORMALIZAÇÃO DE COLUNAS
+# 📂 CARREGAMENTO ROBUSTO + NORMALIZAÇÃO DE COLUNAS
 # ------------------------------------------------------------
 @st.cache_data(show_spinner=False)
 def load_data():
@@ -50,7 +50,7 @@ def load_data():
 
     df = df.fillna("")
 
-    # ✅ Normalização ampla — cobre dezenas de variações de escrita
+    # Normaliza nomes de colunas
     rename_patterns = {
         "job title": "Job Title",
         "title": "Job Title",
@@ -59,6 +59,7 @@ def load_data():
         "job family": "Family",
         "sub-family": "Subfamily",
         "sub family": "Subfamily",
+        "job sub-family": "Subfamily",
         "subfamily": "Subfamily",
         "grade differentiation": "Grade Differentiator",
         "grade differentiator": "Grade Differentiator",
@@ -71,7 +72,6 @@ def load_data():
         "job profile description": "Job Profile Description",
     }
 
-    # Detecta e renomeia independentemente de maiúsculas/minúsculas
     df.rename(
         columns={
             c: rename_patterns.get(c.strip().lower(), c)
@@ -80,7 +80,7 @@ def load_data():
         inplace=True,
     )
 
-    # Garante todas as colunas exigidas
+    # Garante colunas obrigatórias
     required_cols = [
         "Job Title", "Family", "Subfamily", "Grade",
         "Sub Job Family Description", "Job Profile Description",
@@ -91,7 +91,11 @@ def load_data():
         if c not in df.columns:
             df[c] = ""
 
-    # Cria coluna unificada para cálculo semântico
+    # Normaliza espaços e capitalização
+    df["Family"] = df["Family"].str.strip().str.title()
+    df["Subfamily"] = df["Subfamily"].str.strip().str.title()
+
+    # Campo unificado para embeddings
     df["Merged_Text"] = (
         "Job Title: " + df["Job Title"] +
         " | Family: " + df["Family"] +
@@ -112,9 +116,6 @@ except Exception as e:
     st.error(f"❌ Erro ao carregar base: {e}")
     st.stop()
 
-# Mostra colunas detectadas (apenas para debug inicial)
-with st.expander("🧩 Colunas detectadas na base (verificação única):"):
-    st.write(list(df.columns))
 
 # ------------------------------------------------------------
 # 🧠 EMBEDDINGS
@@ -132,12 +133,21 @@ st.markdown("### 🔧 Parâmetros de busca")
 
 col1, col2 = st.columns(2)
 with col1:
-    family = st.selectbox("Selecione a Family", sorted(df["Family"].unique()))
-with col2:
-    subfamily = st.selectbox(
-        "Selecione a Subfamily",
-        sorted(df[df["Family"] == family]["Subfamily"].unique())
+    family = st.selectbox(
+        "Selecione a Family",
+        sorted([f for f in df["Family"].unique() if f.strip()])
     )
+
+# 🔹 Fallback para garantir Subfamily
+subfamilias_filtradas = df[df["Family"] == family]["Subfamily"].dropna().unique()
+subfamilias_filtradas = sorted([s for s in subfamilias_filtradas if s.strip()])
+
+with col2:
+    if len(subfamilias_filtradas) == 0:
+        st.warning("Nenhuma Subfamily encontrada para essa Family.")
+        subfamily = ""
+    else:
+        subfamily = st.selectbox("Selecione a Subfamily", subfamilias_filtradas)
 
 descricao = st.text_area(
     "✍️ Descreva brevemente suas atividades:",
@@ -151,13 +161,16 @@ if st.button("🔍 Identificar Cargo"):
 
     st.info("🔎 Analisando sua descrição e comparando com cargos existentes...")
 
-    # 🔹 Filtra base
-    subset = df[(df["Family"] == family) & (df["Subfamily"] == subfamily)].copy()
+    # 🔹 Filtra Family/Subfamily
+    subset = df[(df["Family"] == family)]
+    if subfamily:
+        subset = subset[subset["Subfamily"] == subfamily]
+
     if subset.empty:
         st.warning("Nenhum cargo encontrado para a Family/Subfamily selecionadas.")
         st.stop()
 
-    # 🔹 Similaridade
+    # 🔹 Calcula similaridade
     model_embeddings = model.encode(subset["Merged_Text"].tolist(), convert_to_tensor=True)
     query_embedding = model.encode(descricao, convert_to_tensor=True)
     scores = util.cos_sim(query_embedding, model_embeddings)[0].cpu().numpy()
@@ -165,7 +178,7 @@ if st.button("🔍 Identificar Cargo"):
     subset["Score"] = scores
     subset = subset.sort_values("Score", ascending=False)
 
-    # 🔹 Cargo mais compatível
+    # 🔹 Seleciona o mais compatível
     best = subset.iloc[0]
     similarity = float(best["Score"]) * 100
     gg = best["Grade"]
