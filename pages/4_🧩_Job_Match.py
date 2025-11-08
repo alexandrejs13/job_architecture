@@ -1,6 +1,7 @@
 # ==============================================================
-# 🧩 Job Match — Versão Final Corrigida
+# 🧩 Job Match — Versão Blindada
 # ==============================================================
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -10,7 +11,7 @@ from sentence_transformers import SentenceTransformer, util
 st.set_page_config(page_title="🧩 Job Match", layout="wide")
 
 # ==============================================================
-# 1️⃣ Carregamento inteligente da base
+# 1️⃣ Função para carregar base
 # ==============================================================
 
 @st.cache_data(show_spinner=False)
@@ -24,7 +25,7 @@ def load_data():
 
     df = df.fillna("")
 
-    # Normaliza todos os nomes de colunas (remove espaços, acentos e minúsculas)
+    # Normaliza os nomes das colunas (sem espaços, hifens, sublinhados)
     df.columns = (
         df.columns.str.strip()
         .str.replace("-", " ")
@@ -33,7 +34,7 @@ def load_data():
         .str.lower()
     )
 
-    # Detecta colunas equivalentes
+    # Define possíveis nomes equivalentes
     family_aliases = ["family", "job family", "jobfamily"]
     subfamily_aliases = ["subfamily", "sub family", "sub-family", "job subfamily", "job sub-family"]
 
@@ -43,25 +44,36 @@ def load_data():
                 return col
         return None
 
+    # Detecta colunas
     family_col = find_col(family_aliases)
     subfamily_col = find_col(subfamily_aliases)
 
-    if not family_col:
-        st.warning("⚠️ Coluna de Family não encontrada. Verifique o nome no CSV.")
-        df["family"] = ""
-    if not subfamily_col:
-        st.warning("⚠️ Coluna de Subfamily não encontrada. Verifique o nome no CSV.")
-        df["subfamily"] = ""
-
-    # Padroniza nomes finais
+    # Mapeia colunas detectadas
     rename_map = {}
     if family_col:
         rename_map[family_col] = "Family"
+    else:
+        df["Family"] = ""
+
     if subfamily_col:
         rename_map[subfamily_col] = "Subfamily"
-    df.rename(columns=rename_map, inplace=True)
+    else:
+        df["Subfamily"] = ""
 
-    # Garante colunas obrigatórias
+    # Renomeia as existentes
+    if rename_map:
+        df.rename(columns=rename_map, inplace=True)
+
+    # Normaliza colunas criadas
+    if "Family" not in df.columns:
+        df["Family"] = ""
+    if "Subfamily" not in df.columns:
+        df["Subfamily"] = ""
+
+    df["Family"] = df["Family"].astype(str).str.strip().str.title()
+    df["Subfamily"] = df["Subfamily"].astype(str).str.strip().str.title()
+
+    # Colunas obrigatórias
     obrigatorias = [
         "Job Title", "Grade", "Sub Job Family Description", "Job Profile Description",
         "Role Description", "Grade Differentiator", "KPIs/Specific Parameters", "Qualifications"
@@ -70,11 +82,7 @@ def load_data():
         if col not in df.columns:
             df[col] = ""
 
-    # Ajusta capitalização
-    df["Family"] = df.get("Family", "").astype(str).str.strip().str.title()
-    df["Subfamily"] = df.get("Subfamily", "").astype(str).str.strip().str.title()
-
-    # Concatena texto de contexto semântico
+    # Texto semântico
     df["Merged_Text"] = (
         "Job Title: " + df["Job Title"].fillna("") +
         " | Family: " + df["Family"].fillna("") +
@@ -124,7 +132,6 @@ with col2:
         if subs:
             subfamily_selected = st.selectbox("Selecione a Subfamily", [""] + subs)
         else:
-            st.warning("⚠️ Nenhuma Subfamily encontrada para essa Family.")
             subfamily_selected = ""
     else:
         subfamily_selected = ""
@@ -137,7 +144,7 @@ descricao = st.text_area(
 )
 
 # ==============================================================
-# 4️⃣ Processamento de busca
+# 4️⃣ Processamento da busca
 # ==============================================================
 
 if st.button("🔍 Identificar Cargo"):
