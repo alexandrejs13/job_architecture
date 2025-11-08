@@ -4,10 +4,9 @@ from utils.data_loader import load_data
 from utils.ui_components import section
 
 # ===========================================================
-# Funções utilitárias
+# Utilitários
 # ===========================================================
 def safe_get(row, keys, default=""):
-    """Busca um valor no DataFrame ignorando variações de maiúsculas e espaços."""
     for k in keys if isinstance(keys, list) else [keys]:
         for col in row.index:
             if col.strip().lower() == k.strip().lower():
@@ -17,17 +16,12 @@ def safe_get(row, keys, default=""):
     return default
 
 def format_paragraphs(text):
-    """Transforma texto em parágrafos legíveis."""
     if not text:
         return "-"
     parts = re.split(r"\n+|•|\r", text.strip())
-    return "".join(
-        f"<p class='ja-p'>{p.strip()}</p>"
-        for p in parts if len(p.strip()) > 2
-    )
+    return "".join(f"<p class='ja-p'>{p.strip()}</p>" for p in parts if len(p.strip()) > 2)
 
 def header_badge(title, grade):
-    """Cabeçalho do cargo (nome + grade)."""
     return f"""
     <div class="ja-hd">
       <div class="ja-hd-title">{title}</div>
@@ -36,7 +30,6 @@ def header_badge(title, grade):
     """
 
 def class_box(row):
-    """Bloco de classificação do cargo."""
     return f"""
     <div class="ja-class">
       <b>Família:</b> {row['Job Family']}<br>
@@ -49,7 +42,6 @@ def class_box(row):
     """
 
 def cell_card(emoji, title, html_text):
-    """Componente visual de cada seção."""
     return f"""
     <div class="ja-sec">
       <div class="ja-sec-h">
@@ -63,6 +55,8 @@ def cell_card(emoji, title, html_text):
 # ===========================================================
 # Página principal
 # ===========================================================
+st.set_page_config(layout="wide")
+
 data = load_data()
 section("📋 Job Profile Description")
 
@@ -73,80 +67,77 @@ if "job_profile" not in data:
 df = data["job_profile"]
 
 # ===========================================================
-# Estilo visual refinado (alinhamento e espaçamento)
+# CSS — travar layout e corrigir alinhamentos
 # ===========================================================
 st.markdown("""
 <style>
-/* Tipografia */
-.ja-p { margin: 0 0 6px 0; text-align: justify; }
 
-/* Cabeçalho do cargo */
+/* ====== BLOQUEIO DE REDIMENSIONAMENTO ====== */
+.css-1d391kg, .block-container {
+  max-width: 1600px !important;     /* largura máxima do conteúdo */
+  min-width: 1600px !important;     /* evita comprimir */
+  margin: 0 auto !important;        /* centraliza o conteúdo */
+}
+
+/* barra lateral fixa */
+[data-testid="stSidebar"][aria-expanded="true"]{
+  width: 320px !important;
+  min-width: 320px !important;
+  max-width: 320px !important;
+}
+[data-testid="stSidebarCollapsedControl"]{
+  width: 320px !important;
+}
+
+/* ====== ESTILO PADRÃO ====== */
+.ja-p { margin: 0 0 6px 0; text-align: justify; }
 .ja-hd { display:flex; align-items:baseline; gap:10px; margin:0 0 6px 0; }
 .ja-hd-title { font-size:1.05rem; font-weight:700; }
 .ja-hd-grade { color:#1E56E0; font-weight:700; }
-
-/* Caixa de classificação */
 .ja-class {
   background:#fff; border:1px solid #e0e4f0; border-radius:8px;
   padding:10px; width:100%; display:inline-block;
 }
 
-/* Seções (título e cartão) */
-.ja-sec { margin-bottom:10px; } /* alinhamento vertical refinado */
-.ja-sec-h {
-  display:flex; align-items:center; gap:8px;
-  margin:4px 0 4px 0;
-}
-.ja-ic { width:24px; display:inline-block; text-align:center; line-height:1; }
+/* Títulos e cartões */
+.ja-sec { margin: 0 !important; }
+.ja-sec-h { display:flex; align-items:center; gap:8px; margin:0 0 4px 0 !important; }
+.ja-ic { width:24px; text-align:center; line-height:1; }
 .ja-ttl { font-weight:700; color:#1E56E0; font-size:0.98rem; }
-
-/* Cartões */
 .ja-card {
   background:#f9f9f9; padding:10px 14px; border-radius:8px;
   border-left:4px solid #1E56E0;
   box-shadow:0 1px 3px rgba(0,0,0,0.05);
-  width:100%; display:inline-block;
+  width:100%;
 }
 
-/* GRID alinhado por seção */
-.ja-grid { display:grid; gap:12px; margin:4px 0 18px 0; }
+/* GRID alinhado */
+.ja-grid {
+  display:grid; gap:12px 12px;
+  margin:2px 0 14px 0 !important;
+}
 .ja-grid.cols-1 { grid-template-columns: repeat(1, 1fr); }
 .ja-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
 .ja-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
 
 /* Multiselect */
 .compare-box { margin-top:-18px; }
-.compare-box .compare-label { margin:4px 0 6px 0; font-weight:600; color:#2b2d42; }
+.compare-box .compare-label {
+  margin:4px 0 6px 0; font-weight:600; color:#2b2d42;
+}
 div[data-baseweb="tag"] { max-width:none !important; }
 div[data-baseweb="tag"] span {
-  white-space: normal !important;
-  word-break: break-word !important;
-  line-height: 1.25 !important;
-  font-weight: 600 !important;
+  white-space: normal !important; word-break: break-word !important;
+  line-height: 1.25 !important; font-weight: 600 !important;
   font-size: 0.88rem !important;
 }
 div[data-baseweb="select"] > div { min-height:44px !important; height:auto !important; }
 
-/* ===== Fix absoluto de alinhamento entre seções ===== */
-.ja-sec { margin: 0 !important; }
-.ja-sec-h { margin: 0 0 4px 0 !important; }
-.ja-card {
-  padding: 10px 14px !important;
-  margin: 0 !important;
-}
-.ja-grid { 
-  gap: 12px 12px !important; 
-  margin: 2px 0 14px 0 !important;
-}
-.ja-ic { width: 24px !important; }
-.ja-grid, .ja-sec, .ja-sec-h, .ja-card, .ja-class, .ja-ttl, .ja-ic, .ja-p {
-  box-sizing: border-box !important;
-}
 </style>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# Filtros superiores
+# Filtros
 # ===========================================================
 col1, col2, col3 = st.columns([1.2, 2.2, 1])
 with col1:
@@ -181,7 +172,7 @@ selected_labels = st.multiselect("", options=pick_options, max_selections=3, lab
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ===========================================================
-# Renderização dos comparativos
+# Renderização comparativa
 # ===========================================================
 if selected_labels:
     st.markdown("---")
@@ -210,7 +201,7 @@ if selected_labels:
     html_cells = [f"<div>{class_box(r)}</div>" if r is not None else "<div></div>" for r in rows]
     st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
 
-    # Seções comparativas
+    # Seções
     SECTIONS = [
         ("🧭", "Sub Job Family Description", lambda r: safe_get(r, "Sub Job Family Description")),
         ("🧠", "Job Profile Description",   lambda r: safe_get(r, "Job Profile Description")),
@@ -224,10 +215,10 @@ if selected_labels:
             "Grade Differentiators"
         ])),
         ("📊", "KPIs / Specific Parameters", lambda r: safe_get(r, ["Specific parameters KPIs", "Specific parameters / KPIs"])),
-        ("💡", "Competency 1",              lambda r: safe_get(r, "Competency 1")),
-        ("💡", "Competency 2",              lambda r: safe_get(r, "Competency 2")),
-        ("💡", "Competency 3",              lambda r: safe_get(r, "Competency 3")),
-        ("🎓", "Qualifications",            lambda r: safe_get(r, "Qualifications")),
+        ("💡", "Competency 1", lambda r: safe_get(r, "Competency 1")),
+        ("💡", "Competency 2", lambda r: safe_get(r, "Competency 2")),
+        ("💡", "Competency 3", lambda r: safe_get(r, "Competency 3")),
+        ("🎓", "Qualifications", lambda r: safe_get(r, "Qualifications")),
     ]
 
     for emoji, title, getter in SECTIONS:
@@ -237,8 +228,5 @@ if selected_labels:
                 html_cells.append("<div></div>")
             else:
                 raw = getter(r)
-                if raw:
-                    html_cells.append("<div>" + cell_card(emoji, title, format_paragraphs(raw)) + "</div>")
-                else:
-                    html_cells.append("<div></div>")
+                html_cells.append("<div>" + cell_card(emoji, title, format_paragraphs(raw)) + "</div>")
         st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
