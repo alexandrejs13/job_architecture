@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import os, re
+import os, re, time
 from openai import OpenAI
 from utils.data_loader import load_data
 from utils.ui_components import section
@@ -11,7 +11,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 # CONFIGURAÇÃO E INICIALIZAÇÃO
 # ===========================================================
 st.set_page_config(layout="wide")
-
 section("🧠 Find My Job Profile")
 
 # --- Validação da chave ---
@@ -89,6 +88,7 @@ df = data["job_profile"].copy()
 def generate_embeddings(df):
     if "embedding" in df.columns:
         return df
+
     df["merged_text"] = df.apply(lambda row:
         " ".join([
             safe_get(row, "Job Profile Description"),
@@ -97,42 +97,55 @@ def generate_embeddings(df):
             safe_get(row, "Qualifications")
         ]), axis=1)
 
-    # gerar embedding linha a linha
     embeddings = []
-    for text in df["merged_text"]:
+    total = len(df)
+    progress = st.progress(0, text="🔄 Gerando embeddings dos cargos... isso é feito apenas uma vez.")
+
+    for i, text in enumerate(df["merged_text"]):
         try:
             emb = client.embeddings.create(
                 model="text-embedding-3-small",
-                input=text[:5000]  # limite de segurança
+                input=text[:5000]
             ).data[0].embedding
         except Exception as e:
             emb = [0]*1536
         embeddings.append(emb)
+        progress.progress((i + 1) / total)
+
     df["embedding"] = embeddings
+    progress.empty()
+    st.success("✅ Embeddings gerados e armazenados em cache.")
     return df
 
-df_embeddings = generate_embeddings(df)
+with st.spinner("Preparando base de dados..."):
+    df_embeddings = generate_embeddings(df)
+    time.sleep(1)
 
 # ===========================================================
 # ENTRADA DO USUÁRIO
 # ===========================================================
 st.markdown("#### Descreva as principais atividades do cargo que você busca")
-user_input = st.text_area("Exemplo: Gerenciar campanhas de comunicação interna e externa, coordenar equipe de marketing e relações públicas.", height=120)
+user_input = st.text_area(
+    "Exemplo: Gerenciar campanhas de comunicação interna e externa, coordenar equipe de marketing e relações públicas.",
+    height=120
+)
 
+# ===========================================================
+# BUSCA SEMÂNTICA
+# ===========================================================
 if user_input:
-    # gerar embedding da consulta
-    try:
-        query_emb = client.embeddings.create(
-            model="text-embedding-3-small",
-            input=user_input
-        ).data[0].embedding
-    except Exception as e:
-        st.error(f"Erro ao gerar embedding da consulta: {e}")
-        st.stop()
+    with st.spinner("🔍 Buscando o cargo mais compatível..."):
+        try:
+            query_emb = client.embeddings.create(
+                model="text-embedding-3-small",
+                input=user_input
+            ).data[0].embedding
+        except Exception as e:
+            st.error(f"Erro ao gerar embedding da consulta: {e}")
+            st.stop()
 
-    # calcular similaridade
-    df_embeddings["score"] = df_embeddings["embedding"].apply(lambda emb: cosine_similarity([emb], [query_emb])[0][0])
-    best = df_embeddings.sort_values("score", ascending=False).iloc[0]
+        df_embeddings["score"] = df_embeddings["embedding"].apply(lambda emb: cosine_similarity([emb], [query_emb])[0][0])
+        best = df_embeddings.sort_values("score", ascending=False).iloc[0]
 
     st.markdown("---")
     st.markdown("### 🎯 Cargo mais compatível encontrado")
