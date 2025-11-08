@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from utils.data_loader import load_data
+import html
 
 # ================================================
 # Configurações gerais
@@ -50,10 +51,12 @@ st.markdown("""
 }
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
     gap: 1.2rem;
     align-items: stretch;
 }
+.grid-1 { grid-template-columns: 1fr; }
+.grid-2 { grid-template-columns: 1fr 1fr; }
+.grid-3 { grid-template-columns: 1fr 1fr 1fr; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -133,10 +136,9 @@ def safe_get(row, cols):
 def format_paragraphs(text):
     if not text or str(text).strip() in ["-", "nan", "None"]:
         return "-"
-    parts = [p.strip() for p in str(text).split("\n") if p.strip()]
+    safe = html.escape(str(text))
+    parts = [p.strip() for p in safe.split("\n") if p.strip()]
     return "<br>".join(parts)
-
-grid_class = "grid-container"
 
 # ================================================
 # Estrutura das seções
@@ -163,7 +165,7 @@ if competency_cols:
     ])
 
 # ================================================
-# Renderização — título dentro de cada card
+# Renderização dinâmica — layout automático (1, 2 ou 3 colunas)
 # ================================================
 for title, getter in SECTIONS:
     has_content = any(
@@ -185,4 +187,5 @@ for title, getter in SECTIONS:
             """
         )
 
+    grid_class = f"grid-container grid-{len(rows)}"
     st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
