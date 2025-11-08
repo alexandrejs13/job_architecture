@@ -4,25 +4,27 @@ from utils.data_loader import load_data
 from utils.ui_components import section
 
 # -----------------------------
-# Utilidades
+# Funções utilitárias
 # -----------------------------
 def safe_get(row, keys, default=""):
-    """Retorna o primeiro campo existente (ex: Grade Differentiator ou Grade Differentiation)."""
+    """Retorna o primeiro campo válido na lista de possíveis nomes de coluna."""
     for k in keys:
-        if k in row and str(row[k]).strip() and str(row[k]).strip().lower() != "nan":
-            return str(row[k]).strip()
+        for col in row.index:
+            if col.strip().lower() == k.strip().lower():
+                val = str(row[col]).strip()
+                if val and val.lower() != "nan":
+                    return val
     return default
 
 def format_paragraphs(text):
-    """Divide o texto em parágrafos curtos, mantendo legibilidade."""
+    """Formata blocos de texto em parágrafos separados por linha."""
     if not text:
         return "-"
-    parts = re.split(r'\n+', text.strip())
-    formatted = "".join(
+    parts = re.split(r'\n+|•|\r', text.strip())
+    return "".join(
         f"<p style='margin:0 0 6px 0; text-align:justify;'>{p.strip()}</p>"
         for p in parts if len(p.strip()) > 2
     )
-    return formatted
 
 # -----------------------------
 # Página principal
@@ -146,14 +148,16 @@ else:
                     </div>
                 """, unsafe_allow_html=True)
 
-                # Seções (Grade Differentiator incluso)
+                # Seções, incluindo a detecção automática do Grade Differentiator (com erros)
                 sections = [
                     ("Sub Job Family Description", "🧭 Sub Job Family Description"),
                     ("Job Profile Description", "🧠 Job Profile Description"),
                     ("Role Description", "🎯 Role Description"),
-                    (["Grade Differentiator", "Grade Differentiation"], "🏅 Grade Differentiator"),
-                    ("Specific parameters / KPIs", "📊 KPIs / Specific Parameters"),
-                    ("Competency", "💡 Competency"),
+                    (["Grade Differentiator", "Grade Differentiation", "Grade Differentiatior", "Grade Differentiators", " Grade Differentiator", "Grade Differentiator "], "🏅 Grade Differentiator"),
+                    ("Specific parameters KPIs", "📊 KPIs / Specific Parameters"),
+                    ("Competency 1", "💡 Competency 1"),
+                    ("Competency 2", "💡 Competency 2"),
+                    ("Competency 3", "💡 Competency 3"),
                     ("Qualifications", "🎓 Qualifications")
                 ]
 
