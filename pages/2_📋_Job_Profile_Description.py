@@ -31,7 +31,7 @@ else:
 
     career_df = sub_df[sub_df["Career Path"] == career]
 
-    # === CSS para expandir texto selecionado ===
+    # === CSS para mostrar texto completo e ajustar largura dos cards ===
     st.markdown(
         """
         <style>
@@ -43,6 +43,20 @@ else:
         }
         div[data-baseweb="select"] span {
             white-space: normal !important;
+        }
+
+        /* Ajusta os cards descritivos para largura do conteúdo */
+        .description-card {
+            background-color: #f9f9f9;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border-left: 4px solid #1E56E0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            display: inline-block; /* <-- largura se ajusta ao conteúdo */
+            max-width: 95%;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         </style>
         """,
@@ -64,8 +78,7 @@ else:
     selected_labels = st.multiselect(
         "Selecione até 3 cargos para comparar:",
         options=pick_options,
-        max_selections=3,
-        help="Selecione até três cargos da mesma trilha de carreira para comparar suas descrições lado a lado."
+        max_selections=3
     )
 
     if selected_labels:
@@ -88,7 +101,7 @@ else:
                 # --- Bloco de Classificação ---
                 st.markdown(
                     f"""
-                    <div style='background-color:#ffffff; padding:10px; border-radius:8px; border:1px solid #e0e4f0;'>
+                    <div style='background-color:#ffffff; padding:10px; border-radius:8px; border:1px solid #e0e4f0; display:inline-block;'>
                         <b>Família:</b> {selected_row['Job Family']}<br>
                         <b>Subfamília:</b> {selected_row['Sub Job Family']}<br>
                         <b>Carreira:</b> {selected_row['Career Path']}<br>
@@ -121,12 +134,6 @@ else:
                     ):
                         st.markdown(f"**{title}**")
                         st.markdown(
-                            f"""
-                            <div style='background-color:#f9f9f9; padding:10px; border-radius:8px;
-                                        border-left:4px solid #1E56E0; font-size:0.9rem; line-height:1.5;
-                                        margin-bottom:12px;'>
-                                {selected_row[col_name]}
-                            </div>
-                            """,
+                            f"<div class='description-card'>{selected_row[col_name]}</div>",
                             unsafe_allow_html=True
                         )
