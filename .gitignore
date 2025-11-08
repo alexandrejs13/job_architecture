@@ -1,0 +1,13 @@
+# Ignorar arquivos de cache de embeddings
+data/job_embeddings.npy
+data/job_embeddings.meta.json
+
+# Cache e metadados do Streamlit
+.streamlit/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.DS_Store
+.pytest_cache/
+.vscode/
