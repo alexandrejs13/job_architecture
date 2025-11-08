@@ -1,5 +1,5 @@
 # ==============================================================
-# 🧩 Job Match — versão definitiva (corrigido mapeamento Sub Job Family)
+# 🧩 Job Match — versão blindada (corrige duplicatas e espaços)
 # ==============================================================
 
 import streamlit as st
@@ -18,9 +18,12 @@ def load_data():
     except Exception:
         df = pd.read_csv(path, sep=";", engine="python", dtype=str, on_bad_lines="skip")
 
+    # --- Remove espaços e duplicatas no cabeçalho ---
+    df.columns = df.columns.str.strip()
+    df = df.loc[:, ~df.columns.duplicated(keep="first")]
     df = df.fillna("")
 
-    # ---- renomeia conforme cabeçalho real do seu arquivo ----
+    # --- Renomeia colunas relevantes ---
     rename_map = {}
     for c in df.columns:
         c_norm = c.strip().lower()
@@ -45,7 +48,7 @@ def load_data():
 
     df.rename(columns=rename_map, inplace=True)
 
-    # ---- garante colunas obrigatórias ----
+    # --- Garante que todas as colunas existam ---
     obrig = [
         "Family", "Subfamily", "Job Title", "Grade",
         "Job Profile Description", "Role Description",
@@ -55,25 +58,22 @@ def load_data():
         if c not in df.columns:
             df[c] = ""
 
-    # ---- normaliza ----
+    # --- Normaliza textos ---
     df["Family"] = df["Family"].astype(str).str.strip().str.title()
     df["Subfamily"] = df["Subfamily"].astype(str).str.strip().str.title()
 
-    # ---- campo semântico ----
-    df["Merged_Text"] = (
-        "Job Title: " + df["Job Title"].fillna("") +
-        " | Family: " + df["Family"].fillna("") +
-        " | Subfamily: " + df["Subfamily"].fillna("") +
-        " | Grade: " + df["Grade"].fillna("") +
-        " | Job Profile Description: " + df["Job Profile Description"].fillna("") +
-        " | Role Description: " + df["Role Description"].fillna("") +
-        " | Grade Differentiator: " + df["Grade Differentiator"].fillna("") +
-        " | KPIs: " + df["KPIs/Specific Parameters"].fillna("") +
-        " | Qualifications: " + df["Qualifications"].fillna("")
-    )
+    # --- Campo semântico seguro ---
+    def safe_concat(row):
+        parts = []
+        for col in ["Job Title", "Family", "Subfamily", "Grade", 
+                    "Job Profile Description", "Role Description", 
+                    "Grade Differentiator", "KPIs/Specific Parameters", "Qualifications"]:
+            if col in row and pd.notna(row[col]) and str(row[col]).strip():
+                parts.append(f"{col}: {str(row[col]).strip()}")
+        return " | ".join(parts)
 
+    df["Merged_Text"] = df.apply(safe_concat, axis=1)
     return df
-
 
 # ==============================================================
 # Interface
