@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import io, base64, random
 
+# ===========================================================
+# CONFIG
+# ===========================================================
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 
 st.markdown("""
@@ -39,8 +42,7 @@ h1 {
   font-size: 0.85rem;
   text-align: center;
   width: max-content;
-  position: relative; /* mantém o contexto */
-  z-index: 0; /* impede criação de novos contextos */
+  z-index: 0;
 }
 .jobmap-grid > div {
   border: 1px solid #ddd;
@@ -72,7 +74,7 @@ h1 {
   text-align: center;
 }
 
-/* ======= COLUNA “GG” (TOTALMENTE FIXA) ======= */
+/* ======= COLUNA “GG” FIXA ======= */
 .grade-header {
   font-weight: 800;
   font-size: 0.95rem;
@@ -86,7 +88,7 @@ h1 {
   position: sticky;
   top: 0;
   left: 0;
-  z-index: 25 !important; /* fica sempre acima */
+  z-index: 40 !important;
 }
 .grade-cell {
   font-weight: 700;
@@ -95,10 +97,19 @@ h1 {
   padding: 6px 8px;
   position: sticky;
   left: 0;
-  z-index: 20 !important; /* garante sobreposição */
+  z-index: 30 !important;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.grade-cell::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background: rgba(0,0,0,0.05);
 }
 
 /* ======= CARDS ======= */
@@ -190,7 +201,11 @@ fam_colors = {f: palette[i % len(palette)] for i, f in enumerate(families)}
 # ===========================================================
 # GRADE HORIZONTAL
 # ===========================================================
-grades = sorted(filtered["Global Grade"].unique(), key=lambda x: int(x) if x.isdigit() else x)
+# Ordena do MAIOR para o MENOR
+grades = sorted(filtered["Global Grade"].unique(),
+                key=lambda x: int(x) if x.isdigit() else x,
+                reverse=True)
+
 subfam_map = {f: sorted(filtered[filtered["Job Family"] == f]["Sub Job Family"].unique().tolist()) for f in families}
 
 col_sizes = [100]
@@ -201,7 +216,7 @@ grid_template = f"grid-template-columns: {' '.join(str(x)+'px' for x in col_size
 html = "<div class='map-wrapper'>"
 
 # Cabeçalho 1 (Família)
-html += f"<div class='jobmap-grid' style='{grid_template}'>"
+html += f"<div class='jobmap-grid' style='{grid_template}; z-index:5;'>"
 html += "<div class='grade-header'>GG</div>"
 for f in families:
     span = len(subfam_map[f])
@@ -210,8 +225,8 @@ for f in families:
 html += "</div>"
 
 # Cabeçalho 2 (Subfamily)
-html += f"<div class='jobmap-grid' style='{grid_template}'>"
-html += "<div class='grade-cell' style='background:#fff; z-index:22 !important;'></div>"
+html += f"<div class='jobmap-grid' style='{grid_template}; z-index:4;'>"
+html += "<div class='grade-cell' style='background:#eef3ff; z-index:32 !important;'></div>"
 for f in families:
     for sf in subfam_map[f]:
         html += f"<div class='header-subfamily'>{sf}</div>"
@@ -219,7 +234,7 @@ html += "</div>"
 
 # Linhas (Grades)
 for g in grades:
-    html += f"<div class='jobmap-grid grade-row' style='{grid_template}'>"
+    html += f"<div class='jobmap-grid grade-row' style='{grid_template}; z-index:1;'>"
     html += f"<div class='grade-cell'>GG {g}</div>"
     for f in families:
         fam_df = filtered[filtered["Job Family"] == f]
