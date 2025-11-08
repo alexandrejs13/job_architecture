@@ -1,3 +1,4 @@
+st.markdown("""
 <style>
 
 /* ====== CONTAINER CENTRAL ====== */
@@ -5,13 +6,23 @@
   max-width: 1200px !important;
   min-width: 900px !important;
   margin: 0 auto !important;
-  padding: 0.5rem 1.5rem;
+  padding: 1rem 1.5rem 2rem 1.5rem;
   zoom: 0.9;
 }
 
 /* ====== ESCALA RESPONSIVA ====== */
 html, body, [class*="css"] {
-  font-size: calc(13px + 0.18vw) !important; /* fonte levemente maior */
+  font-size: calc(13px + 0.18vw) !important;
+}
+
+/* ====== TÍTULO DA PÁGINA ====== */
+h1, h2, h3 {
+  text-align: left !important;
+  margin-top: 1rem !important;
+  margin-bottom: 1.2rem !important;
+  overflow-wrap: break-word !important;
+  word-wrap: break-word !important;
+  white-space: normal !important;
 }
 
 /* ====== SIDEBAR ====== */
@@ -35,7 +46,7 @@ html, body, [class*="css"] {
 .ja-hd {
   display:flex;
   flex-direction:column;
-  align-items:flex-start;   /* agora à esquerda */
+  align-items:flex-start;
   justify-content:flex-start;
   gap:4px;
   margin:0 0 6px 0;
@@ -123,3 +134,4 @@ div[data-baseweb="select"] > div {
   height:auto !important;
 }
 </style>
+""", unsafe_allow_html=True)
