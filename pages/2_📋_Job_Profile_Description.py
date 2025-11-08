@@ -67,50 +67,51 @@ if "job_profile" not in data:
 df = data["job_profile"]
 
 # ===========================================================
-# CSS — responsivo, igualar larguras e alinhar à esquerda
+# CSS — versão elegante e compacta
 # ===========================================================
 st.markdown("""
 <style>
 
-/* ====== LAYOUT PRINCIPAL ====== */
+/* ====== CONTAINER CENTRAL ====== */
 .block-container {
-  max-width: 1500px !important;
+  max-width: 1200px !important;
   min-width: 900px !important;
   margin: 0 auto !important;
-  padding: 1rem 2rem;
+  padding: 0.5rem 1.5rem;
+  zoom: 0.9; /* leve redução geral */
 }
 
-/* Escala responsiva */
+/* ====== ESCALA RESPONSIVA ====== */
 html, body, [class*="css"] {
-  font-size: calc(13px + 0.2vw) !important;
+  font-size: calc(12px + 0.15vw) !important;
 }
 
-/* Barra lateral fixa */
+/* ====== SIDEBAR ====== */
 [data-testid="stSidebar"][aria-expanded="true"]{
-  width: 320px !important;
-  min-width: 320px !important;
-  max-width: 320px !important;
+  width: 300px !important;
+  min-width: 300px !important;
+  max-width: 300px !important;
 }
 [data-testid="stSidebarCollapsedControl"]{
-  width: 320px !important;
+  width: 300px !important;
 }
 
 /* ====== TEXTOS ====== */
 .ja-p {
-  margin: 0 0 6px 0;
+  margin: 0 0 4px 0;
   text-align: left;
-  line-height: 1.55;
+  line-height: 1.45;
 }
 .ja-hd {
   display:flex;
   align-items:baseline;
   justify-content:center;
-  gap:10px;
-  margin:0 0 6px 0;
+  gap:8px;
+  margin:0 0 4px 0;
   text-align:center;
 }
 .ja-hd-title {
-  font-size:1.1rem;
+  font-size:1rem;
   font-weight:700;
 }
 .ja-hd-grade {
@@ -120,71 +121,71 @@ html, body, [class*="css"] {
 .ja-class {
   background:#fff;
   border:1px solid #e0e4f0;
-  border-radius:8px;
-  padding:12px 16px;
+  border-radius:6px;
+  padding:8px 12px;
   width:100%;
   text-align:left;
   box-sizing:border-box;
-  min-height:150px;
+  min-height:130px;
 }
 
-/* ====== SEÇÕES E CARDS ====== */
+/* ====== SEÇÕES ====== */
 .ja-sec { margin: 0 !important; text-align:left; }
 .ja-sec-h {
   display:flex;
   align-items:center;
   justify-content:flex-start;
-  gap:8px;
-  margin:0 0 4px 0 !important;
+  gap:6px;
+  margin:0 0 3px 0 !important;
 }
-.ja-ic { width:24px; text-align:center; line-height:1; }
+.ja-ic { width:18px; text-align:center; line-height:1; }
 .ja-ttl {
   font-weight:700;
   color:#1E56E0;
-  font-size:1rem;
+  font-size:0.9rem;
 }
 .ja-card {
   background:#f9f9f9;
-  padding:14px 18px;
-  border-radius:8px;
-  border-left:4px solid #1E56E0;
-  box-shadow:0 1px 3px rgba(0,0,0,0.05);
+  padding:10px 14px;
+  border-radius:6px;
+  border-left:3px solid #1E56E0;
+  box-shadow:0 1px 2px rgba(0,0,0,0.05);
   width:100%;
   text-align:left;
   display:block;
-  min-height:140px;
+  min-height:120px;
   box-sizing:border-box;
 }
 
 /* ====== GRID ====== */
 .ja-grid {
   display:grid;
-  gap:18px 18px;
+  gap:14px 14px;
   justify-items:stretch;
   align-items:start;
-  margin:8px 0 18px 0 !important;
+  margin:6px 0 12px 0 !important;
 }
-.ja-grid.cols-1 { grid-template-columns: repeat(1, minmax(300px, 1fr)); }
-.ja-grid.cols-2 { grid-template-columns: repeat(2, minmax(400px, 1fr)); }
-.ja-grid.cols-3 { grid-template-columns: repeat(3, minmax(420px, 1fr)); }
+.ja-grid.cols-1 { grid-template-columns: repeat(1, minmax(250px, 1fr)); }
+.ja-grid.cols-2 { grid-template-columns: repeat(2, minmax(300px, 1fr)); }
+.ja-grid.cols-3 { grid-template-columns: repeat(3, minmax(340px, 1fr)); }
 
 /* ====== MULTISELECT ====== */
-.compare-box { margin-top:-18px; }
+.compare-box { margin-top:-14px; }
 .compare-box .compare-label {
-  margin:4px 0 6px 0;
+  margin:4px 0 5px 0;
   font-weight:600;
   color:#2b2d42;
+  font-size:0.85rem;
 }
-div[data-baseweb="tag"] { max-width:none !important; }
 div[data-baseweb="tag"] span {
   white-space: normal !important;
   word-break: break-word !important;
-  line-height: 1.25 !important;
+  line-height: 1.15 !important;
   font-weight: 600 !important;
-  font-size: 0.9rem !important;
+  font-size: 0.82rem !important;
 }
 div[data-baseweb="select"] > div {
-  min-height:44px !important;
+  min-height:38px !important;
   height:auto !important;
 }
 </style>
@@ -210,7 +211,7 @@ with col3:
 career_df = sub_df[sub_df["Career Path"] == career]
 
 # ===========================================================
-# Multiselect
+# Multiselect de cargos
 # ===========================================================
 def option_label(row):
     g = row.get("Global Grade", "")
@@ -255,7 +256,7 @@ if selected_labels:
     html_cells = [f"<div>{class_box(r)}</div>" if r is not None else "<div></div>" for r in rows]
     st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
 
-    # Seções principais (sem competências)
+    # Seções principais
     SECTIONS = [
         ("🧭", "Sub Job Family Description", lambda r: safe_get(r, "Sub Job Family Description")),
         ("🧠", "Job Profile Description",   lambda r: safe_get(r, "Job Profile Description")),
