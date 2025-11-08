@@ -26,7 +26,7 @@ else:
 
     career_df = sub_df[sub_df["Career Path"] == career]
 
-    # === LISTA DE CARGOS ===
+    # === LISTA DE CARGOS (MULTISELECT) ===
     def format_profile(row):
         grade = row.get("Global Grade", "")
         title = row.get("Job Profile", "")
@@ -35,48 +35,56 @@ else:
 
     career_df_sorted = career_df.sort_values(by="Global Grade", ascending=False)
     pick_options = career_df_sorted.apply(format_profile, axis=1).tolist()
-    selected_label = st.selectbox("Selecione o Cargo:", pick_options)
 
-    # === LOCALIZA LINHA DO CARGO ===
-    selected_row = career_df_sorted.iloc[pick_options.index(selected_label)]
+    selected_labels = st.multiselect(
+        "Selecione até 3 cargos para comparar:",
+        options=pick_options,
+        max_selections=3
+    )
 
-    # === BLOCO DE CLASSIFICAÇÃO ===
-    st.markdown("---")
-    st.markdown(f"## 🧾 {selected_row['Job Profile']}")
-    st.write(f"**Família:** {selected_row['Job Family']}")
-    st.write(f"**Subfamília:** {selected_row['Sub Job Family']}")
-    st.write(f"**Trilha de Carreira:** {selected_row['Career Path']}")
-    st.write(f"**Nível Global:** {selected_row['Global Grade']}")
-    st.write(f"**Função:** {selected_row['Function Code']}")
-    st.write(f"**Disciplina:** {selected_row['Discipline Code']}")
-    st.write(f"**Código Completo:** {selected_row['Full Job Code']}")
+    if not selected_labels:
+        st.info("Selecione até 3 cargos para visualizar suas descrições detalhadas.")
+    else:
+        st.markdown("---")
+        st.markdown(f"### 🧾 Comparativo de Cargos — {career} ({sub})")
 
-    st.markdown("---")
+        for label in selected_labels:
+            selected_row = career_df_sorted.iloc[pick_options.index(label)]
 
-    # === SEÇÕES DE DESCRIÇÃO ===
-    description_sections = [
-        ("Sub Job Family Description", "🧭 Sub Job Family Description"),
-        ("Job Profile Description", "🧠 Job Profile Description"),
-        ("Role Description", "🎯 Role Description"),
-        ("Grade Differentiation", "🏅 Grade Differentiation"),
-        ("Specific parameters / KPIs", "📊 Specific Parameters / KPIs"),
-        ("Competency", "💡 Competency"),
-        ("Qualifications", "🎓 Qualifications")
-    ]
+            st.markdown(f"## {selected_row['Job Profile']} — GG {selected_row['Global Grade']}")
+            st.write(f"**Família:** {selected_row['Job Family']}")
+            st.write(f"**Subfamília:** {selected_row['Sub Job Family']}")
+            st.write(f"**Trilha de Carreira:** {selected_row['Career Path']}")
+            st.write(f"**Função:** {selected_row['Function Code']}")
+            st.write(f"**Disciplina:** {selected_row['Discipline Code']}")
+            st.write(f"**Código Completo:** {selected_row['Full Job Code']}")
 
-    for col, title in description_sections:
-        if col in selected_row and str(selected_row[col]).strip() and str(selected_row[col]).lower() != "nan":
-            st.markdown(f"### {title}")
-            html_block = f"""
+            st.markdown("---")
+
+            description_sections = [
+                ("Sub Job Family Description", "🧭 Sub Job Family Description"),
+                ("Job Profile Description", "🧠 Job Profile Description"),
+                ("Role Description", "🎯 Role Description"),
+                ("Grade Differentiation", "🏅 Grade Differentiation"),
+                ("Specific parameters / KPIs", "📊 Specific Parameters / KPIs"),
+                ("Competency", "💡 Competency"),
+                ("Qualifications", "🎓 Qualifications")
+            ]
+
+            for col, title in description_sections:
+                if col in selected_row and str(selected_row[col]).strip() and str(selected_row[col]).lower() != "nan":
+                    html_block = f"""
 <div style='
     background-color:#f9f9f9;
     padding:12px;
     border-radius:8px;
     border-left:4px solid #1E56E0;
+    margin-bottom:10px;
     line-height:1.6;
     white-space:pre-wrap;'>
-    {selected_row[col]}
+<b>{title}</b><br>{selected_row[col]}
 </div>
 """
-            st.markdown(html_block, unsafe_allow_html=True)
+                    st.markdown(html_block, unsafe_allow_html=True)
+
             st.markdown("---")
