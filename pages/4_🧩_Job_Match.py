@@ -22,7 +22,11 @@ model = load_model()
 # ===========================================================
 @st.cache_data(show_spinner=True)
 def load_data():
-    df = pd.read_csv("Job Profile.csv")  # ✅ corrigido caminho
+    try:
+        df = pd.read_csv("Job Profile.csv")  # Tenta primeiro na raiz
+    except FileNotFoundError:
+        df = pd.read_csv("data/Job Profile.csv")  # Se não achar, busca em /data
+
     df.columns = [c.strip().title().replace("_", " ") for c in df.columns]
 
     # Padroniza colunas principais
