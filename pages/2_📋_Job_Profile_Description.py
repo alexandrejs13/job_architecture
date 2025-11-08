@@ -23,7 +23,7 @@ st.markdown("""
     font-weight: 700 !important;
     color: #1d4ed8;
     margin-top: 1.2rem;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.8rem;
     text-align: left;
 }
 .card {
@@ -36,6 +36,12 @@ st.markdown("""
     font-size: 0.94rem;
     line-height: 1.5;
     text-align: justify;
+}
+.card-title {
+    font-weight: 700;
+    color: #1d4ed8;
+    font-size: 1.05rem;
+    margin-bottom: 0.6rem;
 }
 .grid-container {
     display: grid;
@@ -128,7 +134,7 @@ def format_paragraphs(text):
 grid_class = "grid-container"
 
 # ================================================
-# Renderização comparativa com títulos alinhados
+# Renderização comparativa (título em cada card)
 # ================================================
 SECTIONS = [
     ("Sub Job Family Description", lambda r: safe_get(r, "Sub Job Family Description")),
@@ -152,7 +158,7 @@ if competency_cols:
     ])
 
 # ================================================
-# Exibição das seções
+# Exibição das seções — títulos em todos os cards
 # ================================================
 for title, getter in SECTIONS:
     has_content = any(
@@ -162,9 +168,15 @@ for title, getter in SECTIONS:
     if not has_content:
         continue
 
-    st.markdown(f"<div class='section-title'>{title}</div>", unsafe_allow_html=True)
     html_cells = []
     for r in rows:
         raw = getter(r)
-        html_cells.append(f"<div class='card'>{format_paragraphs(raw)}</div>")
+        html_cells.append(
+            f"""
+            <div class='card'>
+                <div class='card-title'>{title}</div>
+                <div>{format_paragraphs(raw)}</div>
+            </div>
+            """
+        )
     st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
