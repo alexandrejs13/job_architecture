@@ -3,7 +3,7 @@ import pandas as pd
 from utils.data_loader import load_data
 
 # ================================================
-# Configurações
+# Configurações gerais
 # ================================================
 st.set_page_config(page_title="Job Profile Description", layout="wide")
 
@@ -19,11 +19,11 @@ st.markdown("""
     color: #333;
 }
 .section-title {
-    font-size: 1.15rem !important;
+    font-size: 1.2rem !important;
     font-weight: 700 !important;
     color: #1d4ed8;
-    margin-top: 1.2rem;
-    margin-bottom: 0.8rem;
+    margin-top: 1.4rem;
+    margin-bottom: 0.6rem;
     text-align: left;
 }
 .card {
@@ -36,24 +36,29 @@ st.markdown("""
     font-size: 0.94rem;
     line-height: 1.5;
     text-align: justify;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: 100%;
 }
 .card-title {
     font-weight: 700;
     color: #1d4ed8;
     font-size: 1.05rem;
     margin-bottom: 0.6rem;
+    min-height: 28px;
 }
 .grid-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1.2rem;
-    align-items: start;
+    align-items: stretch;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # ================================================
-# Carregamento de dados
+# Carregamento dos dados
 # ================================================
 data = load_data()
 if not data or "job_profile" not in data:
@@ -66,7 +71,7 @@ df = df.applymap(lambda x: str(x).strip() if isinstance(x, str) else x)
 df.fillna("", inplace=True)
 
 # ================================================
-# Filtros
+# Filtros superiores
 # ================================================
 st.markdown("## 📋 Job Profile Description")
 
@@ -115,7 +120,7 @@ rows = [
 ]
 
 # ================================================
-# Funções auxiliares
+# Funções utilitárias
 # ================================================
 def safe_get(row, cols):
     if isinstance(cols, str):
@@ -134,7 +139,7 @@ def format_paragraphs(text):
 grid_class = "grid-container"
 
 # ================================================
-# Renderização comparativa (título em cada card)
+# Estrutura das seções
 # ================================================
 SECTIONS = [
     ("Sub Job Family Description", lambda r: safe_get(r, "Sub Job Family Description")),
@@ -158,7 +163,7 @@ if competency_cols:
     ])
 
 # ================================================
-# Exibição das seções — títulos em todos os cards
+# Renderização — título dentro de cada card
 # ================================================
 for title, getter in SECTIONS:
     has_content = any(
@@ -179,4 +184,5 @@ for title, getter in SECTIONS:
             </div>
             """
         )
+
     st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
