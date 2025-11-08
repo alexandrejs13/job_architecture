@@ -42,13 +42,6 @@ st.markdown("""
     justify-content: flex-start;
     height: 100%;
 }
-.card-title {
-    font-weight: 700;
-    color: #1d4ed8;
-    font-size: 1.05rem;
-    margin-bottom: 0.6rem;
-    min-height: 28px;
-}
 .grid-container {
     display: grid;
     gap: 1.2rem;
@@ -165,9 +158,10 @@ if competency_cols:
     ])
 
 # ================================================
-# Renderização dinâmica — layout automático (1, 2 ou 3 colunas)
+# Renderização — título fora dos cards + todos os cargos
 # ================================================
 for title, getter in SECTIONS:
+    # verifica se há conteúdo para exibir
     has_content = any(
         getter(r) and getter(r).strip() not in ["", "-", "nan", "NaN", "None"]
         for r in rows if r is not None
@@ -175,17 +169,24 @@ for title, getter in SECTIONS:
     if not has_content:
         continue
 
-    html_cells = []
+    # título fora do card
+    st.markdown(f"<div class='section-title'>{title}</div>", unsafe_allow_html=True)
+
+    # define colunas conforme número de cargos
+    grid_class = f"grid-container grid-{len(rows)}"
+    st.markdown(f"<div class='{grid_class}'>", unsafe_allow_html=True)
+
+    # renderiza todos os cards corretamente
     for r in rows:
         raw = getter(r)
-        html_cells.append(
+        st.markdown(
             f"""
             <div class='card'>
-                <div class='card-title'>{title}</div>
                 <div>{format_paragraphs(raw)}</div>
             </div>
-            """
+            """,
+            unsafe_allow_html=True
         )
 
-    grid_class = f"grid-container grid-{len(rows)}"
-    st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
+    # fecha grid
+    st.markdown("</div>", unsafe_allow_html=True)
