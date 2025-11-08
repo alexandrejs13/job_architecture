@@ -1,248 +1,186 @@
-# ==============================================================
-# 🧩 Job Match — versão aprimorada com layout igual ao Job Profile Description
-# ==============================================================
-
-import streamlit as st
-import pandas as pd
-import numpy as np
-from sentence_transformers import SentenceTransformer, util
 import re
+import pandas as pd
+import streamlit as st
+from sentence_transformers import SentenceTransformer, util
 
-# --------------------------------------------------------------
-# Configuração da página
-# --------------------------------------------------------------
+# ===========================================================
+# ⚙️ Configuração da página
+# ===========================================================
 st.set_page_config(page_title="🧩 Job Match", layout="wide")
 
-# --------------------------------------------------------------
-# Função para carregar a base
-# --------------------------------------------------------------
-@st.cache_data(show_spinner=False)
+# ===========================================================
+# 🧠 Cache de carregamento do modelo
+# ===========================================================
+@st.cache_resource(show_spinner=False)
+def load_model():
+    return SentenceTransformer("paraphrase-MiniLM-L6-v2")
+
+model = load_model()
+
+# ===========================================================
+# 📂 Carrega a base de dados de cargos
+# ===========================================================
+@st.cache_data(show_spinner=True)
 def load_data():
-    path = "data/Job Profile.csv"
+    df = pd.read_csv("data/Job_Profile.csv")
+    df.columns = [c.strip().title().replace("_", " ") for c in df.columns]
 
-    try:
-        df = pd.read_csv(path, sep=None, engine="python", dtype=str, on_bad_lines="skip")
-    except Exception:
-        df = pd.read_csv(path, sep=";", engine="python", dtype=str, on_bad_lines="skip")
-
-    df.columns = df.columns.str.strip()
-    df = df.loc[:, ~df.columns.duplicated(keep="first")]
-    df = df.fillna("")
-
-    rename_map = {}
-    for c in df.columns:
-        c_norm = c.strip().lower()
-        if c_norm == "job family":
-            rename_map[c] = "Family"
-        elif c_norm == "sub job family":
-            rename_map[c] = "Subfamily"
-        elif c_norm == "job profile":
-            rename_map[c] = "Job Title"
-        elif "grade" in c_norm:
-            rename_map[c] = "Grade"
-        elif "profile description" in c_norm:
-            rename_map[c] = "Job Profile Description"
-        elif "role description" in c_norm:
-            rename_map[c] = "Role Description"
-        elif "differentiator" in c_norm:
-            rename_map[c] = "Grade Differentiator"
-        elif "kpi" in c_norm or "specific" in c_norm:
-            rename_map[c] = "KPIs / Specific Parameters"
-        elif "qualification" in c_norm:
-            rename_map[c] = "Qualifications"
-        elif "career" in c_norm:
-            rename_map[c] = "Career Path"
-        elif "function" in c_norm:
-            rename_map[c] = "Function Code"
-        elif "discipline" in c_norm:
-            rename_map[c] = "Discipline Code"
-        elif "full job code" in c_norm or "job code" in c_norm:
-            rename_map[c] = "Full Job Code"
-
+    # Padroniza colunas principais
+    rename_map = {
+        "Job Family": "Family",
+        "Sub Job Family": "Subfamily",
+        "Career Path": "Career Path",
+        "Job Profile": "Job Profile",
+        "Global Grade": "Grade",
+    }
     df.rename(columns=rename_map, inplace=True)
 
-    obrig = [
-        "Family", "Subfamily", "Job Title", "Grade",
-        "Career Path", "Function Code", "Discipline Code", "Full Job Code",
-        "Job Profile Description", "Role Description",
-        "Grade Differentiator", "KPIs / Specific Parameters", "Qualifications"
-    ]
-    for c in obrig:
-        if c not in df.columns:
-            df[c] = ""
+    # Limpa valores nulos
+    for c in ["Family", "Subfamily", "Job Profile", "Grade"]:
+        df[c] = df.get(c, "").astype(str).fillna("").str.strip().str.title()
 
-    df["Family"] = df["Family"].astype(str).str.strip().str.title()
-    df["Subfamily"] = df["Subfamily"].astype(str).str.strip().str.title()
-
+    # Concatena colunas para criar campo de busca semântico
     def safe_concat(row):
-        parts = []
-        for col in [
-            "Job Title", "Family", "Subfamily", "Grade",
-            "Career Path", "Function Code", "Discipline Code",
-            "Job Profile Description", "Role Description",
-            "Grade Differentiator", "KPIs / Specific Parameters", "Qualifications"
-        ]:
-            val = row.get(col, "")
-            if isinstance(val, str) and val.strip():
-                parts.append(f"{col}: {val.strip()}")
-        return " | ".join(parts)
+        cols = [
+            "Job Profile Description",
+            "Role Description",
+            "Grade Differentiator",
+            "Kpis / Specific Parameters",
+            "Qualifications",
+        ]
+        text = " ".join(str(row[c]) for c in cols if c in row and pd.notna(row[c]))
+        return re.sub(r"\s+", " ", text).strip()
 
-    df["Merged_Text"] = df.apply(lambda r: safe_concat(r), axis=1)
+    df["Merged_Text"] = df.apply(safe_concat, axis=1)
+    df["Embedding"] = df["Merged_Text"].apply(lambda x: model.encode(x, convert_to_tensor=True))
+
     return df
 
-
-# --------------------------------------------------------------
-# Função para formatar parágrafos como no Job Profile Description
-# --------------------------------------------------------------
-def format_paragraphs(text):
-    if not text:
-        return "-"
-    parts = re.split(r"\n+|•|\r", text.strip())
-    return "".join(f"<p class='ja-p'>{p.strip()}</p>" for p in parts if len(p.strip()) > 2)
-
-
-# --------------------------------------------------------------
-# Carrega base e modelo
-# --------------------------------------------------------------
 df = load_data()
-if df.empty:
-    st.error("⚠️ A base está vazia ou corrompida.")
-    st.stop()
 
-model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
-
-# --------------------------------------------------------------
-# CSS estilo Job Profile Description
-# --------------------------------------------------------------
+# ===========================================================
+# 🎨 CSS customizado
+# ===========================================================
 st.markdown("""
 <style>
-.css-1d391kg, .block-container {
-  max-width: 1600px !important;
-  min-width: 1600px !important;
-  margin: 0 auto !important;
+.block-container {
+  max-width: 1600px;
+  margin: 0 auto;
 }
-[data-testid="stSidebar"][aria-expanded="true"] {
-  width: 320px !important;
-  min-width: 320px !important;
-}
-.ja-p { margin: 0 0 6px 0; text-align: justify; }
-.ja-hd { display:flex; align-items:baseline; gap:10px; margin:0 0 6px 0; }
-.ja-hd-title { font-size:1.2rem; font-weight:700; color:#1E56E0; }
-.ja-hd-grade { color:#1E56E0; font-weight:700; }
-.ja-class {
-  background:#fff; border:1px solid #e0e4f0; border-radius:8px;
-  padding:10px; width:100%; display:inline-block;
-}
-.ja-sec-h { display:flex; align-items:center; gap:8px; margin:12px 0 4px 0 !important; }
-.ja-ic { width:24px; text-align:center; line-height:1; }
-.ja-ttl { font-weight:700; color:#1E56E0; font-size:1rem; }
+h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
 .ja-card {
-  background:#f9f9f9; padding:10px 14px; border-radius:8px;
-  border-left:4px solid #1E56E0; box-shadow:0 1px 3px rgba(0,0,0,0.05);
-  width:100%;
+  background: #f9f9f9;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border-left: 4px solid #1E56E0;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
+.ja-hd { display:flex; align-items:baseline; gap:10px; margin-bottom:8px; }
+.ja-hd-title { font-size:1.1rem; font-weight:700; }
+.ja-hd-grade { color:#1E56E0; font-weight:700; }
+.ja-p { margin: 0 0 6px 0; text-align: justify; }
+.ja-sec { margin-top: 8px; }
+.ja-sec-h { font-weight:700; color:#1E56E0; margin-bottom:4px; }
+button[title="View fullscreen"] { display: none; }
 </style>
 """, unsafe_allow_html=True)
 
-# --------------------------------------------------------------
-# Interface
-# --------------------------------------------------------------
+# ===========================================================
+# 🧭 Cabeçalho
+# ===========================================================
 st.markdown("## 🧩 Job Match")
-st.markdown("""
-Descubra o **cargo mais compatível** com suas responsabilidades e experiência.  
-O sistema analisa as **atividades descritas**, o **nível de senioridade** e as **características do cargo**.
-""")
+st.markdown("Identifique automaticamente o cargo mais compatível com base na descrição de suas atividades e nível de atuação.")
 
-c1, c2 = st.columns(2)
-families = sorted(df.loc[df["Family"].ne(""), "Family"].unique().tolist())
-family_selected = c1.selectbox("Selecione a Family", [""] + families)
+# ===========================================================
+# 🔍 Seletores de filtros
+# ===========================================================
+col1, col2 = st.columns(2)
+with col1:
+    families = sorted(df["Family"].dropna().unique())
+    selected_family = st.selectbox("Família", [""] + families, index=0)
 
-if family_selected:
-    subs = (
-        df.loc[(df["Family"] == family_selected) & (df["Subfamily"].ne("")), "Subfamily"]
-        .drop_duplicates()
-        .sort_values()
-        .tolist()
-    )
-else:
-    subs = []
+with col2:
+    subfamilies = []
+    if selected_family:
+        subfamilies = sorted(df[df["Family"] == selected_family]["Subfamily"].dropna().unique())
+    selected_subfamily = st.selectbox("Subfamília", [""] + subfamilies, index=0)
 
-subfamily_selected = c2.selectbox(
-    "Selecione a Subfamily",
-    [""] + subs if subs else [""],
-    disabled=(not family_selected)
-)
-
+# ===========================================================
+# 📝 Campo de descrição
+# ===========================================================
 descricao = st.text_area(
     "✍️ Descreva brevemente suas atividades:",
     placeholder=(
-        "Exemplo: Responsável pelo processamento de folha de pagamento, controle de ponto eletrônico, "
-        "benefícios e obrigações legais (INSS, FGTS, IRRF). "
-        "Graduado em Administração, com 5 anos de experiência na área de Departamento Pessoal."
+        "Exemplo: Atuo como analista de remuneração, responsável por conduzir estudos salariais, elaborar políticas de benefícios "
+        "e apoiar revisões de estrutura organizacional. Tenho 6 anos de experiência em RH corporativo, graduação em Administração "
+        "e MBA em Gestão de Pessoas. Coordeno processos de meritocracia e indicadores de performance em ambiente multinacional."
     ),
-    height=140
+    height=160
 )
 
-# --------------------------------------------------------------
-# Botão de busca
-# --------------------------------------------------------------
-if st.button("🔍 Encontrar Job Profile"):
-    if not family_selected or not subfamily_selected:
-        st.warning("⚠️ Campos 'Family' e 'Subfamily' são obrigatórios.")
-        st.stop()
-    if len(descricao.split()) <= 10:
-        st.warning("⚠️ Descreva suas atividades com mais detalhes (mínimo de 10 palavras).")
+# ===========================================================
+# 🚦 Validações iniciais
+# ===========================================================
+if st.button("🔎 Encontrar Job Profile", use_container_width=True):
+    if not selected_family or not selected_subfamily:
+        st.warning("⚠️ Selecione a **Família** e **Subfamília** antes de prosseguir.")
         st.stop()
 
-    df_filtered = df[(df["Family"] == family_selected) & (df["Subfamily"] == subfamily_selected)].copy()
+    if len(descricao.split()) < 50:
+        st.warning("""
+        ⚠️ Descreva suas atividades com mais detalhes (mínimo de **50 palavras**).  
+        Inclua informações como: responsabilidades principais, tempo de experiência, nível de autonomia, escopo da função e formação acadêmica.
+        """)
+        st.stop()
+
+    st.info("🔄 Buscando correspondência mais precisa...")
+
+    # Filtro da base pela family e subfamily
+    df_filtered = df[(df["Family"] == selected_family) & (df["Subfamily"] == selected_subfamily)]
+
     if df_filtered.empty:
-        st.error("Nenhum cargo encontrado nessa Family/Subfamily.")
+        st.error("Nenhum cargo encontrado para a combinação selecionada.")
         st.stop()
 
-    q_emb = model.encode(descricao, convert_to_tensor=True)
-    c_emb = model.encode(df_filtered["Merged_Text"].tolist(), convert_to_tensor=True)
-    scores = util.cos_sim(q_emb, c_emb)[0].cpu().numpy()
+    # Calcula embedding da descrição
+    query_embedding = model.encode(descricao, convert_to_tensor=True)
+    df_filtered["Similarity"] = df_filtered["Embedding"].apply(lambda emb: float(util.cos_sim(query_embedding, emb)))
 
-    best_idx = int(np.argmax(scores))
-    best = df_filtered.iloc[best_idx]
-    best_score = round(float(scores[best_idx]) * 100, 1)
+    best_row = df_filtered.sort_values(by="Similarity", ascending=False).iloc[0]
+    sim_score = best_row["Similarity"] * 100
 
-    # ----------------------------------------------------------
-    # Exibe resultado formatado
-    # ----------------------------------------------------------
-    st.markdown("### 🎯 Cargo mais compatível encontrado")
+    st.success(f"✅ Cargo mais compatível encontrado ({sim_score:.1f}% de similaridade):")
+
+    # ===========================================================
+    # 🧱 Estrutura visual (mesmo formato do Job Profile Description)
+    # ===========================================================
+    def section(emoji, title, text):
+        return f"""
+        <div class='ja-sec'>
+          <div class='ja-sec-h'>{emoji} {title}</div>
+          <div class='ja-card'><div class='ja-p'>{re.sub(r'\\n+', '<br>', str(text))}</div></div>
+        </div>
+        """
+
     st.markdown(f"""
-    <div class="ja-hd">
-      <div class="ja-hd-title">{best['Job Title']}</div>
-      <div class="ja-hd-grade">GG {best['Grade']}</div>
-    </div>
-    <div class="ja-class">
-      <b>Família:</b> {best['Family']}<br>
-      <b>Subfamília:</b> {best['Subfamily']}<br>
-      <b>Carreira:</b> {best['Career Path']}<br>
-      <b>Função:</b> {best['Function Code']}<br>
-      <b>Disciplina:</b> {best['Discipline Code']}<br>
-      <b>Código:</b> {best['Full Job Code']}
+    <div class='ja-card'>
+      <div class='ja-hd'>
+        <div class='ja-hd-title'>{best_row["Job Profile"]}</div>
+        <div class='ja-hd-grade'>GG {best_row["Grade"]}</div>
+      </div>
+      <div class='ja-p'>
+        <b>Família:</b> {best_row["Family"]}<br>
+        <b>Subfamília:</b> {best_row["Subfamily"]}<br>
+        <b>Carreira:</b> {best_row["Career Path"]}<br>
+        <b>Código:</b> {best_row["Full Job Code"] if "Full Job Code" in best_row else "-"}
+      </div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div class='ja-sec-h'><span class='ja-ic'>🧭</span><span class='ja-ttl'>Sub Job Family Description</span></div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='ja-card'>{format_paragraphs(best['Job Profile Description'])}</div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='ja-sec-h'><span class='ja-ic'>🧠</span><span class='ja-ttl'>Job Profile Description</span></div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='ja-card'>{format_paragraphs(best['Job Profile Description'])}</div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='ja-sec-h'><span class='ja-ic'>🎯</span><span class='ja-ttl'>Role Description</span></div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='ja-card'>{format_paragraphs(best['Role Description'])}</div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='ja-sec-h'><span class='ja-ic'>🏅</span><span class='ja-ttl'>Grade Differentiator</span></div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='ja-card'>{format_paragraphs(best['Grade Differentiator'])}</div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='ja-sec-h'><span class='ja-ic'>📊</span><span class='ja-ttl'>KPIs / Specific Parameters</span></div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='ja-card'>{format_paragraphs(best['KPIs / Specific Parameters'])}</div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='ja-sec-h'><span class='ja-ic'>🎓</span><span class='ja-ttl'>Qualifications</span></div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='ja-card'>{format_paragraphs(best['Qualifications'])}</div>", unsafe_allow_html=True)
-
-else:
-    st.info("Preencha as informações e clique em **🔍 Encontrar Job Profile**.")
+    st.markdown(section("🧭", "Sub Job Family Description", best_row.get("Sub Job Family Description", "")), unsafe_allow_html=True)
+    st.markdown(section("🧠", "Job Profile Description", best_row.get("Job Profile Description", "")), unsafe_allow_html=True)
+    st.markdown(section("🎯", "Role Description", best_row.get("Role Description", "")), unsafe_allow_html=True)
+    st.markdown(section("🏅", "Grade Differentiator", best_row.get("Grade Differentiator", "")), unsafe_allow_html=True)
+    st.markdown(section("📊", "KPIs / Specific Parameters", best_row.get("Kpis / Specific Parameters", "")), unsafe_allow_html=True)
+    st.markdown(section("🎓", "Qualifications", best_row.get("Qualifications", "")), unsafe_allow_html=True)
