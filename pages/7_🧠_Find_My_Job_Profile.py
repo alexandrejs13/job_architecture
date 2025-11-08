@@ -1,227 +1,70 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import re
-from sklearn.metrics.pairwise import cosine_similarity
-from sentence_transformers import SentenceTransformer
-from deep_translator import GoogleTranslator
-from utils.data_loader import load_data
-from utils.ui_components import section
+st.markdown("---")
+st.subheader("🎯 Cargos mais compatíveis:")
 
-# ===========================================================
-# CONFIGURAÇÃO GERAL
-# ===========================================================
-st.set_page_config(layout="wide")
-section("🧠 Find My Job Profile")
-
-# ===========================================================
-# CSS GLOBAL
-# ===========================================================
-st.markdown("""
-<style>
-.block-container { max-width: 1600px !important; margin: 0 auto !important; }
-[data-testid="stSidebar"][aria-expanded="true"]{ width: 320px !important; }
-.result-card {
-  background: #f9f9f9;
-  border-left: 5px solid #1E56E0;
-  border-radius: 10px;
-  padding: 14px 18px;
-  margin-bottom: 14px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-.result-header { display:flex; justify-content:space-between; align-items:center; }
-.result-title { font-weight:700; color:#1E56E0; font-size:1.05rem; }
-.result-sim { font-weight:500; color:#444; font-size:0.95rem; }
-.ja-grid { display:grid; gap:12px 12px; margin:2px 0 14px 0 !important; }
-.ja-grid.cols-1 { grid-template-columns: repeat(1, 1fr); }
-.ja-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
-.ja-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
-.ja-class {
-  background:#fff; border:1px solid #e0e4f0; border-radius:8px;
-  padding:10px; width:100%; display:inline-block;
-}
-.ja-sec { margin:0 !important; }
-.ja-sec-h { display:flex; align-items:center; gap:8px; margin:0 0 4px 0 !important; }
-.ja-ic { width:24px; text-align:center; line-height:1; }
-.ja-ttl { font-weight:700; color:#1E56E0; font-size:0.98rem; }
-.ja-card {
-  background:#f9f9f9; padding:10px 14px; border-radius:8px;
-  border-left:4px solid #1E56E0;
-  box-shadow:0 1px 3px rgba(0,0,0,0.05); width:100%;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ===========================================================
-# CARREGAR BASE DE DADOS
-# ===========================================================
-data = load_data()
-if "job_profile" not in data:
-    st.error("❌ Arquivo Job Profile.csv não encontrado em /data")
-    st.stop()
-
-df = data["job_profile"].copy()
-
-def merge_row_text(row):
-    parts = [
-        str(row.get("Sub Job Family Description", "")),
-        str(row.get("Job Profile Description", "")),
-        str(row.get("Role Description", "")),
-        str(row.get("Grade Differentiator", "")) or str(row.get("Grade Differentiatior", "")),
-        str(row.get("Specific parameters KPIs", "")) or str(row.get("Specific parameters / KPIs", "")),
-        str(row.get("Qualifications", "")),
-    ]
-    return " ".join([p for p in parts if p and p.lower() != "nan"]).strip()
-
-df["merged_text"] = df.apply(merge_row_text, axis=1)
-
-# ===========================================================
-# EMBEDDINGS E MODELO LOCAL
-# ===========================================================
-@st.cache_resource(show_spinner=True)
-def load_model():
-    return SentenceTransformer("all-MiniLM-L6-v2")
-
-@st.cache_data(show_spinner=False)
-def generate_embeddings(df):
-    model = load_model()
-    emb = model.encode(df["merged_text"].tolist(), show_progress_bar=False, normalize_embeddings=True)
-    return emb
-
-with st.spinner("🔄 Preparando base semântica local..."):
-    matrix = generate_embeddings(df)
-st.success("✅ Base semântica pronta.")
-
-# ===========================================================
-# TRADUÇÃO AUTOMÁTICA (PT → EN)
-# ===========================================================
-def translate_to_english(text):
-    try:
-        return GoogleTranslator(source="auto", target="en").translate(text)
-    except Exception:
-        return text
-
-# ===========================================================
-# ÁREA DE BUSCA
-# ===========================================================
-st.markdown("#### Descreva as atividades ou responsabilidades do cargo desejado (em qualquer idioma):")
-query = st.text_area(
-    "Exemplo: Gerenciar folha de pagamento, processar encargos e liderar equipe de analistas.",
-    height=120
+# Ordenar resultados por Global Grade (maior → menor)
+results_sorted = sorted(
+    [(i, sims[i]) for i in idx[:top_n]],
+    key=lambda x: float(df.iloc[x[0]].get("Global Grade", 0) or 0),
+    reverse=True
 )
-buscar = st.button("🔍 Encontrar cargos correspondentes", type="primary")
 
-# ===========================================================
-# EXECUTAR BUSCA
-# ===========================================================
-if buscar and query.strip():
-    with st.spinner("🌐 Traduzindo e analisando sua descrição..."):
-        translated_query = translate_to_english(query)
+compare_labels = []
+for i, score in results_sorted:
+    row = df.iloc[i]
+    grade = str(row.get("Global Grade", "")).strip()
+    job = row.get("Job Profile", "-").strip()
+    compare_labels.append(f"{job} (GG {grade})")
 
-    model = load_model()
-    q_emb = model.encode([translated_query], normalize_embeddings=True)
-    sims = cosine_similarity(q_emb, generate_embeddings(df)).ravel()
-    idx = np.argsort(-sims)
-    top_n = 5
-    results = [(i, sims[i]) for i in idx[:top_n]]
+    # CARD ELEGANTE UNIFICADO
+    st.markdown(
+        f"""
+        <div style="
+            background:#fff;
+            border:1px solid #e4e8f4;
+            border-left:6px solid #1E56E0;
+            border-radius:12px;
+            padding:18px 22px;
+            margin-bottom:14px;
+            box-shadow:0 1px 3px rgba(0,0,0,0.05);
+        ">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <span style="font-weight:700;color:#1E56E0;font-size:1.05rem;">
+                    GG {grade} — {job}
+                </span>
+                <span style="color:#333;font-size:0.95rem;">
+                    Similaridade: <b>{score*100:.1f}%</b>
+                </span>
+            </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    st.markdown("---")
-    st.subheader("🎯 Cargos mais compatíveis:")
+    with st.expander("📋 Ver detalhes"):
+        st.markdown(f"**Família:** {row.get('Job Family','')}")
+        st.markdown(f"**Subfamília:** {row.get('Sub Job Family','')}")
+        st.markdown(f"**Carreira:** {row.get('Career Path','')}")
+        st.markdown(f"**Função:** {row.get('Function Code','')}")
+        st.markdown(f"**Disciplina:** {row.get('Discipline Code','')}")
+        st.markdown(f"**Código:** {row.get('Full Job Code','')}")
 
-    compare_labels = []
-    for i, score in results:
-        row = df.iloc[i]
-        label = f"{row.get('Job Profile','-')} (GG {row.get('Global Grade','')})"
-        compare_labels.append(label)
+        st.markdown("### 🧭 Sub Job Family Description")
+        st.write(row.get("Sub Job Family Description","-") or "-")
 
-        # CARD ÚNICO — título, similaridade e botão no mesmo container
-        with st.container():
-            st.markdown(
-                f"<div class='result-card'>"
-                f"<div class='result-header'>"
-                f"<div class='result-title'>{row.get('Job Profile','-')}</div>"
-                f"<div class='result-sim'>Similaridade: <b>{score*100:.1f}%</b></div>"
-                f"</div>", unsafe_allow_html=True
-            )
+        st.markdown("### 🧠 Job Profile Description")
+        st.write(row.get("Job Profile Description","-") or "-")
 
-            with st.expander("📋 Ver detalhes"):
-                st.markdown(f"**Família:** {row.get('Job Family','')}")
-                st.markdown(f"**Subfamília:** {row.get('Sub Job Family','')}")
-                st.markdown(f"**Carreira:** {row.get('Career Path','')}")
-                st.markdown(f"**Função:** {row.get('Function Code','')}")
-                st.markdown(f"**Disciplina:** {row.get('Discipline Code','')}")
-                st.markdown(f"**Código:** {row.get('Full Job Code','')}")
+        st.markdown("### 🎯 Role Description")
+        st.write(row.get("Role Description","-") or "-")
 
-                st.markdown("### 🧭 Sub Job Family Description")
-                st.write(row.get("Sub Job Family Description","-") or "-")
+        st.markdown("### 🏅 Grade Differentiator")
+        gd = row.get("Grade Differentiator","") or row.get("Grade Differentiatior","") or "-"
+        st.write(gd)
 
-                st.markdown("### 🧠 Job Profile Description")
-                st.write(row.get("Job Profile Description","-") or "-")
+        st.markdown("### 📊 KPIs / Specific Parameters")
+        kp = row.get("Specific parameters KPIs","") or row.get("Specific parameters / KPIs","") or "-"
+        st.write(kp)
 
-                st.markdown("### 🎯 Role Description")
-                st.write(row.get("Role Description","-") or "-")
+        st.markdown("### 🎓 Qualifications")
+        st.write(row.get("Qualifications","-") or "-")
 
-                st.markdown("### 🏅 Grade Differentiator")
-                gd = row.get("Grade Differentiator","") or row.get("Grade Differentiatior","") or "-"
-                st.write(gd)
-
-                st.markdown("### 📊 KPIs / Specific Parameters")
-                kp = row.get("Specific parameters KPIs","") or row.get("Specific parameters / KPIs","") or "-"
-                st.write(kp)
-
-                st.markdown("### 🎓 Qualifications")
-                st.write(row.get("Qualifications","-") or "-")
-
-            st.markdown("</div>", unsafe_allow_html=True)
-
-    # =======================================================
-    # COMPARATIVO
-    # =======================================================
-    st.markdown("---")
-    st.markdown("### ⚖️ Selecione cargos para comparar:")
-    selected_labels = st.multiselect("", options=compare_labels, max_selections=3)
-
-    if selected_labels:
-        st.markdown("---")
-        st.subheader("📋 Comparativo de Cargos Selecionados")
-
-        selected_rows = []
-        for label in selected_labels:
-            name = label.split(" (GG")[0].strip()
-            grade = re.findall(r"GG\s*(\d+)", label)
-            grade = grade[0] if grade else None
-            sel = df[(df["Job Profile"].str.strip().str.lower() == name.lower())]
-            if grade:
-                sel = sel[sel["Global Grade"].astype(str).str.strip() == grade]
-            if not sel.empty:
-                selected_rows.append(sel.iloc[0])
-
-        n = len(selected_rows)
-        grid_class = f"ja-grid cols-{n}"
-
-        html_cells = [f"<div><div class='result-title'>{r['Job Profile']}</div><div class='result-sim'>GG {r['Global Grade']}</div></div>" for r in selected_rows]
-        st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
-
-        html_cells = [f"<div class='ja-class'><b>Família:</b> {r['Job Family']}<br><b>Subfamília:</b> {r['Sub Job Family']}<br><b>Carreira:</b> {r['Career Path']}<br><b>Função:</b> {r['Function Code']}<br><b>Disciplina:</b> {r['Discipline Code']}<br><b>Código:</b> {r['Full Job Code']}</div>" for r in selected_rows]
-        st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
-
-        SECTIONS = [
-            ("🧭", "Sub Job Family Description", lambda r: r.get("Sub Job Family Description")),
-            ("🧠", "Job Profile Description",   lambda r: r.get("Job Profile Description")),
-            ("🎯", "Role Description",          lambda r: r.get("Role Description")),
-            ("🏅", "Grade Differentiator",      lambda r: r.get("Grade Differentiator") or r.get("Grade Differentiatior")),
-            ("📊", "KPIs / Specific Parameters", lambda r: r.get("Specific parameters KPIs") or r.get("Specific parameters / KPIs")),
-            ("🎓", "Qualifications", lambda r: r.get("Qualifications")),
-        ]
-
-        for emoji, title, getter in SECTIONS:
-            html_cells = []
-            for r in selected_rows:
-                raw = getter(r)
-                html_cells.append(f"<div class='ja-sec'><div class='ja-sec-h'><span class='ja-ic'>{emoji}</span><span class='ja-ttl'>{title}</span></div><div class='ja-card'>{raw or '-'}</div></div>")
-            st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
-
-elif buscar:
-    st.warning("⚠️ Por favor, digite uma descrição para buscar o cargo correspondente.")
-else:
-    st.info("✏️ Digite uma descrição acima e clique em 'Encontrar cargos correspondentes'.")
+    st.markdown("</div>", unsafe_allow_html=True)
