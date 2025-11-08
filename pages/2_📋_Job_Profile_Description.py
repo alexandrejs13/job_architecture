@@ -10,30 +10,48 @@ if "job_profile" not in data:
 else:
     df = data["job_profile"]
 
-    # === LINHA DE FILTROS PRINCIPAIS ===
-    col1, col2, col3 = st.columns(3)
+    # === LINHA DE FILTROS PRINCIPAIS (com tamanhos personalizados) ===
+    col1, col2, col3 = st.columns([1, 1.8, 0.8])  # Subfamília mais larga, trilha menor
 
     with col1:
         families = sorted(df["Job Family"].dropna().unique())
-        fam = st.selectbox("Família", families)
+        fam = st.selectbox("Família", families, key="fam_select")
 
     filtered = df[df["Job Family"] == fam]
 
     with col2:
         subs = sorted(filtered["Sub Job Family"].dropna().unique())
-        sub = st.selectbox("Subfamília", subs)
+        sub = st.selectbox("Subfamília", subs, key="sub_select")
 
     sub_df = filtered[filtered["Sub Job Family"] == sub]
 
     with col3:
         career_options = sorted(sub_df["Career Path"].dropna().unique())
-        career = st.selectbox("Trilha de Carreira", career_options)
+        career = st.selectbox("Trilha de Carreira", career_options, key="career_select")
 
     career_df = sub_df[sub_df["Career Path"] == career]
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    # === CSS para expandir texto selecionado ===
+    st.markdown(
+        """
+        <style>
+        /* Permite visualizar o texto completo dentro dos selectboxes após a seleção */
+        div[data-baseweb="select"] > div {
+            white-space: normal !important;
+            height: auto !important;
+            min-height: 38px;
+        }
+        div[data-baseweb="select"] span {
+            white-space: normal !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
-    # === LISTA DE CARGOS (MULTISELECT) ===
+    # === SELETOR DE CARGOS (MULTISELECT) ===
+    st.markdown("<div style='margin-top:-10px'></div>", unsafe_allow_html=True)
+
     def format_profile(row):
         grade = row.get("Global Grade", "")
         title = row.get("Job Profile", "")
@@ -46,16 +64,14 @@ else:
     selected_labels = st.multiselect(
         "Selecione até 3 cargos para comparar:",
         options=pick_options,
-        max_selections=3
+        max_selections=3,
+        help="Selecione até três cargos da mesma trilha de carreira para comparar suas descrições lado a lado."
     )
 
-    if not selected_labels:
-        st.info("Selecione até 3 cargos para comparar lado a lado.")
-    else:
+    if selected_labels:
         st.markdown("---")
         st.markdown("### 🧾 Comparativo de Cargos Selecionados")
 
-        # === CRIA AS COLUNAS DE COMPARAÇÃO ===
         cols = st.columns(len(selected_labels))
 
         for idx, label in enumerate(selected_labels):
