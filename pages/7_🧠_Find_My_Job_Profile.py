@@ -141,7 +141,7 @@ if query:
         query_emb = model.encode(query, convert_to_tensor=True)
         scores = util.cos_sim(query_emb, embeddings)[0]
         top_k = min(10, len(df))
-        best_idx = np.argsort(scores)[-top_k:][::-1]
+        best_idx = np.argsort(scores.cpu().numpy())[-top_k:][::-1]
 
         st.markdown("## 🎯 Cargos mais compatíveis:")
 
