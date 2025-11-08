@@ -1,0 +1,24 @@
+:root {
+  --sig-blue: #1E56E0;
+  --sig-bg: #f7f9ff;
+  --sig-card: #ffffff;
+  --sig-border: #e1e5f2;
+}
+
+body {
+  background-color: var(--sig-bg);
+  font-family: 'Inter', sans-serif;
+}
+
+.block-container {
+  padding: 2rem 3rem;
+}
+
+.card {
+  background-color: var(--sig-card);
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--sig-border);
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.05);
+}
