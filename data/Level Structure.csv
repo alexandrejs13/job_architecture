@@ -1,0 +1,55 @@
+Global Grade,Career Path,Level ,Career Path-SG,Career Band,Career Level,CL-SG
+21,Management,CEO,Management-21,EX,EX,EX-21
+20,Management,Executive Manager,Management-20,EX,EX,EX-20
+19,Management,Executive Manager,Management-19,EX,EX,EX-19
+18,Management,Executive Manager,Management-18,EX,EX,EX-18
+17,Management,Senior Group Manager,Management-17,EX,EX,EX-17
+16,Management,Group Manager,Management-16,M,M4,M4-16
+15,Management,Senior Manager,Management-15,M,M3,M3-15
+14,Management,Senior Manager,Management-14,M,M3,M3-14
+13,Management,Manager,Management-13,M,M2,M2-13
+12,Management,Manager,Management-12,M,M2,M2-12
+11,Management,Supervisor,Management-11,M,M1,M1-11
+10,Management,Supervisor,Management-10,M,M1,M1-10
+16,Professional,Lead Expert,Professional-16,P,P6,P6-16
+15,Professional,Lead Expert,Professional-15,P,P5,P5-15
+14,Professional,Senior Expert,Professional-14,P,P4,P4-14
+13,Professional,Senior Expert,Professional-13,P,P4,P4-13
+12,Professional,Expert,Professional-12,P,P3,P3-12
+11,Professional,Expert,Professional-11,P,P3,P3-11
+10,Professional,Senior Specialist,Professional-10,P,P2,P2-10
+09,Professional,Senior Specialist,Professional-09,P,P2,P2-09
+08,Professional,Specialist,Professional-08,P,P1,P1-08
+07,Professional,Assistant / Analyst,Professional-07,U,U3,U3-07
+06,Professional,Assistant / Analyst,Professional-06,U,U2,U2-06
+05,Professional,Assistant / Analyst,Professional-05,U,U2,U2-05
+,Apprentice/Intern,Apprentice/Intern,Apprentice/Intern-04,P,P0,P0-04
+16,Projects,Program Manager,Projects-16,M,M4,M4-16
+15,Projects,Program Manager,Projects-15,M,M3,M3-15
+14,Projects,Senior Project Manager,Projects-14,M,M3,M3-14
+13,Projects,Senior Project Manager,Projects-13,P,P4,P4-13
+12,Projects,Project Manager,Projects-12,P,P3,P3-12
+11,Projects,Project Manager,Projects-11,P,P3,P3-11
+10,Projects,Senior Project Coordinator,Projects-10,P,P2,P2-10
+09,Projects,Senior Project Coordinator,Projects-09,P,P2,P2-09
+08,Projects,Project Coordinator,Projects-08,P,P1,P1-08
+16,Sales,Lead Sales Manager,Sales-16,S,S6,S6-16
+15,Sales,Lead Sales Manager,Sales-15,S,S5,S5-15
+14,Sales,Senior Sales Manager,Sales-14,S,S4,S4-14
+13,Sales,Senior Sales Manager,Sales-13,S,S4,S4-13
+12,Sales,Sales Manager,Sales-12,S,S3,S3-12
+11,Sales,Sales Manager,Sales-11,S,S3,S3-11
+10,Sales,Senior Sales Coordinator,Sales-10,S,S2,S2-10
+09,Sales,Senior Sales Coordinator,Sales-09,S,S2,S2-09
+08,Sales,Sales Coordinator,Sales-08,S,S1,S1-08
+10,Operations,Senior Technician,Operations-10,T,T4,T4-10
+09,Operations,Technician,Operations-09,T,T4,T4-09
+08,Operations,Senior Operator,Operations-08,W,W4,W4-08
+08,Operations / Technician,Technician,Operations / Technician-08,T,T3,T3-08
+07,Operations,Senior Operator,Operations-07,W,W4,W4-07
+07,Operations / Technician,Technician,Operations / Technician-07,T,T3,T3-07
+06,Operations,Operator,Operations-06,W,W3,W3-06
+05,Operations,Operator,Operations-05,W,W2,W2-05
+04,Operations,Operator,Operations-04,W,W2,W2-04
+03,Operations,Worker,Operations-03,W,W1,W1-03
+02,Operations,Worker,Operations-02,W,W1,W1-02
