@@ -2,9 +2,6 @@ import streamlit as st
 import pandas as pd
 import io, base64, random
 
-# ===========================================================
-# CONFIGURAÇÃO DA PÁGINA
-# ===========================================================
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 
 st.markdown("""
@@ -15,7 +12,7 @@ st.markdown("""
   margin: 0 auto !important;
 }
 
-/* Header */
+/* ======= HEADER ======= */
 h1 {
   color: #1E56E0 !important;
   font-weight: 800 !important;
@@ -24,13 +21,7 @@ h1 {
   display: flex; align-items: center; gap: 8px;
 }
 
-/* Selectors */
-div[data-baseweb="select"] > div {
-  min-height: 44px !important;
-  font-weight: 600 !important;
-}
-
-/* Scroll principal */
+/* ======= ÁREA DE SCROLL ======= */
 .map-wrapper {
   overflow-x: auto;
   overflow-y: hidden;
@@ -41,26 +32,26 @@ div[data-baseweb="select"] > div {
   white-space: nowrap;
 }
 
-/* GRID COMPLETO */
+/* ======= GRID ======= */
 .jobmap-grid {
   display: grid;
   border-collapse: collapse;
   font-size: 0.85rem;
   text-align: center;
   width: max-content;
+  position: relative; /* mantém o contexto */
+  z-index: 0; /* impede criação de novos contextos */
 }
-
-/* Bordas (Grid visual) */
 .jobmap-grid > div {
   border: 1px solid #ddd;
   box-sizing: border-box;
 }
 
-/* Cabeçalhos principais */
+/* ======= CABEÇALHOS ======= */
 .header-family {
   font-weight: 800;
   color: #fff;
-  padding: 8px;
+  padding: 10px;
   border-right: 2px solid #fff;
   white-space: normal;
   font-size: 1rem;
@@ -81,20 +72,21 @@ div[data-baseweb="select"] > div {
   text-align: center;
 }
 
-/* Coluna GG */
+/* ======= COLUNA “GG” (TOTALMENTE FIXA) ======= */
 .grade-header {
   font-weight: 800;
   font-size: 0.95rem;
   background: #1E56E0;
   color: #fff;
   padding: 8px;
-  position: sticky;
-  left: 0;
-  z-index: 5;
   border-right: 2px solid #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 25 !important; /* fica sempre acima */
 }
 .grade-cell {
   font-weight: 700;
@@ -103,13 +95,13 @@ div[data-baseweb="select"] > div {
   padding: 6px 8px;
   position: sticky;
   left: 0;
-  z-index: 3;
+  z-index: 20 !important; /* garante sobreposição */
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Card */
+/* ======= CARDS ======= */
 .job-card {
   background: #fafafa;
   border-left: 4px solid #1E56E0;
@@ -130,23 +122,19 @@ div[data-baseweb="select"] > div {
   background: #f0f5ff;
 }
 
-/* Zebra rows */
+/* ======= ZEBRA ======= */
 .grade-row:nth-child(even) {
   background: #fcfcfc;
 }
 
-/* Responsividade */
-@media (max-width: 1500px) {
-  .block-container { zoom: 0.9; }
-}
-@media (max-width: 1200px) {
-  .block-container { zoom: 0.8; }
-}
+/* ======= RESPONSIVIDADE ======= */
+@media (max-width: 1500px) { .block-container { zoom: 0.9; } }
+@media (max-width: 1200px) { .block-container { zoom: 0.8; } }
 </style>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# CARREGAR DADOS
+# DADOS
 # ===========================================================
 from utils.data_loader import load_data
 data = load_data()
@@ -189,7 +177,7 @@ if filtered.empty:
     st.stop()
 
 # ===========================================================
-# CORES AUTOMÁTICAS POR FAMÍLIA
+# CORES POR FAMÍLIA
 # ===========================================================
 families = sorted(filtered["Job Family"].unique().tolist())
 random.seed(10)
@@ -200,12 +188,11 @@ palette = [
 fam_colors = {f: palette[i % len(palette)] for i, f in enumerate(families)}
 
 # ===========================================================
-# GERAÇÃO DO MAPA HORIZONTAL
+# GRADE HORIZONTAL
 # ===========================================================
 grades = sorted(filtered["Global Grade"].unique(), key=lambda x: int(x) if x.isdigit() else x)
 subfam_map = {f: sorted(filtered[filtered["Job Family"] == f]["Sub Job Family"].unique().tolist()) for f in families}
 
-# Layout geral
 col_sizes = [100]
 for f in families:
     col_sizes += [140 for _ in subfam_map[f]]
@@ -215,22 +202,22 @@ html = "<div class='map-wrapper'>"
 
 # Cabeçalho 1 (Família)
 html += f"<div class='jobmap-grid' style='{grid_template}'>"
-html += "<div class='grade-header' rowspan='2'>GG</div>"
+html += "<div class='grade-header'>GG</div>"
 for f in families:
     span = len(subfam_map[f])
     color = fam_colors[f]
     html += f"<div class='header-family' style='grid-column: span {span}; background:{color};'>{f}</div>"
 html += "</div>"
 
-# Cabeçalho 2 (Sub Family)
+# Cabeçalho 2 (Subfamily)
 html += f"<div class='jobmap-grid' style='{grid_template}'>"
-html += "<div style='background:#fff;'></div>"
+html += "<div class='grade-cell' style='background:#fff; z-index:22 !important;'></div>"
 for f in families:
     for sf in subfam_map[f]:
         html += f"<div class='header-subfamily'>{sf}</div>"
 html += "</div>"
 
-# Linhas (GG + cards)
+# Linhas (Grades)
 for g in grades:
     html += f"<div class='jobmap-grid grade-row' style='{grid_template}'>"
     html += f"<div class='grade-cell'>GG {g}</div>"
@@ -249,22 +236,4 @@ for g in grades:
     html += "</div>"
 
 html += "</div>"
-
 st.markdown(html, unsafe_allow_html=True)
-
-# ===========================================================
-# EXPORTAR PARA EXCEL
-# ===========================================================
-def gerar_excel(dframe):
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-        dframe.to_excel(writer, index=False, sheet_name="Job Map Consolidado")
-        for fam, fam_df in dframe.groupby("Job Family"):
-            fam_df.to_excel(writer, index=False, sheet_name=fam[:30])
-    return output.getvalue()
-
-st.markdown("---")
-excel_data = gerar_excel(filtered)
-b64 = base64.b64encode(excel_data).decode()
-href = f'<a href="data:application/octet-stream;base64,{b64}" download="Job_Map_Corporativo.xlsx" class="stDownloadButton">📤 Baixar Job Map Corporativo (Excel)</a>'
-st.markdown(href, unsafe_allow_html=True)
