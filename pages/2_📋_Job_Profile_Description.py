@@ -1,154 +1,165 @@
+import re
 import streamlit as st
-import pandas as pd
 from utils.data_loader import load_data
-import html
+from utils.ui_components import section
 
-# ==========================================
-# Configuração da página
-# ==========================================
-st.set_page_config(page_title="Job Profile Description", layout="wide")
-
-st.markdown("""
-<style>
-.main {
-    max-width: 1900px;
-    margin: 0 auto;
-    padding: 1rem 2rem;
-}
-.section-title {
-    font-size: 1.3rem !important;
-    font-weight: 700 !important;
-    color: #1d4ed8;
-    margin-top: 1.8rem;
-    margin-bottom: 0.6rem;
-}
-.card {
-    background: #f9fafb;
-    border-radius: 10px;
-    padding: 1.2rem 1.4rem;
-    margin-bottom: 1rem;
-    box-shadow: 0px 2px 5px rgba(0,0,0,0.08);
-    border-left: 5px solid #2563eb;
-    font-size: 0.96rem;
-    line-height: 1.55;
-    text-align: justify;
-}
-.card-title {
-    font-weight: 700;
-    color: #1e3a8a;
-    font-size: 1.05rem;
-    margin-bottom: 0.4rem;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ==========================================
-# Funções utilitárias
-# ==========================================
-def fmt(text: str) -> str:
-    """Formatar texto seguro em HTML com <br>."""
-    if not text or str(text).strip() in {"-", "nan", "None"}:
-        return "-"
-    safe = html.escape(str(text))
-    parts = [p.strip() for p in safe.split("\n") if p.strip()]
-    return "<br>".join(parts)
-
-def get_cell(row, cols):
-    if isinstance(cols, str):
-        return str(row.get(cols, "")).strip()
-    for c in cols:
-        if c in row and str(row[c]).strip():
-            return str(row[c]).strip()
-    return ""
-
-# ==========================================
-# Carregamento de dados
-# ==========================================
 data = load_data()
-if not data or "job_profile" not in data:
-    st.error("Erro: arquivo 'Job Profile.csv' não encontrado.")
-    st.stop()
+section("📋 Job Profile Description")
 
-df = data["job_profile"].copy()
-df.columns = [c.strip() for c in df.columns]
-df = df.applymap(lambda x: str(x).strip() if isinstance(x, str) else x).fillna("")
+if "job_profile" not in data:
+    st.error("Job Profile.csv não encontrado em /data")
+else:
+    df = data["job_profile"]
 
-# ==========================================
-# Filtros principais
-# ==========================================
-st.markdown("## 📋 Job Profile Description")
+    # ===== CSS visual e spacing =====
+    st.markdown(
+        """
+        <style>
+        .compare-box { margin-top: -18px; }
+        .compare-box .compare-label {
+            margin: 4px 0 6px 0;
+            font-weight: 600;
+            color: #2b2d42;
+        }
+        div[data-baseweb="tag"] {
+            max-width: none !important;
+        }
+        div[data-baseweb="tag"] span {
+            white-space: normal !important;
+            word-break: break-word !important;
+            line-height: 1.25 !important;
+            font-weight: 600 !important;
+            font-size: 0.88rem !important;
+        }
+        div[data-baseweb="select"] > div {
+            min-height: 44px !important;
+            height: auto !important;
+        }
+        .description-card {
+            background-color: #f9f9f9;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border-left: 4px solid #1E56E0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            display: inline-block;
+            max-width: 95%;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
-c1, c2, c3 = st.columns([1.1, 2.5, 1.2], gap="large")
-with c1:
-    families = sorted(df["Job Family"].dropna().unique())
-    fam = st.selectbox("Família", families)
-sub_df = df[df["Job Family"].str.lower().str.strip() == fam.lower().strip()]
+    # ===== FILTROS =====
+    col1, col2, col3 = st.columns([1, 2, 0.8])
+    with col1:
+        families = sorted(df["Job Family"].dropna().unique())
+        fam = st.selectbox("Família", families)
+    filtered = df[df["Job Family"] == fam]
 
-with c2:
-    subs = sorted(sub_df["Sub Job Family"].dropna().unique())
-    subfam = st.selectbox("Subfamília", subs)
+    with col2:
+        subs = sorted(filtered["Sub Job Family"].dropna().unique())
+        sub = st.selectbox("Subfamília", subs)
+    sub_df = filtered[filtered["Sub Job Family"] == sub]
 
-with c3:
-    paths = sorted(sub_df["Career Path"].dropna().unique())
-    path = st.selectbox("Trilha de Carreira", paths)
+    with col3:
+        careers = sorted(sub_df["Career Path"].dropna().unique())
+        career = st.selectbox("Trilha de Carreira", careers)
+    career_df = sub_df[sub_df["Career Path"] == career]
 
-view = df[
-    (df["Job Family"].str.lower().str.strip() == fam.lower().strip()) &
-    (df["Sub Job Family"].str.lower().str.strip() == subfam.lower().strip()) &
-    (df["Career Path"].str.lower().str.strip() == path.lower().strip())
-].copy()
+    # ===== MULTISELECT =====
+    def format_profile(row):
+        g = row.get("Global Grade", "")
+        p = row.get("Job Profile", "")
+        return f"GG{int(g)} — {p}" if str(g).isdigit() else p
 
-if view.empty:
-    st.warning("Nenhum cargo encontrado para os filtros selecionados.")
-    st.stop()
+    career_df_sorted = career_df.sort_values(by="Global Grade", ascending=False)
+    pick_options = career_df_sorted.apply(format_profile, axis=1).tolist()
 
-view["__display__"] = view.apply(lambda x: f"{x['Global Grade']} — {x['Job Profile']}", axis=1)
+    st.markdown('<div class="compare-box">', unsafe_allow_html=True)
+    st.markdown('<div class="compare-label">Selecione até 3 cargos para comparar:</div>', unsafe_allow_html=True)
+    selected_labels = st.multiselect(
+        "",
+        options=pick_options,
+        max_selections=3,
+        label_visibility="collapsed"
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown("<div style='margin-top:-10px'></div>", unsafe_allow_html=True)
-picks = st.multiselect("Selecione até 3 cargos para comparar:", view["__display__"].tolist(), max_selections=3)
-if not picks:
-    st.stop()
+    # ===== RESULTADO =====
+    if selected_labels:
+        st.markdown("---")
+        st.markdown("### 🧾 Comparativo de Cargos Selecionados")
 
-rows = [view.loc[view["__display__"] == d].iloc[0] for d in picks]
-n = len(rows)
+        cols = st.columns(len(selected_labels))
 
-# ==========================================
-# Seções da descrição (com títulos por card)
-# ==========================================
-SECTIONS = [
-    ("Sub Job Family Description", lambda r: get_cell(r, "Sub Job Family Description")),
-    ("Job Profile Description",   lambda r: get_cell(r, "Job Profile Description")),
-    ("Role Description",          lambda r: get_cell(r, "Role Description")),
-    ("Grade Differentiator",      lambda r: get_cell(r, ["Grade Differentiator","Grade Differentiation","Grade Differentiatior"])),
-    ("Qualifications",            lambda r: get_cell(r, "Qualifications")),
-    ("KPIs / Specific Parameters",lambda r: get_cell(r, ["Specific parameters KPIs","Specific parameters / KPIs"])),
-]
+        for idx, label in enumerate(selected_labels):
+            with cols[idx]:
+                # --- identifica grade e nome, aceitando vários tipos de travessão ---
+                parts = re.split(r"\s*[–—-]\s*", label)  # aceita hífen, en ou em dash
+                label_grade = parts[0].replace("GG", "").strip() if parts else ""
+                label_title = parts[1].strip() if len(parts) > 1 else label.strip()
 
-competency_cols = [c for c in df.columns if c.strip().lower().startswith("competency")]
-if competency_cols:
-    for i in range(1, 4):
-        colname = f"Competency {i}"
-        if colname in df.columns:
-            SECTIONS.append((colname, lambda r, col=colname: get_cell(r, col)))
+                # --- busca tolerante por espaços e maiúsculas/minúsculas ---
+                selected_row_df = career_df_sorted[
+                    career_df_sorted["Job Profile"].str.strip().str.lower() == label_title.lower()
+                ]
+                if label_grade and "Global Grade" in career_df_sorted.columns:
+                    selected_row_df = selected_row_df[
+                        selected_row_df["Global Grade"].astype(str).str.strip() == label_grade
+                    ]
 
-# ==========================================
-# Renderização — títulos dentro de cada card + alinhamento lado a lado
-# ==========================================
-for title, getter in SECTIONS:
-    if not any(getter(r) and getter(r).strip() not in {"", "-", "nan", "None"} for r in rows):
-        continue
+                if selected_row_df.empty:
+                    st.warning(f"Cargo não encontrado: {label}")
+                    continue
 
-    st.markdown(f"<div class='section-title'>{title}</div>", unsafe_allow_html=True)
-    cols = st.columns(n, gap="large")
+                selected_row = selected_row_df.iloc[0]
 
-    for col, row in zip(cols, rows):
-        with col:
-            grade = row.get("Global Grade", "")
-            job = row.get("Job Profile", "")
-            card_title = f"{grade} — {job}" if grade or job else ""
-            content = fmt(getter(row))
+                # --- Cabeçalho do Cargo ---
+                st.markdown(f"#### {selected_row['Job Profile']}")
+                st.markdown(
+                    f"<p style='color:#1E56E0; font-weight:bold;'>GG {selected_row['Global Grade']}</p>",
+                    unsafe_allow_html=True
+                )
 
-            st.markdown(
-                f"<div class='card'><div class='card-title'>{card_title}</div>{content}</div>",
-                unsafe_allow_html=True
-            )
+                # --- Bloco de Classificação ---
+                st.markdown(
+                    f"""
+                    <div style='background-color:#ffffff; padding:10px; border-radius:8px; border:1px solid #e0e4f0; display:inline-block;'>
+                        <b>Família:</b> {selected_row['Job Family']}<br>
+                        <b>Subfamília:</b> {selected_row['Sub Job Family']}<br>
+                        <b>Carreira:</b> {selected_row['Career Path']}<br>
+                        <b>Função:</b> {selected_row['Function Code']}<br>
+                        <b>Disciplina:</b> {selected_row['Discipline Code']}<br>
+                        <b>Código:</b> {selected_row['Full Job Code']}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # --- Seções descritivas ---
+                description_sections = [
+                    ("Sub Job Family Description", "🧭 Sub Job Family Description"),
+                    ("Job Profile Description", "🧠 Job Profile Description"),
+                    ("Role Description", "🎯 Role Description"),
+                    ("Grade Differentiation", "🏅 Grade Differentiation"),
+                    ("Specific parameters / KPIs", "📊 KPIs / Specific Parameters"),
+                    ("Competency", "💡 Competency"),
+                    ("Qualifications", "🎓 Qualifications")
+                ]
+
+                for col_name, title in description_sections:
+                    if (
+                        col_name in selected_row
+                        and str(selected_row[col_name]).strip()
+                        and str(selected_row[col_name]).lower() != "nan"
+                    ):
+                        st.markdown(f"**{title}**")
+                        st.markdown(
+                            f"<div class='description-card'>{selected_row[col_name]}</div>",
+                            unsafe_allow_html=True
+                        )
