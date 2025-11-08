@@ -1,5 +1,5 @@
 # ==============================================================
-# 🧩 Job Match — Versão Estável e Blindada
+# 🧩 Job Match — Versão definitiva (mapeamento exato de colunas)
 # ==============================================================
 
 import streamlit as st
@@ -10,65 +10,112 @@ from sentence_transformers import SentenceTransformer, util
 
 st.set_page_config(page_title="🧩 Job Match", layout="wide")
 
+# -------------------------------
+# Util: normalização de cabeçalhos
+# -------------------------------
+def _norm(s: str) -> str:
+    """
+    Normaliza nomes de colunas: minúsculas, remove acentos e tudo que não for [a-z0-9].
+    Ex.: "Sub Job Family " -> "subjobfamily"
+    """
+    if not isinstance(s, str):
+        s = str(s)
+    s = s.strip().lower()
+    # troca acentos básicos
+    acentos = (("áàâãä", "a"), ("éèêë", "e"), ("íìîï", "i"), ("óòôõö", "o"), ("úùûü", "u"), ("ç", "c"))
+    for grupo, rep in acentos:
+        for ch in grupo:
+            s = s.replace(ch, rep)
+    s = re.sub(r"[^a-z0-9]", "", s)  # remove separadores
+    return s
 
-# ==============================================================
-# 1️⃣ Carregamento robusto da base
-# ==============================================================
+# -------------------------------
+# Colunas que queremos (mapeamento exato por nome normalizado)
+# -------------------------------
+# Base real do seu CSV (pelos exemplos que você mandou):
+# "Job Family", "Sub Job Family", "Job Profile", "Function Code", "Discipline Code",
+# "Career Path", "Global Grade", "Sub Job Family Description", "Job Profile Description",
+# "Role Description", "Grade Differentiatior", "Qualifications", "Specific parameters KPIs"
+COL_MAP_CANON = {
+    # origem normalizada -> destino padronizado
+    "jobfamily": "Family",
+    "subjobfamily": "Subfamily",
+    "jobprofile": "Job Title",
+    "jobtitle": "Job Title",
+    "globalgrade": "Grade",
+    "grade": "Grade",
 
+    "functioncode": "Function Code",
+    "disciplinecode": "Discipline Code",
+    "careerpath": "Career Path",
+
+    "subjobfamilydescription": "Sub Job Family Description",
+    "jobprofiledescription": "Job Profile Description",
+    "roledescription": "Role Description",
+
+    # variações de escrita do CSV
+    "gradedifferentiatior": "Grade Differentiator",  # (com erro de grafia no CSV)
+    "gradedifferentiator": "Grade Differentiator",
+    "gradedifferentiators": "Grade Differentiator",
+
+    # KPIs
+    "specificparameterskpis": "KPIs/Specific Parameters",
+    "specificparameterskpiss": "KPIs/Specific Parameters",
+    "specificparameters": "KPIs/Specific Parameters",
+    "kpisspecificparameters": "KPIs/Specific Parameters",
+
+    "qualifications": "Qualifications",
+}
+
+OBRIGATORIAS = [
+    "Family", "Subfamily", "Job Title", "Grade",
+    "Sub Job Family Description", "Job Profile Description", "Role Description",
+    "Grade Differentiator", "KPIs/Specific Parameters", "Qualifications"
+]
+
+# -------------------------------
+# Carregamento robusto de base
+# -------------------------------
 @st.cache_data(show_spinner=False)
 def load_data():
     path = "data/Job Profile.csv"
 
-    # Tenta ler com separadores possíveis
+    # Tenta detectar separador automaticamente
     try:
-        df = pd.read_csv(path, sep=",", dtype=str, engine="python", on_bad_lines="skip")
+        df = pd.read_csv(path, sep=None, engine="python", dtype=str, on_bad_lines="skip")
     except Exception:
-        df = pd.read_csv(path, sep=";", dtype=str, engine="python", on_bad_lines="skip")
+        # fallback para vírgula
+        try:
+            df = pd.read_csv(path, sep=",", engine="python", dtype=str, on_bad_lines="skip")
+        except Exception:
+            # fallback para ponto e vírgula
+            df = pd.read_csv(path, sep=";", engine="python", dtype=str, on_bad_lines="skip")
 
     df = df.fillna("")
 
-    # Normaliza os nomes das colunas
-    clean_map = {}
-    for c in df.columns:
-        key = re.sub(r"[^a-z0-9]", "", c.strip().lower())
-        clean_map[key] = c
+    # Cria mapa: normalizado -> original
+    norm2orig = {_norm(c): c for c in df.columns}
 
-    def find_col(possible_keys):
-        for pk in possible_keys:
-            for ck, original in clean_map.items():
-                if pk in ck:
-                    return original
-        return None
+    # Monta renomeação exata (apenas quando existir normalizado no CSV)
+    rename_map = {}
+    for norm_src, canon_dst in COL_MAP_CANON.items():
+        if norm_src in norm2orig:
+            rename_map[norm2orig[norm_src]] = canon_dst
 
-    # Detecta colunas de Family e Subfamily
-    family_col = find_col(["jobfamily", "family"])
-    subfamily_col = find_col(["subfamily", "subjobfamily", "subfamilydescription"])
+    # Renomeia o que encontrou
+    if rename_map:
+        df = df.rename(columns=rename_map)
 
-    # Garante que Family/Subfamily existam
-    if family_col and family_col in df.columns:
-        df.rename(columns={family_col: "Family"}, inplace=True)
-    else:
-        df["Family"] = ""
-
-    if subfamily_col and subfamily_col in df.columns:
-        df.rename(columns={subfamily_col: "Subfamily"}, inplace=True)
-    else:
-        df["Subfamily"] = ""
-
-    # Normaliza capitalização
-    df["Family"] = df["Family"].astype(str).str.strip().str.title()
-    df["Subfamily"] = df["Subfamily"].astype(str).str.strip().str.title()
-
-    # Garante colunas obrigatórias
-    obrigatorias = [
-        "Job Title", "Grade", "Sub Job Family Description", "Job Profile Description",
-        "Role Description", "Grade Differentiator", "KPIs/Specific Parameters", "Qualifications"
-    ]
-    for col in obrigatorias:
+    # Garante existência das obrigatórias (evita KeyError)
+    for col in OBRIGATORIAS:
         if col not in df.columns:
             df[col] = ""
 
-    # Concatena texto semântico
+    # Normaliza capitalização de Family/Subfamily
+    df["Family"] = df["Family"].astype(str).str.strip().str.title()
+    df["Subfamily"] = df["Subfamily"].astype(str).str.strip().str.title()
+
+    # Texto semântico consolidado (para comparar)
     df["Merged_Text"] = (
         "Job Title: " + df["Job Title"].fillna("") +
         " | Family: " + df["Family"].fillna("") +
@@ -82,58 +129,50 @@ def load_data():
 
     return df
 
-
-# ==============================================================
-# 2️⃣ Carrega base e modelo
-# ==============================================================
-
+# -------------------------------
+# Carrega base e modelo
+# -------------------------------
 df = load_data()
 if df.empty:
-    st.error("⚠️ A base está vazia ou corrompida. Verifique o arquivo 'data/Job Profile.csv'.")
+    st.error("⚠️ A base está vazia ou corrompida. Verifique 'data/Job Profile.csv'.")
     st.stop()
 
+# Se Family/Subfamily não existirem de fato, não segue (evita pick list louca)
+if df["Family"].eq("").all():
+    st.error("⚠️ Coluna 'Job Family' não foi localizada no CSV. Confirme o cabeçalho exato.")
+    st.stop()
+
+# Modelo local leve e rápido
 model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
 
-
-# ==============================================================
-# 3️⃣ Layout principal
-# ==============================================================
-
+# -------------------------------
+# UI
+# -------------------------------
 st.markdown("## 🧩 Job Match")
-st.write("""
-Descubra o **cargo mais compatível** com suas responsabilidades e área de atuação.  
-O sistema identifica automaticamente o **nível de senioridade** e o **escopo** com base na descrição das suas atividades.
-""")
 
-# ---------- Filtros ----------
-col1, col2 = st.columns(2)
-
-with col1:
-    families = sorted([f for f in df["Family"].unique() if f])
+# Filtros (com listas estritamente derivadas das colunas corretas)
+c1, c2 = st.columns(2)
+with c1:
+    families = sorted(df.loc[df["Family"].ne(""), "Family"].unique().tolist())
     family_selected = st.selectbox("Selecione a Family", [""] + families)
 
-with col2:
+with c2:
     if family_selected:
-        subs = sorted(df[df["Family"] == family_selected]["Subfamily"].unique())
-        if len(subs) > 0:
-            subfamily_selected = st.selectbox("Selecione a Subfamily", [""] + subs)
-        else:
-            subfamily_selected = ""
+        subs = df.loc[(df["Family"] == family_selected) & (df["Subfamily"].ne("")), "Subfamily"].unique().tolist()
+        subs = sorted(subs)
+        subfamily_selected = st.selectbox("Selecione a Subfamily", [""] + subs) if subs else ""
     else:
         subfamily_selected = ""
 
-# ---------- Caixa de descrição ----------
 descricao = st.text_area(
     "✍️ Descreva brevemente suas atividades:",
-    placeholder="Exemplo: Apoio no processamento de folha de pagamento, controle de ponto e benefícios...",
+    placeholder="Ex.: Apoio no processamento de folha de pagamento, controle de ponto e benefícios…",
     height=120
 )
 
-
-# ==============================================================
-# 4️⃣ Processamento da busca
-# ==============================================================
-
+# -------------------------------
+# Busca
+# -------------------------------
 if st.button("🔍 Identificar Cargo"):
     if not family_selected or not descricao.strip():
         st.warning("⚠️ Preencha a Family e a descrição das atividades.")
@@ -147,35 +186,34 @@ if st.button("🔍 Identificar Cargo"):
         st.error("Nenhum cargo encontrado nessa Family/Subfamily.")
         st.stop()
 
-    query_emb = model.encode(descricao, convert_to_tensor=True)
-    corpus_emb = model.encode(df_filtered["Merged_Text"].tolist(), convert_to_tensor=True)
-    scores = util.cos_sim(query_emb, corpus_emb)[0].cpu().numpy()
+    # Embeddings e similaridade
+    q_emb = model.encode(descricao, convert_to_tensor=True)
+    c_emb = model.encode(df_filtered["Merged_Text"].tolist(), convert_to_tensor=True)
+    scores = util.cos_sim(q_emb, c_emb)[0].cpu().numpy()
 
     best_idx = int(np.argmax(scores))
-    best_row = df_filtered.iloc[best_idx]
+    best = df_filtered.iloc[best_idx]
     best_score = round(float(scores[best_idx]) * 100, 1)
 
-    # ---------- Resultado ----------
-    st.markdown("### 🎯 Cargo mais compatível encontrado:")
+    # Resultado (estrutura igual ao Job Profile Description)
+    st.markdown("### 🎯 Cargo mais compatível encontrado")
     with st.container():
-        st.markdown(f"### 🧩 **{best_row['Job Title']}**")
-        st.markdown(f"**Grade:** {best_row['Grade']} — **Similaridade:** {best_score:.1f}%")
-        st.markdown(f"**Family:** {best_row['Family']} | **Subfamily:** {best_row['Subfamily']}")
+        st.markdown(f"### **GG {best['Grade']} — {best['Job Title']}**")
+        st.markdown(f"**Family:** {best['Family']} | **Subfamily:** {best['Subfamily']}")
 
         st.markdown("#### 🧠 Job Profile Description")
-        st.info(best_row['Job Profile Description'] or "—")
+        st.info(best["Job Profile Description"] or "—")
 
         st.markdown("#### 🎯 Role Description")
-        st.info(best_row['Role Description'] or "—")
+        st.info(best["Role Description"] or "—")
 
-        st.markdown("#### ⚙️ Grade Differentiator")
-        st.info(best_row['Grade Differentiator'] or "—")
+        st.markdown("#### 🏅 Grade Differentiator")
+        st.info(best["Grade Differentiator"] or "—")
 
         st.markdown("#### 📊 KPIs / Specific Parameters")
-        st.info(best_row['KPIs/Specific Parameters'] or "—")
+        st.info(best["KPIs/Specific Parameters"] or "—")
 
         st.markdown("#### 🎓 Qualifications")
-        st.info(best_row['Qualifications'] or "—")
-
+        st.info(best["Qualifications"] or "—")
 else:
-    st.info("Preencha as informações e clique em **🔍 Identificar Cargo** para encontrar o Job Match mais compatível.")
+    st.info("Preencha os campos e clique em **🔍 Identificar Cargo**.")
