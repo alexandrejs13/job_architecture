@@ -7,18 +7,21 @@ from utils.ui_components import section
 # Utilidades
 # -----------------------------
 def safe_get(row, keys, default=""):
-    """Retorna o primeiro campo existente na ordem de keys."""
+    """Retorna o primeiro campo existente (ex: Grade Differentiator ou Grade Differentiation)."""
     for k in keys:
         if k in row and str(row[k]).strip() and str(row[k]).strip().lower() != "nan":
-            return str(row[k])
+            return str(row[k]).strip()
     return default
 
 def format_paragraphs(text):
-    """Divide o texto em parágrafos limpos, mantendo espaçamento natural."""
+    """Divide o texto em parágrafos curtos, mantendo legibilidade."""
     if not text:
         return "-"
     parts = re.split(r'\n+', text.strip())
-    formatted = "".join(f"<p style='margin:0 0 6px 0; text-align:justify;'>{p.strip()}</p>" for p in parts if len(p.strip()) > 2)
+    formatted = "".join(
+        f"<p style='margin:0 0 6px 0; text-align:justify;'>{p.strip()}</p>"
+        for p in parts if len(p.strip()) > 2
+    )
     return formatted
 
 # -----------------------------
@@ -32,9 +35,8 @@ if "job_profile" not in data:
 else:
     df = data["job_profile"]
 
-    # ===== CSS =====
-    st.markdown(
-        """
+    # ===== CSS visual =====
+    st.markdown("""
         <style>
         .compare-box { margin-top: -18px; }
         .compare-box .compare-label { margin: 4px 0 6px 0; font-weight: 600; color: #2b2d42; }
@@ -66,9 +68,7 @@ else:
             text-align: left;
         }
         </style>
-        """,
-        unsafe_allow_html=True
-    )
+    """, unsafe_allow_html=True)
 
     # ===== FILTROS =====
     col1, col2, col3 = st.columns([1.2, 2.2, 1])
@@ -98,12 +98,7 @@ else:
 
     st.markdown('<div class="compare-box">', unsafe_allow_html=True)
     st.markdown('<div class="compare-label">Selecione até 3 cargos para comparar:</div>', unsafe_allow_html=True)
-    selected_labels = st.multiselect(
-        "",
-        options=pick_options,
-        max_selections=3,
-        label_visibility="collapsed"
-    )
+    selected_labels = st.multiselect("", options=pick_options, max_selections=3, label_visibility="collapsed")
     st.markdown('</div>', unsafe_allow_html=True)
 
     # ===== RESULTADO =====
@@ -128,6 +123,7 @@ else:
                 if selected_row_df.empty:
                     st.warning(f"Cargo não encontrado: {label}")
                     continue
+
                 row = selected_row_df.iloc[0]
 
                 # Cabeçalho
@@ -138,8 +134,7 @@ else:
                 )
 
                 # Classificação
-                st.markdown(
-                    f"""
+                st.markdown(f"""
                     <div style='background-color:#ffffff; padding:10px; border-radius:8px;
                     border:1px solid #e0e4f0; display:inline-block; width:100%;'>
                         <b>Família:</b> {row['Job Family']}<br>
@@ -149,23 +144,21 @@ else:
                         <b>Disciplina:</b> {row['Discipline Code']}<br>
                         <b>Código:</b> {row['Full Job Code']}
                     </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+                """, unsafe_allow_html=True)
 
-                # Seções
+                # Seções (Grade Differentiator incluso)
                 sections = [
                     ("Sub Job Family Description", "🧭 Sub Job Family Description"),
                     ("Job Profile Description", "🧠 Job Profile Description"),
                     ("Role Description", "🎯 Role Description"),
-                    ("Grade Differentiation", "🏅 Grade Differentiator"),
+                    (["Grade Differentiator", "Grade Differentiation"], "🏅 Grade Differentiator"),
                     ("Specific parameters / KPIs", "📊 KPIs / Specific Parameters"),
                     ("Competency", "💡 Competency"),
                     ("Qualifications", "🎓 Qualifications")
                 ]
 
                 for key, title in sections:
-                    val = safe_get(row, [key])
+                    val = safe_get(row, key if isinstance(key, list) else [key])
                     if val:
                         formatted = format_paragraphs(val)
                         st.markdown(f"<div class='title-section'>{title}</div>", unsafe_allow_html=True)
