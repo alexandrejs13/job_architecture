@@ -56,7 +56,6 @@ def cell_card(emoji, title, html_text):
 # Página principal
 # ===========================================================
 st.set_page_config(layout="wide")
-
 data = load_data()
 section("📋 Job Profile Description")
 
@@ -67,19 +66,19 @@ if "job_profile" not in data:
 df = data["job_profile"]
 
 # ===========================================================
-# CSS — travar layout e corrigir alinhamentos
+# CSS — layout fixo e textos centralizados
 # ===========================================================
 st.markdown("""
 <style>
 
-/* ====== BLOQUEIO DE REDIMENSIONAMENTO ====== */
-.css-1d391kg, .block-container {
-  max-width: 1600px !important;     /* largura máxima do conteúdo */
-  min-width: 1600px !important;     /* evita comprimir */
-  margin: 0 auto !important;        /* centraliza o conteúdo */
+/* ====== TRAVA DE LARGURA ====== */
+.block-container {
+  max-width: 1500px !important;
+  min-width: 1500px !important;
+  margin: 0 auto !important;
 }
 
-/* barra lateral fixa */
+/* Barra lateral fixa */
 [data-testid="stSidebar"][aria-expanded="true"]{
   width: 320px !important;
   min-width: 320px !important;
@@ -90,30 +89,68 @@ st.markdown("""
 }
 
 /* ====== ESTILO PADRÃO ====== */
-.ja-p { margin: 0 0 6px 0; text-align: justify; }
-.ja-hd { display:flex; align-items:baseline; gap:10px; margin:0 0 6px 0; }
-.ja-hd-title { font-size:1.05rem; font-weight:700; }
-.ja-hd-grade { color:#1E56E0; font-weight:700; }
+.ja-p {
+  margin: 0 0 6px 0;
+  text-align: center;               /* centraliza o texto */
+  line-height: 1.5;
+}
+.ja-hd {
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:10px;
+  margin:0 0 6px 0;
+}
+.ja-hd-title {
+  font-size:1.05rem;
+  font-weight:700;
+}
+.ja-hd-grade {
+  color:#1E56E0;
+  font-weight:700;
+}
 .ja-class {
-  background:#fff; border:1px solid #e0e4f0; border-radius:8px;
-  padding:10px; width:100%; display:inline-block;
+  background:#fff;
+  border:1px solid #e0e4f0;
+  border-radius:8px;
+  padding:10px;
+  width:100%;
+  display:inline-block;
+  text-align:center;
 }
 
 /* Títulos e cartões */
-.ja-sec { margin: 0 !important; }
-.ja-sec-h { display:flex; align-items:center; gap:8px; margin:0 0 4px 0 !important; }
+.ja-sec { margin: 0 !important; text-align:center; }
+.ja-sec-h {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin:0 0 4px 0 !important;
+}
 .ja-ic { width:24px; text-align:center; line-height:1; }
-.ja-ttl { font-weight:700; color:#1E56E0; font-size:0.98rem; }
+.ja-ttl {
+  font-weight:700;
+  color:#1E56E0;
+  font-size:1rem;
+}
 .ja-card {
-  background:#f9f9f9; padding:10px 14px; border-radius:8px;
+  background:#f9f9f9;
+  padding:14px 20px;
+  border-radius:8px;
   border-left:4px solid #1E56E0;
   box-shadow:0 1px 3px rgba(0,0,0,0.05);
-  width:100%;
+  width:90%;
+  margin:0 auto;
+  text-align:center;
+  display:block;
 }
 
-/* GRID alinhado */
+/* GRID fixo */
 .ja-grid {
-  display:grid; gap:12px 12px;
+  display:grid;
+  gap:12px 12px;
+  justify-items:center;
   margin:2px 0 14px 0 !important;
 }
 .ja-grid.cols-1 { grid-template-columns: repeat(1, 1fr); }
@@ -123,15 +160,22 @@ st.markdown("""
 /* Multiselect */
 .compare-box { margin-top:-18px; }
 .compare-box .compare-label {
-  margin:4px 0 6px 0; font-weight:600; color:#2b2d42;
+  margin:4px 0 6px 0;
+  font-weight:600;
+  color:#2b2d42;
 }
 div[data-baseweb="tag"] { max-width:none !important; }
 div[data-baseweb="tag"] span {
-  white-space: normal !important; word-break: break-word !important;
-  line-height: 1.25 !important; font-weight: 600 !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  line-height: 1.25 !important;
+  font-weight: 600 !important;
   font-size: 0.88rem !important;
 }
-div[data-baseweb="select"] > div { min-height:44px !important; height:auto !important; }
+div[data-baseweb="select"] > div {
+  min-height:44px !important;
+  height:auto !important;
+}
 
 </style>
 """, unsafe_allow_html=True)
@@ -201,24 +245,19 @@ if selected_labels:
     html_cells = [f"<div>{class_box(r)}</div>" if r is not None else "<div></div>" for r in rows]
     st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
 
-    # Seções
+    # Seções principais (sem competências)
     SECTIONS = [
         ("🧭", "Sub Job Family Description", lambda r: safe_get(r, "Sub Job Family Description")),
         ("🧠", "Job Profile Description",   lambda r: safe_get(r, "Job Profile Description")),
         ("🎯", "Role Description",          lambda r: safe_get(r, "Role Description")),
         ("🏅", "Grade Differentiator",      lambda r: safe_get(r, [
-            "Grade Differentiator",
-            "Grade Differentiation",
-            "Grade Differentiatior",
-            " Grade Differentiator",
-            "Grade Differentiator ",
-            "Grade Differentiators"
+            "Grade Differentiator", "Grade Differentiation",
+            "Grade Differentiatior", "Grade Differentiators"
         ])),
-        ("📊", "KPIs / Specific Parameters", lambda r: safe_get(r, ["Specific parameters KPIs", "Specific parameters / KPIs"])),
-        ("💡", "Competency 1", lambda r: safe_get(r, "Competency 1")),
-        ("💡", "Competency 2", lambda r: safe_get(r, "Competency 2")),
-        ("💡", "Competency 3", lambda r: safe_get(r, "Competency 3")),
-        ("🎓", "Qualifications", lambda r: safe_get(r, "Qualifications")),
+        ("🎓", "Qualifications",            lambda r: safe_get(r, "Qualifications")),
+        ("📊", "KPIs / Specific Parameters", lambda r: safe_get(r, [
+            "Specific parameters KPIs", "Specific parameters / KPIs"
+        ])),
     ]
 
     for emoji, title, getter in SECTIONS:
