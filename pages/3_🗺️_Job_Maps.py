@@ -30,21 +30,24 @@ div[data-baseweb="select"] > div {
   font-weight: 600 !important;
 }
 
-/* Map container */
+/* Scroll principal */
 .map-wrapper {
   overflow-x: auto;
+  overflow-y: hidden;
   border-top: 3px solid #1E56E0;
   border-bottom: 3px solid #1E56E0;
-  padding-bottom: 1rem;
   background: #fff;
+  padding-bottom: 1rem;
+  white-space: nowrap;
 }
 
-/* Grid geral */
+/* GRID COMPLETO */
 .jobmap-grid {
   display: grid;
   border-collapse: collapse;
   font-size: 0.85rem;
   text-align: center;
+  width: max-content;
 }
 
 /* Cabeçalhos */
@@ -54,21 +57,26 @@ div[data-baseweb="select"] > div {
   padding: 6px 4px;
   text-align: center;
   border-right: 2px solid #fff;
+  white-space: normal;
 }
 .header-subfamily {
   font-weight: 700;
   background: #f0f2ff;
   padding: 6px;
   border-right: 1px solid #ddd;
+  white-space: normal;
 }
 
-/* Grades */
+/* Grade fixa à esquerda */
 .grade-cell {
   font-weight: 700;
   background: #eef3ff;
   border-right: 2px solid #1E56E0;
   border-bottom: 1px solid #ccc;
   padding: 6px 8px;
+  position: sticky;
+  left: 0;
+  z-index: 3;
 }
 
 /* Card */
@@ -81,6 +89,7 @@ div[data-baseweb="select"] > div {
   text-align: left;
   font-size: 0.82rem;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  white-space: normal;
 }
 .job-card span {
   display: block;
@@ -167,32 +176,32 @@ st.markdown("### 📊 Mapa de Cargos Completo (Corporativo)")
 # Montar grid com cabeçalho duplo (Family / SubFamily)
 col_sizes = [80]  # primeira coluna (GG)
 for f in families:
-    col_sizes += [120 for _ in subfam_map[f]]
+    col_sizes += [140 for _ in subfam_map[f]]
 grid_template = f"grid-template-columns: {' '.join(str(x)+'px' for x in col_sizes)};"
 
+html = "<div class='map-wrapper'>"
+
 # Cabeçalho 1 (Família)
-header_row = "<div class='jobmap-grid' style='" + grid_template + "'>"
-header_row += "<div></div>"
+html += f"<div class='jobmap-grid' style='{grid_template}'>"
+html += "<div style='background:#fff;'></div>"
 for f in families:
     span = len(subfam_map[f])
     color = fam_colors[f]
-    header_row += f"<div class='header-family' style='grid-column: span {span}; background:{color};'>{f}</div>"
-header_row += "</div>"
+    html += f"<div class='header-family' style='grid-column: span {span}; background:{color};'>{f}</div>"
+html += "</div>"
 
 # Cabeçalho 2 (Sub Family)
-subfam_row = "<div class='jobmap-grid' style='" + grid_template + "'>"
-subfam_row += "<div></div>"
+html += f"<div class='jobmap-grid' style='{grid_template}'>"
+html += "<div style='background:#fff;'></div>"
 for f in families:
     for sf in subfam_map[f]:
-        subfam_row += f"<div class='header-subfamily'>{sf}</div>"
-subfam_row += "</div>"
-
-st.markdown("<div class='map-wrapper'>" + header_row + subfam_row, unsafe_allow_html=True)
+        html += f"<div class='header-subfamily'>{sf}</div>"
+html += "</div>"
 
 # Linhas de Grades
 for g in grades:
-    row_html = f"<div class='jobmap-grid' style='{grid_template}'>"
-    row_html += f"<div class='grade-cell'>GG {g}</div>"
+    html += f"<div class='jobmap-grid' style='{grid_template}'>"
+    html += f"<div class='grade-cell'>GG {g}</div>"
     for f in families:
         fam_df = filtered[filtered["Job Family"] == f]
         for sf in subfam_map[f]:
@@ -202,13 +211,14 @@ for g in grades:
                     f"<div class='job-card' title='{r['Full Job Code']}'><b>{r['Job Profile']}</b><span>{r['Career Path']}</span></div>"
                     for _, r in cell_df.iterrows()
                 ])
-                row_html += f"<div>{cards}</div>"
+                html += f"<div>{cards}</div>"
             else:
-                row_html += "<div></div>"
-    row_html += "</div>"
-    st.markdown(row_html, unsafe_allow_html=True)
+                html += "<div></div>"
+    html += "</div>"
 
-st.markdown("</div>", unsafe_allow_html=True)
+html += "</div>"  # fecha wrapper
+
+st.markdown(html, unsafe_allow_html=True)
 
 # ===========================================================
 # EXPORTAR PARA EXCEL
