@@ -10,21 +10,30 @@ if "job_profile" not in data:
 else:
     df = data["job_profile"]
 
-    # === FILTROS PRINCIPAIS ===
-    families = sorted(df["Job Family"].dropna().unique())
-    fam = st.selectbox("Selecione a Família:", families)
+    # === LINHA DE FILTROS PRINCIPAIS ===
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        families = sorted(df["Job Family"].dropna().unique())
+        fam = st.selectbox("Família", families)
 
     filtered = df[df["Job Family"] == fam]
-    subs = sorted(filtered["Sub Job Family"].dropna().unique())
-    sub = st.selectbox("Selecione a Subfamília:", subs)
+
+    with col2:
+        subs = sorted(filtered["Sub Job Family"].dropna().unique())
+        sub = st.selectbox("Subfamília", subs)
 
     sub_df = filtered[filtered["Sub Job Family"] == sub]
-    career_options = sorted(sub_df["Career Path"].dropna().unique())
-    career = st.selectbox("Selecione a Trilha de Carreira:", career_options)
+
+    with col3:
+        career_options = sorted(sub_df["Career Path"].dropna().unique())
+        career = st.selectbox("Trilha de Carreira", career_options)
 
     career_df = sub_df[sub_df["Career Path"] == career]
 
-    # === LISTA DE CARGOS ===
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # === LISTA DE CARGOS (MULTISELECT) ===
     def format_profile(row):
         grade = row.get("Global Grade", "")
         title = row.get("Job Profile", "")
@@ -44,9 +53,9 @@ else:
         st.info("Selecione até 3 cargos para comparar lado a lado.")
     else:
         st.markdown("---")
-        st.markdown(f"### 🧾 Comparativo de Cargos — {career} ({sub})")
+        st.markdown("### 🧾 Comparativo de Cargos Selecionados")
 
-        # === GERA COLUNAS PARA CADA CARGO ===
+        # === CRIA AS COLUNAS DE COMPARAÇÃO ===
         cols = st.columns(len(selected_labels))
 
         for idx, label in enumerate(selected_labels):
@@ -55,18 +64,21 @@ else:
 
                 # --- Cabeçalho do Cargo ---
                 st.markdown(f"#### {selected_row['Job Profile']}")
-                st.markdown(f"<p style='color:#1E56E0; font-weight:bold;'>GG {selected_row['Global Grade']}</p>", unsafe_allow_html=True)
+                st.markdown(
+                    f"<p style='color:#1E56E0; font-weight:bold;'>GG {selected_row['Global Grade']}</p>",
+                    unsafe_allow_html=True
+                )
 
-                # --- Dados estruturais ---
+                # --- Bloco de Classificação ---
                 st.markdown(
                     f"""
                     <div style='background-color:#ffffff; padding:10px; border-radius:8px; border:1px solid #e0e4f0;'>
-                    <b>Família:</b> {selected_row['Job Family']}<br>
-                    <b>Subfamília:</b> {selected_row['Sub Job Family']}<br>
-                    <b>Carreira:</b> {selected_row['Career Path']}<br>
-                    <b>Função:</b> {selected_row['Function Code']}<br>
-                    <b>Disciplina:</b> {selected_row['Discipline Code']}<br>
-                    <b>Código:</b> {selected_row['Full Job Code']}
+                        <b>Família:</b> {selected_row['Job Family']}<br>
+                        <b>Subfamília:</b> {selected_row['Sub Job Family']}<br>
+                        <b>Carreira:</b> {selected_row['Career Path']}<br>
+                        <b>Função:</b> {selected_row['Function Code']}<br>
+                        <b>Disciplina:</b> {selected_row['Discipline Code']}<br>
+                        <b>Código:</b> {selected_row['Full Job Code']}
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -74,7 +86,7 @@ else:
 
                 st.markdown("<br>", unsafe_allow_html=True)
 
-                # --- Blocos descritivos ---
+                # --- Seções descritivas ---
                 description_sections = [
                     ("Sub Job Family Description", "🧭 Sub Job Family Description"),
                     ("Job Profile Description", "🧠 Job Profile Description"),
@@ -86,7 +98,11 @@ else:
                 ]
 
                 for col_name, title in description_sections:
-                    if col_name in selected_row and str(selected_row[col_name]).strip() and str(selected_row[col_name]).lower() != "nan":
+                    if (
+                        col_name in selected_row
+                        and str(selected_row[col_name]).strip()
+                        and str(selected_row[col_name]).lower() != "nan"
+                    ):
                         st.markdown(f"**{title}**")
                         st.markdown(
                             f"""
