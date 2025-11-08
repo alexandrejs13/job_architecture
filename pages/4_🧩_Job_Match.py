@@ -1,5 +1,5 @@
 # ==============================================================
-# 🧩 Job Match — Versão Corrigida (Family/Subfamily fix + layout limpo)
+# 🧩 Job Match — Versão Estável e Blindada
 # ==============================================================
 
 import streamlit as st
@@ -12,13 +12,14 @@ st.set_page_config(page_title="🧩 Job Match", layout="wide")
 
 
 # ==============================================================
-# 1️⃣ Função para carregar base
+# 1️⃣ Carregamento robusto da base
 # ==============================================================
 
 @st.cache_data(show_spinner=False)
 def load_data():
     path = "data/Job Profile.csv"
 
+    # Tenta ler com separadores possíveis
     try:
         df = pd.read_csv(path, sep=",", dtype=str, engine="python", on_bad_lines="skip")
     except Exception:
@@ -26,27 +27,30 @@ def load_data():
 
     df = df.fillna("")
 
-    # Normaliza nomes das colunas
-    normalized_cols = {re.sub(r'[^a-zA-Z0-9]', '', c.strip().lower()): c for c in df.columns}
+    # Normaliza os nomes das colunas
+    clean_map = {}
+    for c in df.columns:
+        key = re.sub(r"[^a-z0-9]", "", c.strip().lower())
+        clean_map[key] = c
 
-    def match_col(possibles):
-        for key, val in normalized_cols.items():
-            for p in possibles:
-                if re.search(p, key):
-                    return val
+    def find_col(possible_keys):
+        for pk in possible_keys:
+            for ck, original in clean_map.items():
+                if pk in ck:
+                    return original
         return None
 
-    # Detecta Family/Subfamily independentemente da grafia
-    family_col = match_col(["family", "jobfamily"])
-    subfamily_col = match_col(["subfamily", "subfamily", "subjobfamily"])
+    # Detecta colunas de Family e Subfamily
+    family_col = find_col(["jobfamily", "family"])
+    subfamily_col = find_col(["subfamily", "subjobfamily", "subfamilydescription"])
 
-    # Cria ou renomeia colunas
-    if family_col:
+    # Garante que Family/Subfamily existam
+    if family_col and family_col in df.columns:
         df.rename(columns={family_col: "Family"}, inplace=True)
     else:
         df["Family"] = ""
 
-    if subfamily_col:
+    if subfamily_col and subfamily_col in df.columns:
         df.rename(columns={subfamily_col: "Subfamily"}, inplace=True)
     else:
         df["Subfamily"] = ""
@@ -64,7 +68,7 @@ def load_data():
         if col not in df.columns:
             df[col] = ""
 
-    # Texto semântico
+    # Concatena texto semântico
     df["Merged_Text"] = (
         "Job Title: " + df["Job Title"].fillna("") +
         " | Family: " + df["Family"].fillna("") +
@@ -90,6 +94,7 @@ if df.empty:
 
 model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
 
+
 # ==============================================================
 # 3️⃣ Layout principal
 # ==============================================================
@@ -100,6 +105,7 @@ Descubra o **cargo mais compatível** com suas responsabilidades e área de atua
 O sistema identifica automaticamente o **nível de senioridade** e o **escopo** com base na descrição das suas atividades.
 """)
 
+# ---------- Filtros ----------
 col1, col2 = st.columns(2)
 
 with col1:
@@ -108,20 +114,21 @@ with col1:
 
 with col2:
     if family_selected:
-        sub_opts = sorted(df[df["Family"] == family_selected]["Subfamily"].unique())
-        if len(sub_opts) > 0:
-            subfamily_selected = st.selectbox("Selecione a Subfamily", [""] + sub_opts)
+        subs = sorted(df[df["Family"] == family_selected]["Subfamily"].unique())
+        if len(subs) > 0:
+            subfamily_selected = st.selectbox("Selecione a Subfamily", [""] + subs)
         else:
             subfamily_selected = ""
     else:
         subfamily_selected = ""
 
-# Caixa de texto padrão estilo Streamlit
+# ---------- Caixa de descrição ----------
 descricao = st.text_area(
     "✍️ Descreva brevemente suas atividades:",
     placeholder="Exemplo: Apoio no processamento de folha de pagamento, controle de ponto e benefícios...",
     height=120
 )
+
 
 # ==============================================================
 # 4️⃣ Processamento da busca
@@ -148,9 +155,11 @@ if st.button("🔍 Identificar Cargo"):
     best_row = df_filtered.iloc[best_idx]
     best_score = round(float(scores[best_idx]) * 100, 1)
 
+    # ---------- Resultado ----------
     st.markdown("### 🎯 Cargo mais compatível encontrado:")
     with st.container():
-        st.markdown(f"### 🧩 **{best_row['Job Title']}**  \n**Grade:** {best_row['Grade']} — **Similaridade:** {best_score:.1f}%")
+        st.markdown(f"### 🧩 **{best_row['Job Title']}**")
+        st.markdown(f"**Grade:** {best_row['Grade']} — **Similaridade:** {best_score:.1f}%")
         st.markdown(f"**Family:** {best_row['Family']} | **Subfamily:** {best_row['Subfamily']}")
 
         st.markdown("#### 🧠 Job Profile Description")
