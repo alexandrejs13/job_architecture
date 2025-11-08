@@ -1,11 +1,11 @@
 # 🧩 Job Match — Identificador de Cargo Ideal
 # Autor: Alexandre & GPT-5 — 2025
-# Posição: Abaixo do Glossary (7_🧩_Job_Match.py)
 
 import streamlit as st
 import pandas as pd
 import numpy as np
 from sentence_transformers import SentenceTransformer, util
+import csv
 
 # ------------------------------------------------------------
 # 🎨 CONFIGURAÇÃO INICIAL
@@ -18,31 +18,80 @@ st.markdown("""
 O sistema identifica automaticamente o <b>nível de senioridade</b> e o <b>escopo</b> com base no conteúdo da sua descrição.</p>
 """, unsafe_allow_html=True)
 
+
 # ------------------------------------------------------------
-# 📂 CARREGAMENTO DE BASE
+# 📂 CARREGAMENTO DE BASE ROBUSTO
 # ------------------------------------------------------------
 @st.cache_data(show_spinner=False)
 def load_data():
-    df = pd.read_csv("data/Job Profile.csv")
-    df.fillna("", inplace=True)
+    path = "data/Job Profile.csv"
+
+    try:
+        df = pd.read_csv(
+            path,
+            sep=",",
+            engine="python",
+            dtype=str,
+            quotechar='"',
+            escapechar="\\",
+            quoting=csv.QUOTE_MINIMAL,
+            on_bad_lines="error",
+        )
+    except Exception:
+        df = pd.read_csv(
+            path,
+            sep=";",
+            engine="python",
+            dtype=str,
+            quotechar='"',
+            escapechar="\\",
+            quoting=csv.QUOTE_MINIMAL,
+            on_bad_lines="error",
+        )
+
+    df = df.fillna("")
+
+    # Normaliza colunas esperadas
+    rename_map = {
+        "Job title": "Job Title",
+        "job title": "Job Title",
+        "Sub-family": "Subfamily",
+        "Sub Family": "Subfamily",
+        "Grade Differentiation": "Grade Differentiator",
+        "KPIs / Specific Parameters": "KPIs/Specific Parameters",
+        "KPIs/ Specific Parameters": "KPIs/Specific Parameters",
+    }
+    df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns}, inplace=True)
+
+    required_cols = [
+        "Job Title","Family","Subfamily","Grade",
+        "Sub Job Family Description","Job Profile Description","Role Description",
+        "Grade Differentiator","KPIs/Specific Parameters","Qualifications"
+    ]
+    for c in required_cols:
+        if c not in df.columns:
+            df[c] = ""
 
     df["Merged_Text"] = (
-        "Job Title: " + df["Job Title"].astype(str) +
-        " | Family: " + df["Family"].astype(str) +
-        " | Subfamily: " + df["Subfamily"].astype(str) +
-        " | Grade: " + df["Grade"].astype(str) +
-        " | Job Profile Description: " + df["Job Profile Description"].astype(str) +
-        " | Role Description: " + df["Role Description"].astype(str) +
-        " | Grade Differentiator: " + df["Grade Differentiator"].astype(str) +
-        " | KPIs: " + df["KPIs/Specific Parameters"].astype(str)
+        "Job Title: "+df["Job Title"]+
+        " | Family: "+df["Family"]+
+        " | Subfamily: "+df["Subfamily"]+
+        " | Grade: "+df["Grade"]+
+        " | Job Profile Description: "+df["Job Profile Description"]+
+        " | Role Description: "+df["Role Description"]+
+        " | Grade Differentiator: "+df["Grade Differentiator"]+
+        " | KPIs: "+df["KPIs/Specific Parameters"]
     )
+
     return df
+
 
 try:
     df = load_data()
 except Exception as e:
     st.error(f"Erro ao carregar base: {e}")
     st.stop()
+
 
 # ------------------------------------------------------------
 # 🧠 EMBEDDINGS
@@ -53,8 +102,9 @@ def load_model():
 
 model = load_model()
 
+
 # ------------------------------------------------------------
-# 🧭 INTERFACE DE BUSCA
+# 🧭 INTERFACE
 # ------------------------------------------------------------
 st.markdown("### 🔧 Parâmetros de busca")
 
@@ -79,13 +129,13 @@ if st.button("🔍 Identificar Cargo"):
 
     st.info("🔎 Analisando sua descrição e comparando com cargos existentes...")
 
-    # 🔹 Filtra a base pela Family e Subfamily
+    # 🔹 Filtra base
     subset = df[(df["Family"] == family) & (df["Subfamily"] == subfamily)].copy()
     if subset.empty:
         st.warning("Nenhum cargo encontrado para a Family/Subfamily selecionadas.")
         st.stop()
 
-    # 🔹 Calcula embeddings da subbase
+    # 🔹 Calcula similaridade
     model_embeddings = model.encode(subset["Merged_Text"].tolist(), convert_to_tensor=True)
     query_embedding = model.encode(descricao, convert_to_tensor=True)
     scores = util.cos_sim(query_embedding, model_embeddings)[0].cpu().numpy()
@@ -93,20 +143,20 @@ if st.button("🔍 Identificar Cargo"):
     subset["Score"] = scores
     subset = subset.sort_values("Score", ascending=False)
 
-    # 🔹 Seleciona o cargo mais compatível
+    # 🔹 Cargo mais compatível
     best = subset.iloc[0]
     similarity = float(best["Score"]) * 100
     gg = best["Grade"]
     job_title = best["Job Title"]
 
     # ------------------------------------------------------------
-    # 🎯 RESULTADO FINAL
+    # 🎯 RESULTADO
     # ------------------------------------------------------------
     st.markdown("## 🎯 Cargo mais compatível encontrado:")
 
     with st.container():
         st.markdown(f"""
-        <div style="background-color:#f8f9ff; padding:20px; border-radius:12px; border-left:6px solid #3366ff;">
+        <div style="background-color:#f8f9ff; padding:20px; border-radius:12px; border-left:6px solid #3366ff; margin-bottom:20px;">
             <h3>🧩 {job_title} — GG {gg}</h3>
             <p><b>Family:</b> {best['Family']} &nbsp; | &nbsp; <b>Subfamily:</b> {best['Subfamily']}</p>
             <p><b>Similaridade:</b> {similarity:.1f}%</p>
