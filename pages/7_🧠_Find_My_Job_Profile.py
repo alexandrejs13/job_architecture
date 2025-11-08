@@ -7,7 +7,6 @@ from sentence_transformers import SentenceTransformer
 from deep_translator import GoogleTranslator
 from utils.data_loader import load_data
 from utils.ui_components import section
-from utils.job_cards import render_job_comparison  # opcional se quiser extrair o layout da página 2
 
 # ===========================================================
 # CONFIGURAÇÃO
@@ -121,14 +120,13 @@ buscar = st.button("🔍 Encontrar cargos correspondentes", type="primary")
 # ===========================================================
 # BUSCA E RESULTADOS
 # ===========================================================
-selected_jobs = []
 if buscar and query.strip():
     with st.spinner("🌐 Traduzindo e analisando sua descrição..."):
         translated_query = translate_to_english(query)
 
     model = load_model()
     q_emb = model.encode([translated_query], normalize_embeddings=True)
-    sims = cosine_similarity(q_emb, matrix).ravel()
+    sims = cosine_similarity(q_emb, generate_embeddings(df)).ravel()
     idx = np.argsort(-sims)
 
     top_n = 5
@@ -198,11 +196,9 @@ if buscar and query.strip():
         n = len(selected_rows)
         grid_class = f"ja-grid cols-{n}"
 
-        # Cabeçalhos
         html_cells = [f"<div><div class='ja-hd'><div class='ja-hd-title'>{r['Job Profile']}</div><div class='ja-hd-grade'>GG {r['Global Grade']}</div></div></div>" for r in selected_rows]
         st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
 
-        # Classificação
         html_cells = [f"<div class='ja-class'><b>Família:</b> {r['Job Family']}<br><b>Subfamília:</b> {r['Sub Job Family']}<br><b>Carreira:</b> {r['Career Path']}<br><b>Função:</b> {r['Function Code']}<br><b>Disciplina:</b> {r['Discipline Code']}<br><b>Código:</b> {r['Full Job Code']}</div>" for r in selected_rows]
         st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
 
