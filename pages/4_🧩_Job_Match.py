@@ -1,5 +1,5 @@
 # ==============================================================
-# 🧩 Job Match — Subfamily fix + layout finalizado
+# 🧩 Job Match — correção final: garante Subfamily sempre existente
 # ==============================================================
 
 import streamlit as st
@@ -11,7 +11,7 @@ from sentence_transformers import SentenceTransformer, util
 st.set_page_config(page_title="🧩 Job Match", layout="wide")
 
 # -------------------------------
-# Função de normalização
+# Função utilitária de normalização
 # -------------------------------
 def _norm(s: str) -> str:
     if not isinstance(s, str):
@@ -28,8 +28,7 @@ COL_MAP_CANON = {
     "jobfamily": "Family",
     "subjobfamily": "Subfamily",
     "subfamily": "Subfamily",
-    "subfamilydescription": "Subfamily",
-    "subjobfamilydescription": "Subfamily",
+    "subjobfamilydescription": "Sub Job Family Description",
     "jobprofile": "Job Title",
     "jobtitle": "Job Title",
     "globalgrade": "Grade",
@@ -64,6 +63,7 @@ def load_data():
 
     df = df.fillna("")
 
+    # Normaliza e renomeia colunas conhecidas
     norm2orig = {_norm(c): c for c in df.columns}
     rename_map = {}
     for norm_src, canon_dst in COL_MAP_CANON.items():
@@ -72,23 +72,29 @@ def load_data():
     if rename_map:
         df.rename(columns=rename_map, inplace=True)
 
+    # Garante colunas obrigatórias (cria se não existirem)
     for col in OBRIGATORIAS:
         if col not in df.columns:
             df[col] = ""
 
+    # Normaliza Family/Subfamily
     df["Family"] = df["Family"].astype(str).str.strip().str.title()
     df["Subfamily"] = df["Subfamily"].astype(str).str.strip().str.title()
 
-    # fallback: se Subfamily vazia, usa a descrição
-    if df["Subfamily"].eq("").all() and "Sub Job Family Description" in df.columns:
-        df["Subfamily"] = (
-            df["Sub Job Family Description"].astype(str)
-            .str.extract(r"^([A-Za-z\s\-]+)")[0]
-            .fillna("")
-            .str.strip()
-            .str.title()
-        )
+    # Fallback: se Subfamily está vazia, tenta preencher pela descrição
+    if df["Subfamily"].eq("").all():
+        for alt in ["Sub Job Family Description", "Sub Job Family"]:
+            if alt in df.columns:
+                df["Subfamily"] = (
+                    df[alt].astype(str)
+                    .str.extract(r"^([A-Za-z\s\-]+)")[0]
+                    .fillna("")
+                    .str.strip()
+                    .str.title()
+                )
+                break
 
+    # Concatenação semântica
     df["Merged_Text"] = (
         "Job Title: " + df["Job Title"].fillna("") +
         " | Family: " + df["Family"].fillna("") +
@@ -116,7 +122,7 @@ model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
 
 st.markdown("## 🧩 Job Match")
 
-# Seletores no topo
+# Filtros (Family e Subfamily)
 c1, c2 = st.columns(2)
 with c1:
     families = sorted(df.loc[df["Family"].ne(""), "Family"].unique().tolist())
@@ -124,13 +130,17 @@ with c1:
 
 with c2:
     if family_selected:
-        subs = df.loc[(df["Family"] == family_selected) & (df["Subfamily"].ne("")), "Subfamily"].unique().tolist()
-        subs = sorted(subs)
+        subs = (
+            df.loc[(df["Family"] == family_selected) & (df["Subfamily"].ne("")), "Subfamily"]
+            .drop_duplicates()
+            .sort_values()
+            .tolist()
+        )
         subfamily_selected = st.selectbox("Selecione a Subfamily", [""] + subs) if subs else ""
     else:
         subfamily_selected = ""
 
-# Texto explicativo e caixa de atividades abaixo dos filtros
+# Texto explicativo e entrada
 st.write("""
 Descubra o **cargo mais compatível** com suas responsabilidades e área de atuação.  
 O sistema identifica automaticamente o **nível de senioridade** e o **escopo** com base na descrição das suas atividades.
@@ -143,7 +153,7 @@ descricao = st.text_area(
 )
 
 # ==============================================================
-# Busca
+# Busca e exibição
 # ==============================================================
 
 if st.button("🔍 Identificar Cargo"):
@@ -171,6 +181,7 @@ if st.button("🔍 Identificar Cargo"):
     with st.container():
         st.markdown(f"### **GG {best['Grade']} — {best['Job Title']}**")
         st.markdown(f"**Family:** {best['Family']} | **Subfamily:** {best['Subfamily']}")
+        st.markdown(f"**Similaridade:** {best_score:.1f}%")
 
         st.markdown("#### 🧠 Job Profile Description")
         st.info(best["Job Profile Description"] or "—")
@@ -188,4 +199,4 @@ if st.button("🔍 Identificar Cargo"):
         st.info(best["Qualifications"] or "—")
 
 else:
-    st.info("Preencha as informações e clique em **🔍 Identificar Cargo**.")
+    st.info("Preencha os campos e clique em **🔍 Identificar Cargo**.")
