@@ -143,10 +143,10 @@ SECTIONS = [
     ("Grade Differentiator",      lambda r: safe_get(r, [
         "Grade Differentiator", "Grade Differentiation", "Grade Differentiatior"
     ])),
+    ("Qualifications",            lambda r: safe_get(r, "Qualifications")),
     ("KPIs / Specific Parameters", lambda r: safe_get(r, [
         "Specific parameters KPIs", "Specific parameters / KPIs"
     ])),
-    ("Qualifications",            lambda r: safe_get(r, "Qualifications")),
 ]
 
 competency_cols = [c for c in career_df_sorted.columns if c.strip().lower().startswith("competency")]
@@ -158,10 +158,9 @@ if competency_cols:
     ])
 
 # ================================================
-# Renderização — título fora dos cards + todos os cargos
+# Renderização — títulos fora dos cards + cargos lado a lado
 # ================================================
 for title, getter in SECTIONS:
-    # verifica se há conteúdo para exibir
     has_content = any(
         getter(r) and getter(r).strip() not in ["", "-", "nan", "NaN", "None"]
         for r in rows if r is not None
@@ -169,24 +168,21 @@ for title, getter in SECTIONS:
     if not has_content:
         continue
 
-    # título fora do card
+    # título da seção
     st.markdown(f"<div class='section-title'>{title}</div>", unsafe_allow_html=True)
 
-    # define colunas conforme número de cargos
+    # define a quantidade de colunas conforme número de cargos
     grid_class = f"grid-container grid-{len(rows)}"
-    st.markdown(f"<div class='{grid_class}'>", unsafe_allow_html=True)
 
-    # renderiza todos os cards corretamente
+    # monta o HTML de todos os cards em um único bloco
+    html_cards = ""
     for r in rows:
         raw = getter(r)
-        st.markdown(
-            f"""
-            <div class='card'>
-                <div>{format_paragraphs(raw)}</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        html_cards += f"""
+        <div class='card'>
+            <div>{format_paragraphs(raw)}</div>
+        </div>
+        """
 
-    # fecha grid
-    st.markdown("</div>", unsafe_allow_html=True)
+    # renderiza o grid completo em um único markdown
+    st.markdown(f"<div class='{grid_class}'>{html_cards}</div>", unsafe_allow_html=True)
