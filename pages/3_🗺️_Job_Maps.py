@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO
+# CSS COMPLETO (AJUSTADO PARA CONGELAMENTO)
 # ===========================================================
 st.markdown("""
 <style>
@@ -31,7 +31,7 @@ st.markdown("""
   padding: 0 !important;
 }
 
-/* ======= CABEÇALHO FIXO ======= */
+/* ======= CABEÇALHO FIXO (TOPBAR) ======= */
 .topbar {
   position: sticky;
   top: 0;
@@ -58,7 +58,8 @@ h1 {
   border-bottom: 3px solid var(--blue);
   background: white;
   position: relative;
-  white-space: nowrap;
+  /* Importante para o sticky funcionar bem dentro deste container */
+  will-change: transform; 
 }
 
 /* ======= GRID PRINCIPAL ======= */
@@ -75,7 +76,7 @@ h1 {
   box-sizing: border-box;
 }
 
-/* ======= CABEÇALHOS ======= */
+/* ======= CABEÇALHOS (LINHA 1 - FAMÍLIAS) ======= */
 .header-family {
   font-weight: 800;
   color: #fff;
@@ -83,26 +84,33 @@ h1 {
   text-align: center;
   background: var(--dark-gray);
   border-right: 1px solid white;
-  border-bottom: none; /* linha fantasma removida */
+  border-bottom: none;
   position: sticky;
-  top: 0;
-  z-index: 55;
+  top: 0; /* Congela no topo */
+  z-index: 55; /* Acima das células normais */
   white-space: normal;
+  height: 52px; /* Altura fixa para garantir alinhamento da segunda linha */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+/* ======= CABEÇALHOS (LINHA 2 - SUBFAMÍLIAS) ======= */
 .header-subfamily {
   font-weight: 600;
   background: var(--gray-bg);
   padding: 10px;
   text-align: center;
   border-right: 1px solid var(--gray-line);
-  border-top: none; /* remove linha fantasma */
+  border-top: none;
   position: sticky;
-  top: 52px;
-  z-index: 54;
+  top: 52px; /* Congela logo abaixo da primeira linha (que tem 52px de altura) */
+  z-index: 55;
   white-space: normal;
+  border-bottom: 2px solid var(--gray-line) !important; /* Reforço visual na separação */
 }
 
-/* ======= COLUNA GG ======= */
+/* ======= COLUNA GG (CANTO SUPERIOR ESQUERDO) ======= */
 .gg-header {
   background: #000;
   color: white;
@@ -113,10 +121,14 @@ h1 {
   justify-content: center;
   grid-row: span 2;
   position: sticky;
-  left: 0;
-  z-index: 60;
+  left: 0; /* Congela na esquerda */
+  top: 0;  /* Congela no topo (CRUCIAL para não sumir ao rolar para baixo) */
+  z-index: 60; /* Z-index mais alto para ficar acima de tudo no canto */
   border-right: 2px solid white;
+  border-bottom: 2px solid var(--gray-line); /* Alinha com a borda das subfamílias */
 }
+
+/* ======= CÉLULAS DA COLUNA GG (ESQUERDA) ======= */
 .gg-cell {
   background: #000;
   color: white;
@@ -125,19 +137,20 @@ h1 {
   align-items: center;
   justify-content: center;
   position: sticky;
-  left: 0;
-  z-index: 55;
+  left: 0; /* Congela na esquerda */
+  z-index: 55; /* Acima das células de conteúdo */
   border-right: 2px solid white;
   border-top: 1px solid white;
 }
 
-/* ======= CÉLULAS ======= */
+/* ======= CÉLULAS DE CONTEÚDO ======= */
 .cell {
   background: white;
   padding: 8px;
   text-align: left;
   min-height: 70px;
   vertical-align: middle;
+  z-index: 1; /* Garante que fique abaixo dos cabeçalhos */
 }
 .job-card {
   background: #f9f9f9;
@@ -163,15 +176,16 @@ h1 {
   color: #444;
 }
 
-/* ======= Sombra vertical entre GG e Families ======= */
+/* ======= Sombra vertical para profundidade ao rolar ======= */
 .gg-header::after, .gg-cell::after {
   content: "";
   position: absolute;
-  right: -2px;
+  right: -5px; /* Sombra ligeiramente para fora */
   top: 0;
   bottom: 0;
-  width: 2px;
-  background: linear-gradient(to right, rgba(255,255,255,0.2), rgba(0,0,0,0.15));
+  width: 5px;
+  background: linear-gradient(to right, rgba(0,0,0,0.2), transparent);
+  pointer-events: none;
 }
 
 /* ======= RESPONSIVIDADE ======= */
@@ -193,7 +207,7 @@ if missing:
     st.stop()
 
 df = df.dropna(subset=["Job Family", "Sub Job Family", "Job Profile", "Global Grade"])
-df["Global Grade"] = df["Global Grade"].astype(str).str.replace(r"\\.0$", "", regex=True)
+df["Global Grade"] = df["Global Grade"].astype(str).str.replace(r"\.0$", "", regex=True)
 
 # ===========================================================
 # FILTROS E CABEÇALHO
@@ -220,7 +234,6 @@ families_order = [
     "Facility & Administrative Services"
 ]
 
-# Forçar todas as famílias no dropdown, mesmo que vazias
 families = ["Todas"] + families_order
 paths = ["Todas"] + sorted(df["Career Path"].dropna().unique().tolist())
 
