@@ -1,4 +1,5 @@
 import streamlit as st
+st.write("⚙️ Versão ativa: v2025.11.09.1")
 import pandas as pd
 from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar
