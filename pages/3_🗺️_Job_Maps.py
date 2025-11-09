@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import random
 from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar
 
@@ -9,10 +8,10 @@ from utils.ui_components import section, lock_sidebar
 # ===========================================================
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
-st.write("⚙️ Versão ativa: v2025.11.09.4")
+st.write("⚙️ Versão ativa: v2025.11.09.5")
 
 # ===========================================================
-# CSS E ESTILO VISUAL
+# CSS GLOBAL
 # ===========================================================
 st.markdown("""
 <style>
@@ -53,16 +52,17 @@ h1 {
 .jobmap-grid {
   display: grid;
   border-collapse: collapse;
+  grid-auto-rows: minmax(65px, auto);
   font-size: 0.85rem;
   text-align: center;
   width: max-content;
   position: relative;
 }
 .jobmap-grid > div {
-  border: 1px solid #d9d9d9; /* grid cinza no restante */
+  border: 1px solid #d9d9d9;
   box-sizing: border-box;
-  min-height: 50px;
-  height: auto;
+  height: auto !important;
+  min-height: 65px;
 }
 
 /* ===== COLUNA GG ===== */
@@ -82,7 +82,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  grid-row: span 2; /* mescla GG e célula abaixo */
+  grid-row: span 2;
 }
 .grade-cell {
   background: #000;
@@ -95,7 +95,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid #fff; /* grid branco entre GGs */
+  border-bottom: 1px solid #fff;
 }
 
 /* ===== CABEÇALHOS ===== */
@@ -139,17 +139,17 @@ h1 {
   background: #f9f9f9;
   border-left: 4px solid #145efc;
   border-radius: 6px;
-  padding: 6px 8px;
-  margin: 4px 6px;
+  padding: 6px 10px;
+  margin: 5px;
   text-align: left;
   font-size: 0.8rem;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   word-wrap: break-word;
   white-space: normal;
   overflow-wrap: break-word;
-  width: 100%;
+  width: calc(100% - 12px);
   height: auto;
-  min-height: 65px;
+  min-height: 60px;
 }
 .job-card b {
   display: block;
@@ -168,6 +168,17 @@ h1 {
 /* ===== ZEBRA ===== */
 .grade-row:nth-child(even) {
   background: #fcfcfc;
+}
+
+/* ===== GRID PRETO COM LINHAS BRANCAS ===== */
+.grade-cell, .grade-header {
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+}
+
+/* ===== AJUSTE VISUAL ===== */
+.jobmap-grid > div:first-child {
+  border-left: none;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -190,7 +201,6 @@ if missing:
 df = df.dropna(subset=["Job Family", "Sub Job Family", "Job Profile", "Global Grade"])
 df["Global Grade"] = df["Global Grade"].astype(str).str.replace(r"\\.0$", "", regex=True)
 
-# popula as opções reais
 families = sorted(df["Job Family"].dropna().unique().tolist())
 paths = sorted(df["Career Path"].dropna().unique().tolist())
 
@@ -211,15 +221,11 @@ if df.empty:
     st.stop()
 
 # ===========================================================
-# PALETA DE CORES ELEGANTE
+# PALETA ELEGANTE
 # ===========================================================
 families = sorted(df["Job Family"].unique().tolist())
-palette_dark = [
-    "#3B5BA9", "#4E7063", "#8B7B5A", "#2C4875", "#5C5C5C", "#6B4F6B"
-]
-palette_light = [
-    "#E6EBF8", "#E8F1ED", "#F0EDE6", "#E8EEF9", "#F4F4F4", "#EDE8F1"
-]
+palette_dark = ["#3B5BA9", "#4E7063", "#8B7B5A", "#2C4875", "#5C5C5C", "#6B4F6B"]
+palette_light = ["#E6EBF8", "#E8F1ED", "#F0EDE6", "#E8EEF9", "#F4F4F4", "#EDE8F1"]
 
 fam_colors_dark = {f: palette_dark[i % len(palette_dark)] for i, f in enumerate(families)}
 fam_colors_light = {f: palette_light[i % len(palette_light)] for i, f in enumerate(families)}
@@ -230,10 +236,8 @@ subfam_map = {
     for f in families
 }
 
-col_sizes = [150]
-for f in families:
-    col_sizes += [220 for _ in subfam_map[f]]
-grid_template = f"grid-template-columns: {' '.join(str(x)+'px' for x in col_sizes)};"
+# Grid fluido ajustável
+grid_template = f"grid-template-columns: 150px repeat({sum(len(subfam_map[f]) for f in families)}, minmax(220px, 1fr));"
 
 # ===========================================================
 # GRID VISUAL
