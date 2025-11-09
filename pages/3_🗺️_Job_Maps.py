@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # pages/3_🗺️_Job_Maps.py
-
 import streamlit as st
 import pandas as pd
 from utils.data_loader import load_excel_data
@@ -378,7 +377,10 @@ for i, g in enumerate(grades):
 def largura_texto_minima(text):
     return len(str(text)) * 5 + 30
 
-col_widths = ["100px"]
+# Calcula a largura mínima necessária para a coluna GG
+gg_max_len = max(len(f"GG {g}") for g in grades) if grades else 0
+gg_width = gg_max_len * 8 + 30 # Estimativa de largura em pixels
+col_widths = [f"{gg_width}px"]
 
 for (f, sf), c_idx in subfamilias_map.items():
     width_title = largura_texto_minima(sf)
@@ -444,3 +446,6 @@ for i, g in enumerate(grades):
 
 html.append("</div></div>")
 st.markdown("".join(html), unsafe_allow_html=True)
+
+
+ao vivo
