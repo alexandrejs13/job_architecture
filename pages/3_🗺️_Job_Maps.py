@@ -102,7 +102,7 @@ h1 {
   position: sticky;
   top: 50px;
   z-index: 55;
-  white-space: normal;
+  white-space: normal; /* Permitir quebra de linha */
   border-bottom: 2px solid var(--gray-line) !important;
   min-height: 40px;
   display: flex;
@@ -148,14 +148,14 @@ h1 {
 
 .cell {
   background: white;
-  padding: 8px; /* Aumentei ligeiramente o padding interno da célula */
+  padding: 8px;
   text-align: left;
   vertical-align: middle;
   z-index: 1;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 8px; /* Espaço um pouco maior entre os cards */
+  gap: 8px;
   align-items: flex-start;
   align-content: center;
 }
@@ -316,30 +316,40 @@ for (_, c_idx) in subfamilias_map.items():
         span_map[(g, c_idx)] = span
 
 # ===========================================================
-# CÁLCULO DE LARGURAS DINÂMICAS (AJUSTADO)
+# CÁLCULO DE LARGURAS DINÂMICAS (AJUSTADO PARA COLUNAS ESTREITAS)
 # ===========================================================
-def largura_texto(text):
-    return len(str(text)) * 7 + 25
+def largura_texto_minima(text):
+    # Calcula uma largura mínima baseada no texto, considerando que ele pode quebrar linha
+    # Este é um valor de segurança, pois o card tem largura fixa e o header pode quebrar.
+    return len(str(text)) * 5 + 30 # Menor multiplicador para textos longos
 
-col_widths = ["100px"] # Coluna GG
+col_widths = ["100px"] # Largura fixa da coluna GG
 
 for (f, sf), c_idx in subfamilias_map.items():
-    cargos = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf)]["Job Profile"].tolist()
-    maior_texto = max([sf] + cargos if cargos else [sf], key=len)
-    width_by_text = largura_texto(maior_texto)
+    # 1. Largura mínima baseada no título da Sub Job Family (pode quebrar linha)
+    width_by_subfamily_title = largura_texto_minima(sf)
     
+    # 2. Largura baseada na quantidade MÁXIMA de cards na coluna
     max_cards_in_col = 0
     for g in grades:
         if (g, c_idx) not in skip_set:
              max_cards_in_col = max(max_cards_in_col, cards_count_map.get((g, c_idx), 0))
     
-    cards_capacity = min(max(1, max_cards_in_col), 6)
+    # Cada card tem 125px de largura + 8px de gap.
+    # Ajusta a largura da coluna para 1, 2, ou até 6 cards.
+    # Adiciona um "respiro" de 20px no final para não ficar grudado.
     
-    # 135px por card + 15px de respiro extra no final da coluna
-    width_by_cards = (cards_capacity * 135) + 15
+    if max_cards_in_col <= 1:
+        width_by_cards = 125 + 20 # 1 card + respiro
+    elif max_cards_in_col == 2:
+        width_by_cards = (2 * 125) + (1 * 8) + 20 # 2 cards, 1 gap, respiro
+    else: # Para 3 ou mais cards, mantemos um limite para não expandir demais
+        cards_capacity = min(max(1, max_cards_in_col), 6) # Limita a 6 cards na mesma linha
+        width_by_cards = (cards_capacity * 125) + ((cards_capacity - 1) * 8) + 20
+        
+    # A largura final da coluna é o máximo entre a largura necessária para o título e a largura dos cards
+    final_width = max(width_by_subfamily_title, width_by_cards)
     
-    # Mínimo reduzido para 150px para colunas com 1 só card não ficarem muito largas
-    final_width = max(150, width_by_text, width_by_cards)
     col_widths.append(f"{final_width}px")
 
 grid_template = f"grid-template-columns: {' '.join(col_widths)};"
