@@ -15,7 +15,6 @@ lock_sidebar()
 # ===========================================================
 st.markdown("""
 <style>
-/* ===== BLOCO PRINCIPAL ===== */
 .block-container {
   max-width: 1700px !important;
   min-width: 1400px !important;
@@ -53,7 +52,7 @@ with col2:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ===========================================================
-# CSS PRINCIPAL DO MAPA
+# CSS DO GRID AJUSTADO
 # ===========================================================
 st.markdown("""
 <style>
@@ -74,6 +73,7 @@ st.markdown("""
   text-align: center;
   width: max-content;
   position: relative;
+  grid-auto-rows: auto;
 }
 .jobmap-grid > div {
   border: 1px solid #ffffff;
@@ -111,12 +111,17 @@ st.markdown("""
   font-size: 1rem;
   background: #000;
   color: #fff;
-  padding: 10px;
+  padding: 0 10px;
   position: sticky;
   top: 0;
   left: 0;
   z-index: 60 !important;
   border-right: 2px solid #fff;
+  grid-row: span 2; /* mescla A1 e A2 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 .grade-cell {
   font-weight: 700;
@@ -143,13 +148,21 @@ st.markdown("""
   z-index: 54 !important;
 }
 
-/* ===== CÉLULAS ===== */
+/* ===== CÉLULAS E CARDS ===== */
+.job-cell {
+  padding: 8px 10px;
+  text-align: left;
+  background: #fff;
+  vertical-align: top;
+  box-sizing: border-box;
+}
+
 .job-card {
   background: #f9f9f9;
   border-left: 4px solid #145efc;
   border-radius: 8px;
-  padding: 8px 10px;
-  margin: 5px 4px;
+  padding: 10px 14px;
+  margin: 6px 0;
   text-align: left;
   font-size: 0.82rem;
   box-shadow: 0 1px 2px rgba(0,0,0,0.06);
@@ -159,7 +172,7 @@ st.markdown("""
 .job-card b {
   display: block;
   font-weight: 700;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 .job-card span {
   display: block;
@@ -170,7 +183,7 @@ st.markdown("""
   background: #eef4ff;
 }
 
-/* ===== ESTILO GERAL ===== */
+/* ===== ZEBRA ===== */
 .grade-row:nth-child(even) {
   background: #fcfcfc;
 }
@@ -206,7 +219,7 @@ if df.empty:
     st.stop()
 
 # ===========================================================
-# CORES SUAVES E HARMÔNICAS
+# CORES
 # ===========================================================
 families = sorted(df["Job Family"].unique().tolist())
 palette_dark = [
@@ -217,20 +230,20 @@ palette_light = [
     "#e8ebf7", "#f2ecf6", "#f7f0ea", "#edf2f4", "#f1f4f0", "#edf2f7",
     "#f9edf7", "#f7f4ea", "#eef2f4", "#f1eff6"
 ]
-
 fam_colors_dark = {f: palette_dark[i % len(palette_dark)] for i, f in enumerate(families)}
 fam_colors_light = {f: palette_light[i % len(palette_light)] for i, f in enumerate(families)}
 
 grades = sorted(df["Global Grade"].unique(), key=lambda x: int(x) if x.isdigit() else x, reverse=True)
-subfam_map = {
-    f: sorted(df[df["Job Family"] == f]["Sub Job Family"].unique().tolist())
-    for f in families
-}
+subfam_map = {f: sorted(df[df["Job Family"] == f]["Sub Job Family"].unique().tolist()) for f in families}
 
-col_sizes = [140]
-for f in families:
-    col_sizes += [200 for _ in subfam_map[f]]
-grid_template = f"grid-template-columns: {' '.join(str(x)+'px' for x in col_sizes)};"
+# ===========================================================
+# GRID DINÂMICO (autoajuste de largura conforme texto)
+# ===========================================================
+grid_template = (
+    "grid-template-columns: 140px " +
+    " ".join([f"repeat({len(subfam_map[f])}, minmax(200px, max-content))" for f in families]) +
+    ";"
+)
 
 # ===========================================================
 # CONSTRUÇÃO VISUAL DO GRID
@@ -238,7 +251,7 @@ grid_template = f"grid-template-columns: {' '.join(str(x)+'px' for x in col_size
 html = "<div class='map-wrapper'>"
 
 # LINHA 1 — Famílias
-html += f"<div class='jobmap-grid sticky-family' style='{grid_template};'>"
+html += f"<div class='jobmap-grid sticky-family' style='{grid_template}'>"
 html += "<div class='grade-header'>GG</div>"
 for f in families:
     span = len(subfam_map[f])
@@ -247,8 +260,8 @@ for f in families:
 html += "</div>"
 
 # LINHA 2 — Subfamílias
-html += f"<div class='jobmap-grid sticky-subfamily' style='{grid_template};'>"
-html += "<div class='grade-cell'></div>"
+html += f"<div class='jobmap-grid sticky-subfamily' style='{grid_template}'>"
+html += "<div></div>"
 for f in families:
     for sf in subfam_map[f]:
         color = fam_colors_light[f]
@@ -257,7 +270,7 @@ html += "</div>"
 
 # DEMAIS LINHAS — Grades e cargos
 for g in grades:
-    html += f"<div class='jobmap-grid grade-row' style='{grid_template};'>"
+    html += f"<div class='jobmap-grid grade-row' style='{grid_template}'>"
     html += f"<div class='grade-cell'>GG {g}</div>"
     for f in families:
         fam_df = df[df["Job Family"] == f]
@@ -268,9 +281,9 @@ for g in grades:
                     f"<div class='job-card'><b>{r['Job Profile']}</b><span>{r['Career Path']}</span></div>"
                     for _, r in cell_df.iterrows()
                 ])
-                html += f"<div>{cards}</div>"
+                html += f"<div class='job-cell'>{cards}</div>"
             else:
-                html += "<div></div>"
+                html += "<div class='job-cell'></div>"
     html += "</div>"
 
 html += "</div>"
