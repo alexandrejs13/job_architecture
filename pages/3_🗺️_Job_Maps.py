@@ -8,7 +8,7 @@ from utils.data_loader import load_job_profile_df
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 
 # ===========================================================
-# CSS — layout executivo fixo
+# CSS — Visual Executivo Premium
 # ===========================================================
 st.markdown("""
 <style>
@@ -17,60 +17,51 @@ st.markdown("""
   margin: 0 auto !important;
   overflow: hidden !important;
 }
-.stAppHeader, [data-testid="stSidebar"], [data-testid="stToolbar"] {
-  position: fixed !important;
-  top: 0; left: 0;
-}
 
-/* ===== TÍTULO FIXO ===== */
+/* ======= TÍTULO ======= */
 h1 {
   color: #1E56E0;
   font-weight: 800;
   font-size: 1.9rem;
   margin-bottom: 1.2rem;
-  position: sticky;
-  top: 0;
-  background: white;
-  padding-top: 8px;
-  z-index: 100;
 }
 
-/* ===== SCROLL ===== */
+/* ======= ÁREA SCROLL ======= */
 .map-wrapper {
-  max-height: 72vh;
+  max-height: 75vh;
   overflow: auto;
-  border-top: 2px solid #c7d3f7;
-  border-bottom: 2px solid #c7d3f7;
+  border: 2px solid #d9e1f2;
   background: #fff;
-  border-radius: 6px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-/* ===== GRADE ===== */
+/* ======= GRID ======= */
 .jobmap-grid {
   display: grid;
   border-collapse: collapse;
-  font-size: 0.9rem;
   text-align: center;
   width: max-content;
-  position: relative;
+  font-size: 0.88rem;
 }
 .jobmap-grid > div {
   border: 1px solid #ddd;
   box-sizing: border-box;
   padding: 10px 12px;
+  line-height: 1.3;
+  overflow-wrap: break-word;
 }
 
-/* ===== PRIMEIRA COLUNA (GG) ===== */
+/* ======= CONGELAMENTO ======= */
 .grade-header {
   background: #000;
   color: #fff;
-  font-weight: 800;
-  font-size: 1rem;
-  text-align: center;
+  font-weight: 700;
+  font-size: 0.95rem;
   position: sticky;
-  left: 0; top: 0;
+  left: 0;
+  top: 0;
   z-index: 60;
-  border-right: 2px solid #fff;
 }
 .grade-cell {
   background: #fff;
@@ -83,73 +74,72 @@ h1 {
   border-right: 2px solid #000;
 }
 
-/* ===== FAMÍLIAS ===== */
+/* ======= CABEÇALHOS ======= */
 .header-family {
   font-weight: 700;
   color: #fff;
-  padding: 8px 10px;
+  padding: 10px;
   font-size: 1rem;
-  height: 44px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: normal;
   text-align: center;
   position: sticky;
   top: 0;
   z-index: 40;
   border-right: 2px solid #fff;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
 }
-
-/* ===== SUBFAMÍLIAS ===== */
 .header-subfamily {
   font-weight: 600;
   padding: 10px;
+  height: 65px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   white-space: normal;
   text-align: center;
   font-size: 0.9rem;
-  height: 60px;
-  position: sticky;
-  top: 44px;
-  z-index: 35;
-  border-bottom: 1px solid #d3d7e0;
   line-height: 1.25;
+  position: sticky;
+  top: 48px;
+  z-index: 35;
 }
 
-/* ===== CÉLULAS ===== */
+/* ======= CELULAS DE CARGOS ======= */
 .job-card {
   background: #fafafa;
   border-left: 4px solid #A3B8F0;
   border-radius: 6px;
   padding: 10px 12px;
-  margin: 6px;
+  margin: 8px 6px;
   text-align: left;
   font-size: 0.85rem;
-  white-space: normal;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .job-card b {
-  display: block;
   font-weight: 700;
+  display: block;
   margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
 }
 .job-card span {
   font-size: 0.8rem;
-  color: #444;
-  font-weight: 400;
+  color: #555;
+  font-weight: 500;
 }
 .job-card:hover { background: #f5f7ff; }
 
-/* ===== CORES ===== */
-.family-green { background: #295F2D; }
-.sub-green { background: #D4E8D5; }
-.family-blue { background: #1E56E0; }
-.sub-blue { background: #E4E9FB; }
-.family-orange { background: #8B3E00; }
-.sub-orange { background: #F6E4D1; }
-.family-gray { background: #3E3E3E; }
-.sub-gray { background: #E8E8E8; }
+/* ======= CORES ======= */
+.family-blue { background: #1B4F72; } .sub-blue { background: #D6EAF8; }
+.family-green { background: #145A32; } .sub-green { background: #D5F5E3; }
+.family-orange { background: #784212; } .sub-orange { background: #F6DDCC; }
+.family-purple { background: #4A235A; } .sub-purple { background: #E8DAEF; }
+.family-gray { background: #424949; } .sub-gray { background: #EAEDED; }
 
 .grade-row:nth-child(even) { background: #fcfcfc; }
 
@@ -194,10 +184,11 @@ if filtered.empty:
 # CORES POR FAMÍLIA
 # ===========================================================
 color_map = {
-    "Corporate Affairs": ("family-green", "sub-green"),
-    "Finance": ("family-blue", "sub-blue"),
+    "Corporate Affairs": ("family-blue", "sub-blue"),
+    "Finance": ("family-green", "sub-green"),
     "Operations": ("family-orange", "sub-orange"),
-    "General": ("family-gray", "sub-gray"),
+    "People": ("family-purple", "sub-purple"),
+    "IT": ("family-gray", "sub-gray"),
 }
 
 families = sorted(filtered["Job Family"].unique().tolist())
@@ -207,10 +198,10 @@ subfam_map = {
     for f in families
 }
 
-col_sizes = [120]
+col_sizes = [140]  # coluna GG
 for f in families:
     for sf in subfam_map[f]:
-        width = max(160, len(sf) * 8)
+        width = max(180, len(sf) * 8)
         col_sizes.append(width)
 grid_template = f"grid-template-columns: {' '.join(str(x)+'px' for x in col_sizes)};"
 
@@ -221,7 +212,7 @@ html = "<div class='map-wrapper'>"
 
 # Famílias
 html += f"<div class='jobmap-grid' style='{grid_template}; z-index:5;'>"
-html += "<div class='grade-header' rowspan='2'>GG</div>"
+html += "<div class='grade-header'>GG</div>"
 for f in families:
     fam_class, sub_class = color_map.get(f, ("family-gray", "sub-gray"))
     span = len(subfam_map[f])
