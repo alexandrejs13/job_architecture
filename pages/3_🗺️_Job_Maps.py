@@ -446,6 +446,3 @@ for i, g in enumerate(grades):
 
 html.append("</div></div>")
 st.markdown("".join(html), unsafe_allow_html=True)
-
-
-ao vivo
