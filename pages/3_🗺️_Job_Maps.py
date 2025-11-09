@@ -5,7 +5,7 @@ from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar
 
 # ===========================================================
-# CONFIGURAÇÃO GERAL
+# CONFIGURAÇÃO DA PÁGINA
 # ===========================================================
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
@@ -20,7 +20,7 @@ st.markdown("""
   padding-top: 0 !important;
 }
 
-/* ===== CABEÇALHO ===== */
+/* ======= CABEÇALHO ======= */
 .top-fixed {
   position: sticky;
   top: 0;
@@ -50,7 +50,7 @@ with col2:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ===========================================================
-# CSS DO GRID — layout definitivo
+# CSS DO GRID
 # ===========================================================
 st.markdown("""
 <style>
@@ -60,33 +60,34 @@ st.markdown("""
   border-top: 3px solid #145efc;
   border-bottom: 3px solid #145efc;
   background: #fff;
+  scroll-behavior: smooth;
 }
 
-/* ===== GRID ===== */
+/* ======= GRADE PRINCIPAL ======= */
 .jobmap-grid {
   display: grid;
-  grid-template-columns: 140px repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: 140px repeat(auto-fill, minmax(180px, 1fr));
   border-collapse: collapse;
   font-size: 0.85rem;
   width: max-content;
   text-align: center;
-  gap: 0px;
+  gap: 0;
 }
 
-/* ===== COLUNA GG ===== */
+/* ======= COLUNA GG ======= */
 .grade-header {
-  grid-row: span 2;
   background: #000;
   color: #fff;
   font-weight: 800;
   font-size: 1rem;
+  height: 88px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-right: 2px solid #fff;
   position: sticky;
   left: 0;
-  top: 0;
+  top: 92px;
   z-index: 70 !important;
 }
 .grade-cell {
@@ -100,7 +101,7 @@ st.markdown("""
   border-right: 2px solid #fff;
 }
 
-/* ===== FAMÍLIAS ===== */
+/* ======= FAMÍLIAS ======= */
 .header-family {
   font-weight: 800;
   color: #fff;
@@ -108,15 +109,16 @@ st.markdown("""
   font-size: 1rem;
   border-right: 1px solid #fff;
   border-bottom: 2px solid #fff;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: sticky;
-  top: 100px;
+  top: 92px;
   z-index: 60 !important;
 }
 
-/* ===== SUBFAMÍLIAS ===== */
+/* ======= SUBFAMÍLIAS ======= */
 .header-subfamily {
   font-weight: 600;
   padding: 10px;
@@ -129,14 +131,15 @@ st.markdown("""
   line-height: 1.25;
   border-right: 1px solid #fff;
   border-bottom: 2px solid #fff;
+  height: 40px;
   position: sticky;
-  top: 145px;
+  top: 140px;
   z-index: 55 !important;
 }
 
-/* ===== CÉLULAS ===== */
+/* ======= CÉLULAS ======= */
 .job-cell {
-  padding: 10px 8px;
+  padding: 12px 10px;
   text-align: left;
   background: #fff;
   vertical-align: top;
@@ -146,8 +149,8 @@ st.markdown("""
   background: #f9f9f9;
   border-left: 4px solid #145efc;
   border-radius: 8px;
-  padding: 8px 12px;
-  margin: 6px 0;
+  padding: 10px 12px;
+  margin: 8px 0;
   text-align: left;
   font-size: 0.82rem;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
@@ -166,12 +169,12 @@ st.markdown("""
   color: #555;
 }
 
-/* ===== GRADE ===== */
+/* ======= LINHAS ZEBRADAS ======= */
 .grade-row:nth-child(even) {
   background: #fcfcfc;
 }
 
-/* ===== RESPONSIVIDADE ===== */
+/* ======= SCROLL E ZOOM ======= */
 @media (max-width: 1500px) { .block-container { zoom: 0.9; } }
 @media (max-width: 1200px) { .block-container { zoom: 0.8; } }
 </style>
@@ -202,7 +205,7 @@ if df.empty:
     st.stop()
 
 # ===========================================================
-# CORES HARMÔNICAS (familia + subfamilia)
+# CORES (familia + subfamilia)
 # ===========================================================
 families = sorted(df["Job Family"].unique().tolist())
 palette_dark = [
