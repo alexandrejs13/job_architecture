@@ -160,7 +160,6 @@ h1 {
   align-content: center;
 }
 
-/* === CARDS (COM TAMANHO FIXO) === */
 .job-card {
   background: #f9f9f9;
   border-left: 4px solid var(--blue);
@@ -171,11 +170,9 @@ h1 {
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;
-  
   width: 135px;
   height: 75px;
   flex: 0 0 135px;
-  
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -198,7 +195,6 @@ h1 {
   color: #666;
   line-height: 1.1;
   margin-top: 2px;
-  /* Garante que o GG não quebre de forma feia se for longo */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -241,7 +237,7 @@ df = df[~df["Global Grade"].isin(['nan', 'None', ''])]
 df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True)
 
 # ===========================================================
-# FILTROS
+# FILTROS DEPENDENTES
 # ===========================================================
 st.markdown("<div class='topbar'>", unsafe_allow_html=True)
 section("🗺️ Job Map")
@@ -258,12 +254,27 @@ existing_families = set(df["Job Family"].unique())
 families_order = [f for f in preferred_order if f in existing_families]
 families_order.extend(sorted(list(existing_families - set(families_order))))
 
+# 1. Picklist de Família
 with col1:
     family_filter = st.selectbox("Família", ["Todas"] + families_order)
+
+# 2. Lógica de Dependência: Filtra as trilhas com base na família selecionada
+if family_filter != "Todas":
+    # Se uma família foi escolhida, mostra apenas as trilhas dela
+    available_paths = df[df["Job Family"] == family_filter]["Career Path"].unique().tolist()
+else:
+    # Se "Todas", mostra todas as trilhas disponíveis no geral
+    available_paths = df["Career Path"].unique().tolist()
+
+paths_options = ["Todas"] + sorted([p for p in available_paths if pd.notna(p) and p != 'nan' and p != ''])
+
+# 3. Picklist de Trilha (agora filtrado)
 with col2:
-    path_filter = st.selectbox("Trilha de Carreira", ["Todas"] + sorted(df["Career Path"].unique().tolist()))
+    path_filter = st.selectbox("Trilha de Carreira", paths_options)
+
 st.markdown("</div>", unsafe_allow_html=True)
 
+# 4. Aplicação dos Filtros ao DataFrame principal
 if family_filter != "Todas":
     df = df[df["Job Family"] == family_filter]
 if path_filter != "Todas":
@@ -293,7 +304,6 @@ for f in active_families:
 content_map = {}
 cards_count_map = {}
 
-# 1. Primeira passada: Detectar conteúdo e assinaturas para mesclagem
 for g in grades:
     for (f, sf), c_idx in subfamilias_map.items():
         cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
@@ -307,7 +317,6 @@ for g in grades:
         jobs_sig = "|".join(sorted((cell_df["Job Profile"] + cell_df["Career Path"]).unique()))
         content_map[(g, c_idx)] = jobs_sig
 
-# 2. Calcular mesclagens (spans)
 span_map = {}
 skip_set = set()
 for (_, c_idx) in subfamilias_map.items():
@@ -326,7 +335,6 @@ for (_, c_idx) in subfamilias_map.items():
                 break
         span_map[(g, c_idx)] = span
 
-# 3. Gerar HTML dos cards com o GG correto (Individual ou Faixa)
 cell_html_cache = {}
 for i, g in enumerate(grades):
     for (f, sf), c_idx in subfamilias_map.items():
@@ -335,22 +343,17 @@ for i, g in enumerate(grades):
 
         span = span_map.get((g, c_idx), 1)
         
-        # Determina a label do GG (ex: "15" ou "14-15")
         if span > 1:
-            # Pega os grades cobertos por este span
             covered_grades = grades[i : i + span]
-            # Garante ordem numérica para a label (menor-maior)
             try:
                 min_g = min([int(x) for x in covered_grades if x.isdigit()])
                 max_g = max([int(x) for x in covered_grades if x.isdigit()])
                 gg_label = f"GG {min_g}-{max_g}"
             except:
-                # Fallback se houver grades não numéricos
                 gg_label = f"GG {covered_grades[-1]}-{covered_grades[0]}"
         else:
             gg_label = f"GG {g}"
 
-        # Gera os cards com a nova label de GG
         cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
         cards_html = "".join([
             f"<div class='job-card'><b>{row['Job Profile']}</b><span>{row['Career Path']} - {gg_label}</span></div>"
