@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO
+# CSS COMPLETO (CORREÇÃO AGRESSIVA DA LINHA)
 # ===========================================================
 st.markdown("""
 <style>
@@ -68,7 +68,7 @@ h1 {
   grid-auto-rows: minmax(90px, auto);
   row-gap: 0px !important;
   column-gap: 0px !important;
-  background-color: var(--gray-line);
+  background-color: white !important;
 }
 
 .jobmap-grid > div {
@@ -83,13 +83,13 @@ h1 {
   color: #fff;
   padding: 10px 5px;
   text-align: center;
-  border-right: 1px solid rgba(255,255,255,0.5) !important;
-  border-bottom: 0px none !important;
-  margin-bottom: 0px !important;
-  padding-bottom: 10px !important;
+  border-right: 1px solid rgba(255,255,255,0.3) !important;
+  border-bottom: none !important;
+  outline: none !important;
+  margin-bottom: 0px !important; 
   position: sticky;
   top: 0;
-  z-index: 56;
+  z-index: 57;
   white-space: normal;
   height: 50px;
   display: flex;
@@ -101,17 +101,18 @@ h1 {
 
 .header-subfamily {
   font-weight: 600;
-  color: #333;
-  padding: 8px 5px;
+  background: var(--gray-bg) !important;
+  padding: 4px 5px; /* Padding reduzido */
   text-align: center;
   position: sticky;
   top: 50px;
-  z-index: 55;
+  z-index: 56;
   white-space: normal;
-  border-top: 0px none !important;
-  margin-top: 0px !important;
+  margin-top: -1px !important;
+  border-top: none !important;
+  outline: none !important;
   border-bottom: 2px solid var(--gray-line) !important;
-  min-height: 40px;
+  min-height: 30px; /* Altura mínima reduzida */
   display: flex;
   align-items: center;
   justify-content: center;
