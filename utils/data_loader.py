@@ -1,29 +1,38 @@
-import os
 import pandas as pd
+import os
+import streamlit as st
 
-# ===========================================================
-# Funções auxiliares para leitura de Excel
-# ===========================================================
-def _read_xlsx(filename: str) -> pd.DataFrame:
-    """
-    Lê um arquivo Excel da pasta /data independentemente do local de execução.
-    """
-    base = os.path.join(os.path.dirname(__file__), "..", "data")
-    path = os.path.join(base, filename)
+DATA_DIR = "data"
+
+def _read_xlsx(filename: str):
+    """Lê um arquivo Excel do diretório /data."""
+    path = os.path.join(DATA_DIR, filename)
     if not os.path.exists(path):
-        raise FileNotFoundError(f"Arquivo não encontrado: {path}")
-    df = pd.read_excel(path)
-    df.columns = [str(c).strip() for c in df.columns]
+        st.error(f"❌ Arquivo não encontrado: {path}")
+        st.stop()
+    df = pd.read_excel(path, engine="openpyxl")
+    df.columns = [c.strip() for c in df.columns]
     return df
 
-def load_job_profile_df() -> pd.DataFrame:
-    """Carrega a base principal Job Profile.xlsx"""
+@st.cache_data
+def load_data():
+    """Carrega todas as planilhas Excel do app."""
+    data = {}
+    for file in os.listdir(DATA_DIR):
+        if file.endswith(".xlsx"):
+            df = _read_xlsx(file)
+            key = file.replace(".xlsx", "").replace(" ", "_").lower()
+            data[key] = df
+    return data
+
+@st.cache_data
+def load_job_profile_df():
     return _read_xlsx("Job Profile.xlsx")
 
-def load_job_map_df() -> pd.DataFrame:
-    """Usa a mesma base do Job Profile.xlsx para o mapa"""
-    return _read_xlsx("Job Profile.xlsx")
-
-def load_level_structure_df() -> pd.DataFrame:
-    """Carrega Level Structure.xlsx"""
+@st.cache_data
+def load_level_structure_df():
     return _read_xlsx("Level Structure.xlsx")
+
+@st.cache_data
+def load_job_family_df():
+    return _read_xlsx("Job Family.xlsx")
