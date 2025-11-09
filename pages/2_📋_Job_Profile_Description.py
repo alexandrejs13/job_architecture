@@ -1,12 +1,15 @@
-import re
 import streamlit as st
 import pandas as pd
+import re
 from utils.data_loader import load_job_profile_df
 
+# ===========================================================
+# CONFIGURAÇÃO DA PÁGINA
+# ===========================================================
 st.set_page_config(layout="wide", page_title="📋 Job Profile Description")
 
 # ===========================================================
-# CSS mantido idêntico ao layout aprovado
+# CSS — layout aprovado
 # ===========================================================
 st.markdown("""
 <style>
@@ -31,16 +34,46 @@ h1 { text-align:left !important; margin-top:0.8rem !important; margin-bottom:1.4
 st.markdown("## 📘 Job Profile Description")
 
 # ===========================================================
-# Carrega a planilha Excel
+# FUNÇÃO ROBUSTA PARA LIMPAR COLUNAS DO EXCEL
+# ===========================================================
+def normalize_columns(df):
+    """
+    Remove caracteres invisíveis, espaços extras e normaliza nomes de colunas.
+    """
+    rename_map = {}
+    for c in df.columns:
+        clean = (
+            str(c)
+            .strip()
+            .replace("\u200b", "")
+            .replace("\xa0", " ")
+            .replace("–", "-")
+            .replace("—", "-")
+        )
+        rename_map[c] = clean
+    df.rename(columns=rename_map, inplace=True)
+    df.columns = [c.strip() for c in df.columns]
+    return df
+
+# ===========================================================
+# LEITURA DO ARQUIVO EXCEL
 # ===========================================================
 df = load_job_profile_df()
+df = normalize_columns(df)
 
+# Mostra colunas detectadas (debug temporário)
+st.caption("🧩 Colunas detectadas:")
+st.code(list(df.columns))
+
+# ===========================================================
+# VERIFICAÇÃO DE COLUNAS OBRIGATÓRIAS
+# ===========================================================
 required_cols = [
     "Job Profile", "Job Family", "Sub Job Family", "Career Path",
     "Function Code", "Discipline Code", "Global Grade", "Full Job Code",
     "Sub Job Family Description", "Job Profile Description",
-    "Career Band Description", "Role Description",
-    "Grade Differentiator", "Qualifications"
+    "Career Band Description", "Role Description", "Grade Differentiator",
+    "Qualifications"
 ]
 
 missing = [c for c in required_cols if c not in df.columns]
@@ -49,7 +82,7 @@ if missing:
     st.stop()
 
 # ===========================================================
-# Filtros
+# FILTROS DE NAVEGAÇÃO
 # ===========================================================
 col1, col2, col3 = st.columns([1.2, 2.2, 1])
 with col1:
@@ -71,12 +104,14 @@ with col3:
 career_df = sub_df[sub_df["Career Path"] == career]
 
 # ===========================================================
-# Multiselect
+# MULTISELECT (CARGOS)
 # ===========================================================
 def option_label(row: pd.Series) -> str:
     g = str(row.get("Global Grade", "")).strip()
     p = str(row.get("Job Profile", "")).strip()
-    return f"GG{int(float(g)) if str(g).replace('.','',1).isdigit() else g} — {p}" if g else p
+    if g.replace('.', '').isdigit():
+        g = str(int(float(g)))
+    return f"GG {g} — {p}" if g else p
 
 career_df_sorted = career_df.copy()
 def grade_key(v):
@@ -85,13 +120,13 @@ def grade_key(v):
         return float(s)
     except:
         return -1
-career_df_sorted = career_df_sorted.sort_values(by="Global Grade", key=lambda s: s.map(grade_key), ascending=False)
 
+career_df_sorted = career_df_sorted.sort_values(by="Global Grade", key=lambda s: s.map(grade_key), ascending=False)
 pick_options = career_df_sorted.apply(option_label, axis=1).tolist()
 selected_labels = st.multiselect("Selecione até 3 cargos:", options=pick_options, max_selections=3)
 
 # ===========================================================
-# Funções utilitárias
+# FUNÇÕES DE FORMATAÇÃO
 # ===========================================================
 def safe_get(row, col):
     val = row.get(col) if row is not None and col in row else ""
@@ -135,7 +170,7 @@ def cell_card(emoji, title, html_text):
     """
 
 # ===========================================================
-# Renderização
+# RENDERIZAÇÃO DAS SEÇÕES
 # ===========================================================
 if selected_labels:
     st.markdown("---")
@@ -152,18 +187,20 @@ if selected_labels:
         ]
         if label_grade:
             sel = sel[sel["Global Grade"].astype(str).str.strip() == label_grade]
-
         rows.append(sel.iloc[0] if not sel.empty else None)
 
     n = len(rows)
     grid_class = f"ja-grid cols-{n}"
 
+    # Cabeçalho (título e grade)
     html_cells = [f"<div>{header_badge(safe_get(r, 'Job Profile'), safe_get(r, 'Global Grade'))}</div>" for r in rows]
     st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
 
+    # Box de classificação
     html_cells = [f"<div>{class_box(r)}</div>" for r in rows]
     st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
 
+    # Seções de descrição
     SECTIONS = [
         ("🧭", "Sub Job Family Description"),
         ("🧠", "Job Profile Description"),
