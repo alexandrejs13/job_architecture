@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO
+# CSS COMPLETO (CARDS COM TAMANHO FIXO E UNIFORME)
 # ===========================================================
 st.markdown("""
 <style>
@@ -65,7 +65,7 @@ h1 {
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
-  grid-auto-rows: minmax(60px, auto);
+  grid-auto-rows: minmax(80px, auto); /* Altura mínima da linha ajustada para os novos cards */
 }
 
 .jobmap-grid > div {
@@ -102,7 +102,7 @@ h1 {
   position: sticky;
   top: 50px;
   z-index: 55;
-  white-space: normal; /* Permitir quebra de linha */
+  white-space: normal;
   border-bottom: 2px solid var(--gray-line) !important;
   min-height: 40px;
   display: flex;
@@ -156,36 +156,51 @@ h1 {
   flex-direction: row;
   flex-wrap: wrap;
   gap: 8px;
-  align-items: flex-start;
+  align-items: center; /* Centraliza os cards verticalmente na célula se sobrar espaço */
   align-content: center;
 }
 
+/* === CARDS COM TAMANHO 100% PADRONIZADO === */
 .job-card {
   background: #f9f9f9;
-  border-left: 3px solid var(--blue);
-  border-radius: 4px;
-  padding: 5px 6px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  border-left: 4px solid var(--blue);
+  border-radius: 6px;
+  padding: 6px 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   font-size: 0.75rem;
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;
-  width: 125px;
-  flex: 0 0 125px;
-  min-height: 45px;
+  
+  /* TAMANHO FIXO PARA TODOS */
+  width: 135px;
+  height: 75px;      /* Altura fixa garante uniformidade estética */
+  flex: 0 0 135px;   /* Impede o flexbox de alterar a largura */
+  
+  /* Centralização interna do conteúdo do card */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Centraliza verticalmente textos curtos */
+  overflow: hidden;        /* Garante que nada vaze do tamanho fixo */
 }
 .job-card b {
   display: block;
   font-weight: 700;
-  margin-bottom: 2px;
-  line-height: 1.1;
+  margin-bottom: 3px;
+  line-height: 1.15;
   color: #222;
+  /* Limita o título a 3 linhas para não estourar o card fixo */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .job-card span {
   display: block;
   font-size: 0.7rem;
   color: #666;
-  line-height: 1;
+  line-height: 1.1;
+  margin-top: 2px;
 }
 
 .gg-header::after, .gg-cell::after {
@@ -316,40 +331,31 @@ for (_, c_idx) in subfamilias_map.items():
         span_map[(g, c_idx)] = span
 
 # ===========================================================
-# CÁLCULO DE LARGURAS DINÂMICAS (AJUSTADO PARA COLUNAS ESTREITAS)
+# CÁLCULO DE LARGURAS
 # ===========================================================
 def largura_texto_minima(text):
-    # Calcula uma largura mínima baseada no texto, considerando que ele pode quebrar linha
-    # Este é um valor de segurança, pois o card tem largura fixa e o header pode quebrar.
-    return len(str(text)) * 5 + 30 # Menor multiplicador para textos longos
+    return len(str(text)) * 5 + 30
 
-col_widths = ["100px"] # Largura fixa da coluna GG
+col_widths = ["100px"]
 
 for (f, sf), c_idx in subfamilias_map.items():
-    # 1. Largura mínima baseada no título da Sub Job Family (pode quebrar linha)
-    width_by_subfamily_title = largura_texto_minima(sf)
+    width_by_title = largura_texto_minima(sf)
     
-    # 2. Largura baseada na quantidade MÁXIMA de cards na coluna
-    max_cards_in_col = 0
+    max_cards = 0
     for g in grades:
         if (g, c_idx) not in skip_set:
-             max_cards_in_col = max(max_cards_in_col, cards_count_map.get((g, c_idx), 0))
+             max_cards = max(max_cards, cards_count_map.get((g, c_idx), 0))
     
-    # Cada card tem 125px de largura + 8px de gap.
-    # Ajusta a largura da coluna para 1, 2, ou até 6 cards.
-    # Adiciona um "respiro" de 20px no final para não ficar grudado.
-    
-    if max_cards_in_col <= 1:
-        width_by_cards = 125 + 20 # 1 card + respiro
-    elif max_cards_in_col == 2:
-        width_by_cards = (2 * 125) + (1 * 8) + 20 # 2 cards, 1 gap, respiro
-    else: # Para 3 ou mais cards, mantemos um limite para não expandir demais
-        cards_capacity = min(max(1, max_cards_in_col), 6) # Limita a 6 cards na mesma linha
-        width_by_cards = (cards_capacity * 125) + ((cards_capacity - 1) * 8) + 20
+    # Agora usamos 135px como base (largura do card novo) + 8px gap
+    if max_cards <= 1:
+        width_by_cards = 135 + 25
+    elif max_cards == 2:
+        width_by_cards = (2 * 135) + 8 + 25
+    else:
+        cap = min(max(1, max_cards), 6)
+        width_by_cards = (cap * 135) + ((cap - 1) * 8) + 25
         
-    # A largura final da coluna é o máximo entre a largura necessária para o título e a largura dos cards
-    final_width = max(width_by_subfamily_title, width_by_cards)
-    
+    final_width = max(width_by_title, width_by_cards)
     col_widths.append(f"{final_width}px")
 
 grid_template = f"grid-template-columns: {' '.join(col_widths)};"
