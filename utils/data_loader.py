@@ -5,8 +5,7 @@ import os
 @st.cache_data(show_spinner=False)
 def load_excel_data():
     """
-    Carrega todas as bases Excel do repositório /data.
-    Retorna um dicionário com DataFrames padronizados.
+    Carrega as planilhas Excel em /data e devolve dicionário de DataFrames.
     """
     data_dir = "data"
     files = {
@@ -27,5 +26,4 @@ def load_excel_data():
                 st.error(f"❌ Erro ao ler {fname}: {e}")
         else:
             st.warning(f"⚠️ Arquivo não encontrado: {fname}")
-
     return data
