@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (CORREÇÃO AGRESSIVA DA LINHA)
+# CSS COMPLETO (ESTRATÉGIA BOX-SHADOW PARA GAPS)
 # ===========================================================
 st.markdown("""
 <style>
@@ -84,14 +84,13 @@ h1 {
   padding: 10px 5px;
   text-align: center;
   border-right: 1px solid rgba(255,255,255,0.3) !important;
-  /* SEM BORDA INFERIOR */
-  border-bottom: none !important;
-  outline: none !important;
-  /* Margens zeradas */
-  margin-bottom: 0px !important; 
+  /* ESTRATÉGIA NOVA: Sombra que estende a cor para baixo para cobrir gaps */
+  box-shadow: 0px 1px 0px 0px var(--bg-color, var(--dark-gray));
+  border-bottom: 0px none !important;
+  margin-bottom: 0px !important;
   position: sticky;
   top: 0;
-  z-index: 57; /* Fica por cima da subfamília se sobrepor */
+  z-index: 57;
   white-space: normal;
   height: 50px;
   display: flex;
@@ -104,18 +103,18 @@ h1 {
 .header-subfamily {
   font-weight: 600;
   background: var(--gray-bg) !important;
-  padding: 8px 5px;
+  /* AJUSTE DE ALTURA: Padding menor e altura mínima reduzida */
+  padding: 6px 5px;
+  min-height: 35px; 
   text-align: center;
   position: sticky;
   top: 50px;
   z-index: 56;
   white-space: normal;
-  /* SOLUÇÃO: Puxa 1px para cima para garantir que grude no cabeçalho de cima */
-  margin-top: -1px !important;
-  border-top: none !important;
-  outline: none !important;
+  /* Garante que não haja borda superior visível */
+  border-top: 0px none !important;
+  margin-top: 0px !important;
   border-bottom: 2px solid var(--gray-line) !important;
-  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -255,21 +254,10 @@ section("🗺️ Job Map")
 col1, col2 = st.columns([2, 2])
 
 preferred_order = [
-    "Top Executive/General Management",
-    "Corporate Affairs/Communications",
-    "Legal & Internal Audit",
-    "Finance",
-    "IT",
-    "People & Culture",
-    "Sales",
-    "Marketing",
-    "Technical Services",
-    "Research & Development",
-    "Technical Engineering",
-    "Operations",
-    "Supply Chain & Logistics",
-    "Quality Management",
-    "Facility & Administrative Services"
+    "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
+    "Finance", "IT", "People & Culture", "Sales", "Marketing", "Technical Services",
+    "Research & Development", "Technical Engineering", "Operations", "Supply Chain & Logistics",
+    "Quality Management", "Facility & Administrative Services"
 ]
 
 existing_families = set(df["Job Family"].unique())
@@ -399,8 +387,7 @@ for (f, sf), c_idx in subfamilias_map.items():
         cap = min(max(1, max_cards), 6)
         width_cards = (cap * 135) + ((cap - 1) * 8) + 25
         
-    final_width = max(width_title, width_cards)
-    col_widths.append(f"{final_width}px")
+    col_widths.append(f"{max(width_title, width_cards)}px")
 
 grid_template = f"grid-template-columns: {' '.join(col_widths)};"
 
@@ -408,23 +395,16 @@ grid_template = f"grid-template-columns: {' '.join(col_widths)};"
 # PALETA DE CORES
 # ===========================================================
 palette_pairs = [
-    ("#4F6D7A", "#E6EFF2"),
-    ("#5C7A67", "#E8F2EB"),
-    ("#7A5C5C", "#F2E6E6"),
-    ("#6B5C7A", "#EBE6F2"),
-    ("#7A725C", "#F2EFE6"),
-    ("#5C6B7A", "#E6EBF2"),
-    ("#7A5C74", "#F2E6EF"),
-    ("#5C7A78", "#E6F2F1"),
-    ("#736A62", "#F0EDEB"),
+    ("#4F6D7A", "#E6EFF2"), ("#5C7A67", "#E8F2EB"), ("#7A5C5C", "#F2E6E6"),
+    ("#6B5C7A", "#EBE6F2"), ("#7A725C", "#F2EFE6"), ("#5C6B7A", "#E6EBF2"),
+    ("#7A5C74", "#F2E6EF"), ("#5C7A78", "#E6F2F1"), ("#736A62", "#F0EDEB"),
     ("#626A73", "#EBEDF0"),
 ]
-
 map_cor_fam = {f: palette_pairs[i % len(palette_pairs)][0] for i, f in enumerate(families_order)}
 map_cor_sub = {f: palette_pairs[i % len(palette_pairs)][1] for i, f in enumerate(families_order)}
 
 # ===========================================================
-# RENDERIZAÇÃO FINAL
+# RENDERIZAÇÃO FINAL (COM VARIÁVEL CSS PARA SOMBRA)
 # ===========================================================
 html = ["<div class='map-wrapper'><div class='jobmap-grid' style='{grid_template}'>".format(grid_template=grid_template)]
 html.append("<div class='gg-header'>GG</div>")
@@ -432,7 +412,9 @@ html.append("<div class='gg-header'>GG</div>")
 current_col = 2
 for f in active_families:
     span = header_spans[f]
-    html.append(f"<div class='header-family' style='grid-column: {current_col} / span {span}; background:{map_cor_fam[f]};'>{f}</div>")
+    # Define a variável CSS localmente para que a sombra use a cor correta da família
+    style = f"grid-column: {current_col} / span {span}; background:{map_cor_fam[f]}; --bg-color: {map_cor_fam[f]};"
+    html.append(f"<div class='header-family' style='{style}'>{f}</div>")
     current_col += span
 
 for (f, sf), c_idx in subfamilias_map.items():
