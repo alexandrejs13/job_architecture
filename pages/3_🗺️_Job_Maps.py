@@ -81,7 +81,6 @@ h1 {
   text-align: center;
   background: var(--dark-gray);
   border-right: 1px solid white !important;
-  /* REMOÇÃO DA LINHA FANTASMA REFORÇADA */
   border-bottom: 0px transparent !important;
   position: sticky;
   top: 0;
@@ -149,14 +148,14 @@ h1 {
 
 .cell {
   background: white;
-  padding: 6px;
+  padding: 8px; /* Aumentei ligeiramente o padding interno da célula */
   text-align: left;
   vertical-align: middle;
   z-index: 1;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px; /* Espaço um pouco maior entre os cards */
   align-items: flex-start;
   align-content: center;
 }
@@ -317,31 +316,30 @@ for (_, c_idx) in subfamilias_map.items():
         span_map[(g, c_idx)] = span
 
 # ===========================================================
-# CÁLCULO DE LARGURAS DINÂMICAS
+# CÁLCULO DE LARGURAS DINÂMICAS (AJUSTADO)
 # ===========================================================
 def largura_texto(text):
-    return len(str(text)) * 7 + 30
+    return len(str(text)) * 7 + 25
 
 col_widths = ["100px"] # Coluna GG
 
 for (f, sf), c_idx in subfamilias_map.items():
-    # 1. Largura mínima baseada no texto do cabeçalho/cargos
     cargos = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf)]["Job Profile"].tolist()
     maior_texto = max([sf] + cargos if cargos else [sf], key=len)
     width_by_text = largura_texto(maior_texto)
     
-    # 2. Largura baseada na quantidade MÁXIMA de cards na coluna
     max_cards_in_col = 0
     for g in grades:
-        # Considera mesclagens para não subestimar a largura necessária se uma célula mesclada tiver muitos cards
         if (g, c_idx) not in skip_set:
              max_cards_in_col = max(max_cards_in_col, cards_count_map.get((g, c_idx), 0))
     
-    # Permite até 6 cards lado a lado (aprox 810px). Se tiver mais, eles quebram linha.
     cards_capacity = min(max(1, max_cards_in_col), 6)
-    width_by_cards = cards_capacity * 135 # 135px por card (125px + gap)
     
-    final_width = max(180, width_by_text, width_by_cards)
+    # 135px por card + 15px de respiro extra no final da coluna
+    width_by_cards = (cards_capacity * 135) + 15
+    
+    # Mínimo reduzido para 150px para colunas com 1 só card não ficarem muito largas
+    final_width = max(150, width_by_text, width_by_cards)
     col_widths.append(f"{final_width}px")
 
 grid_template = f"grid-template-columns: {' '.join(col_widths)};"
