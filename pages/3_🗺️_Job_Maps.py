@@ -5,18 +5,14 @@ from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar
 
 # ===========================================================
-# CONFIGURAÇÃO DA PÁGINA (deve vir primeiro!)
+# CONFIGURAÇÃO DA PÁGINA
 # ===========================================================
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
+st.write("⚙️ Versão ativa: v2025.11.09.3")
 
 # ===========================================================
-# IDENTIFICAÇÃO DE VERSÃO ATIVA
-# ===========================================================
-st.write("⚙️ Versão ativa: v2025.11.09.2")
-
-# ===========================================================
-# CSS GLOBAL — VISUAL LIMPO E TÉCNICO
+# CSS
 # ===========================================================
 st.markdown("""
 <style>
@@ -63,7 +59,7 @@ h1 {
   position: relative;
 }
 .jobmap-grid > div {
-  border: 1px solid #fff;
+  border: 1px solid #d9d9d9; /* grid cinza no restante da planilha */
   box-sizing: border-box;
 }
 
@@ -73,14 +69,18 @@ h1 {
   font-size: 1rem;
   background: #000;
   color: #fff;
-  padding: 12px 10px;
+  padding: 16px 10px;
   position: sticky;
   top: 0;
   left: 0;
   z-index: 70 !important;
   text-align: center;
-  vertical-align: middle;
   border-right: 2px solid #fff;
+  border-bottom: 1px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  grid-row: span 2; /* mescla GG e célula abaixo */
 }
 .grade-cell {
   background: #000;
@@ -116,7 +116,7 @@ h1 {
   justify-content: center;
   text-align: center;
   white-space: normal;
-  line-height: 1.2;
+  line-height: 1.25;
   border-right: 1px solid #fff;
 }
 
@@ -136,14 +136,17 @@ h1 {
 .job-card {
   background: #f9f9f9;
   border-left: 4px solid #145efc;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 6px 8px;
-  margin: 4px 5px;
+  margin: 4px 6px;
   text-align: left;
   font-size: 0.8rem;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   word-wrap: break-word;
+  white-space: normal;
   overflow-wrap: break-word;
+  width: 100%;
+  max-width: 100%;
 }
 .job-card b {
   display: block;
@@ -159,19 +162,15 @@ h1 {
   background: #eef4ff;
 }
 
-/* ===== ZEBRA / GRID ===== */
+/* ===== ZEBRA ===== */
 .grade-row:nth-child(even) {
   background: #fcfcfc;
 }
-
-/* ===== ESPAÇAMENTO / RESPONSIVIDADE ===== */
-@media (max-width: 1500px) { .block-container { zoom: 0.9; } }
-@media (max-width: 1200px) { .block-container { zoom: 0.8; } }
 </style>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# TÍTULO E FILTROS FIXOS
+# FILTROS
 # ===========================================================
 st.markdown("<div class='top-fixed'>", unsafe_allow_html=True)
 section("🗺️ Job Map")
@@ -208,18 +207,18 @@ if df.empty:
     st.stop()
 
 # ===========================================================
-# CORES SUAVES E HARMÔNICAS
+# PALETA SIG
 # ===========================================================
-families = sorted(df["Job Family"].unique().tolist())
 palette_dark = [
-    "#145efc", "#00796B", "#9C27B0", "#E65100", "#5D4037", "#0288D1",
-    "#558B2F", "#8E24AA", "#F9A825", "#6D4C41"
+    "#00493b", "#167665", "#4fa593", "#f5f073", "#c8b846", "#a09b05",
+    "#145efc", "#dca0ff", "#73706d", "#bfbaB5"
 ]
 palette_light = [
-    "#e6ecff", "#e8f5e9", "#f3e5f5", "#fbe9e7", "#efebe9", "#e1f5fe",
-    "#f1f8e9", "#f3e5f5", "#fffde7", "#efebe9"
+    "#e6f4f1", "#e1f5ef", "#eaf8f5", "#fefde5", "#f8f6e1", "#f9f8da",
+    "#e8edff", "#f8edff", "#efefef", "#f5f5f5"
 ]
 
+families = sorted(df["Job Family"].unique().tolist())
 fam_colors_dark = {f: palette_dark[i % len(palette_dark)] for i, f in enumerate(families)}
 fam_colors_light = {f: palette_light[i % len(palette_light)] for i, f in enumerate(families)}
 
@@ -235,13 +234,13 @@ for f in families:
 grid_template = f"grid-template-columns: {' '.join(str(x)+'px' for x in col_sizes)};"
 
 # ===========================================================
-# CONSTRUÇÃO VISUAL DO GRID
+# GRID VISUAL
 # ===========================================================
 html = "<div class='map-wrapper'>"
 
 # LINHA 1 — Famílias (GG mesclado)
 html += f"<div class='jobmap-grid sticky-family' style='{grid_template};'>"
-html += "<div class='grade-header' style='grid-row: span 2;'>GG</div>"
+html += "<div class='grade-header'>GG</div>"
 for f in families:
     span = len(subfam_map[f])
     color = fam_colors_dark[f]
