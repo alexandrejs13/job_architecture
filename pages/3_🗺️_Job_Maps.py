@@ -28,7 +28,7 @@ st.markdown("""
 .block-container {
   max-width: 1750px !important;
   margin: 0 auto !important;
-  padding: 0 !important;
+  padding: 2.5rem 1.5rem 2rem 1.5rem !important;
 }
 
 /* ======= CABEÇALHO FIXO ======= */
@@ -83,11 +83,11 @@ h1 {
   text-align: center;
   background: var(--dark-gray);
   border-right: 1px solid white;
-  border-bottom: 1px solid white;
   position: sticky;
   top: 0;
   z-index: 55;
   white-space: normal;
+  line-height: 1.3;
 }
 .header-subfamily {
   font-weight: 600;
@@ -95,11 +95,11 @@ h1 {
   padding: 10px;
   text-align: center;
   border-right: 1px solid var(--gray-line);
-  border-bottom: 1px solid var(--gray-line);
   position: sticky;
   top: 52px;
   z-index: 54;
   white-space: normal;
+  border-top: none !important; /* remove linha fantasma */
 }
 
 /* ======= COLUNA GG ======= */
@@ -113,8 +113,9 @@ h1 {
   justify-content: center;
   grid-row: span 2;
   position: sticky;
+  top: 0;
   left: 0;
-  z-index: 60;
+  z-index: 100 !important;
   border-right: 2px solid white;
 }
 .gg-cell {
@@ -126,7 +127,7 @@ h1 {
   justify-content: center;
   position: sticky;
   left: 0;
-  z-index: 55;
+  z-index: 90 !important;
   border-right: 2px solid white;
   border-top: 1px solid white;
 }
@@ -203,21 +204,11 @@ section("🗺️ Job Map")
 col1, col2 = st.columns([2, 2])
 
 families_order = [
-    "Top Executive/General Management",
-    "Corporate Affairs/Communications",
-    "Legal & Internal Audit",
-    "Finance",
-    "IT",
-    "People & Culture",
-    "Sales",
-    "Marketing",
-    "Technical Services",
-    "Research & Development",
-    "Technical Engineering",
-    "Operations",
-    "Supply Chain & Logistics",
-    "Quality Management",
-    "Facility & Administrative Services"
+    "Top Executive/General Management", "Corporate Affairs/Communications",
+    "Legal & Internal Audit", "Finance", "IT", "People & Culture",
+    "Sales", "Marketing", "Technical Services", "Research & Development",
+    "Technical Engineering", "Operations", "Supply Chain & Logistics",
+    "Quality Management", "Facility & Administrative Services"
 ]
 families = ["Todas"] + [f for f in families_order if f in df["Job Family"].unique()]
 paths = ["Todas"] + sorted(df["Career Path"].dropna().unique().tolist())
@@ -237,19 +228,15 @@ if df.empty:
     st.stop()
 
 # ===========================================================
-# MAPA ESTRUTURADO
+# ESTRUTURA DE GRID
 # ===========================================================
 familias = [f for f in families_order if f in df["Job Family"].unique()]
 cores_familia = [
-    "#726C5B", "#5F6A73", "#6F5C60", "#5D6E70", "#6B715B",
-    "#5B5F77", "#725E7A", "#666C5B", "#736A65", "#6C5F70",
-    "#655C6F", "#6A6C64", "#6C6868", "#5F7073", "#70685E"
+    "#4B4B4B", "#5E5D74", "#6D6268", "#5B686F", "#626A5E",
+    "#5C5E77", "#6E5F70", "#676E6F", "#707075", "#5F5D68",
+    "#605F67", "#6E6B6C", "#67686A", "#5E5E5E", "#646363"
 ]
-cores_sub = [
-    "#EDEBE8", "#ECEEF0", "#F2ECEF", "#EEF2F2", "#F0F2ED",
-    "#EDEDF3", "#F1EEF4", "#F1F2EE", "#F2EFED", "#EFEFF2",
-    "#EFEDED", "#EFEFEF", "#F2F2F0", "#EFEFEF", "#EEEFEF"
-]
+cores_sub = ["#EDEDED" for _ in cores_familia]
 map_cor_fam = {f: cores_familia[i % len(cores_familia)] for i, f in enumerate(familias)}
 map_cor_sub = {f: cores_sub[i % len(cores_sub)] for i, f in enumerate(familias)}
 
@@ -306,3 +293,11 @@ for g in grades:
 
 html.append("</div></div>")
 st.markdown("".join(html), unsafe_allow_html=True)
+
+# ===========================================================
+# VISUALIZAÇÃO INTERATIVA (🔍 ⬇️ ⛶)
+# ===========================================================
+st.divider()
+st.caption("Visualização interativa (zoom, download e tela cheia disponíveis abaixo):")
+st.dataframe(df[["Job Family", "Sub Job Family", "Job Profile", "Career Path", "Global Grade"]],
+             use_container_width=True, height=450)
