@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (COM MESCLAGEM E CARDS LADO A LADO)
+# CSS COMPLETO (CARDS MENORES E PADRONIZADOS)
 # ===========================================================
 st.markdown("""
 <style>
@@ -25,9 +25,9 @@ st.markdown("""
 }
 
 .block-container {
-  max-width: 1850px !important;
-  margin: 0 auto !important;
-  padding: 1rem 3rem !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 1rem 2rem !important;
 }
 
 .topbar {
@@ -60,16 +60,14 @@ h1 {
   box-shadow: 0 0 15px rgba(0,0,0,0.05);
 }
 
-/* Grid com linhas automáticas que se ajustam ao conteúdo */
 .jobmap-grid {
   display: grid;
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
-  grid-auto-rows: minmax(80px, auto); /* Altura mínima de 80px, mas cresce se precisar */
+  grid-auto-rows: minmax(60px, auto); /* Altura mínima da linha reduzida */
 }
 
-/* Bordas para todos os itens diretos do grid */
 .jobmap-grid > div {
   border-right: 1px solid var(--gray-line);
   border-bottom: 1px solid var(--gray-line);
@@ -79,7 +77,7 @@ h1 {
 .header-family {
   font-weight: 800;
   color: #fff;
-  padding: 12px 10px;
+  padding: 10px 5px;
   text-align: center;
   background: var(--dark-gray);
   border-right: 1px solid white !important;
@@ -87,28 +85,30 @@ h1 {
   top: 0;
   z-index: 55;
   white-space: normal;
-  height: 55px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
-  grid-row: 1; /* Força sempre na linha 1 */
+  grid-row: 1;
+  font-size: 0.9rem;
 }
 
 .header-subfamily {
   font-weight: 600;
   background: var(--gray-bg);
-  padding: 10px;
+  padding: 8px 5px;
   text-align: center;
   position: sticky;
-  top: 55px;
+  top: 50px;
   z-index: 55;
   white-space: normal;
   border-bottom: 2px solid var(--gray-line) !important;
-  min-height: 45px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  grid-row: 2; /* Força sempre na linha 2 */
+  grid-row: 2;
+  font-size: 0.85rem;
 }
 
 .gg-header {
@@ -119,8 +119,8 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  grid-row: 1 / span 2; /* Ocupa linhas 1 e 2 */
-  grid-column: 1;       /* Sempre coluna 1 */
+  grid-row: 1 / span 2;
+  grid-column: 1;
   position: sticky;
   left: 0;
   top: 0;
@@ -141,53 +141,54 @@ h1 {
   z-index: 55;
   border-right: 2px solid white !important;
   border-top: 1px solid white !important;
-  grid-column: 1; /* Sempre coluna 1 */
+  grid-column: 1;
+  font-size: 0.9rem;
 }
 
-/* === CÉLULAS DE CONTEÚDO (Flex para Lado a Lado) === */
+/* === CÉLULAS (LAYOUT FLEX) === */
 .cell {
   background: white;
   padding: 6px;
   text-align: left;
   vertical-align: middle;
   z-index: 1;
-  /* Flexbox para colocar cards lado a lado */
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;     /* Quebra linha se não couber */
-  gap: 6px;            /* Espaço entre os cards */
-  align-content: center; /* Centraliza bloco verticalmente se sobrar espaço */
-  align-items: stretch;  /* Cards da mesma linha com mesma altura */
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: flex-start;
+  align-content: center;
 }
 
-/* === CARDS MAIS COMPACTOS === */
+/* === CARDS PADRONIZADOS E MENORES === */
 .job-card {
   background: #f9f9f9;
-  border-left: 4px solid var(--blue);
-  border-radius: 6px;
-  padding: 6px 8px;
+  border-left: 3px solid var(--blue);
+  border-radius: 4px;
+  padding: 5px 6px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.08);
-  font-size: 0.84rem;
+  font-size: 0.75rem; /* Fonte menor */
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;
   
-  /* Flex grow/shrink e base width */
-  flex: 1 1 140px; /* Tenta ter 140px, mas pode crescer ou diminuir */
-  min-width: 120px; /* Largura mínima antes de quebrar linha */
+  /* Tamanho fixo e padronizado */
+  width: 125px;
+  flex: 0 0 125px; /* Não cresce nem diminui, fica sempre com 125px */
+  min-height: 45px; /* Altura mínima para uniformidade visual */
 }
 .job-card b {
   display: block;
   font-weight: 700;
-  margin-bottom: 3px;
-  line-height: 1.2;
-  color: #000;
+  margin-bottom: 2px;
+  line-height: 1.1;
+  color: #222;
 }
 .job-card span {
   display: block;
-  font-size: 0.75rem;
-  color: #555;
-  line-height: 1.1;
+  font-size: 0.7rem;
+  color: #666;
+  line-height: 1;
 }
 
 .gg-header::after, .gg-cell::after {
@@ -202,12 +203,11 @@ h1 {
 }
 
 @media (max-width: 1500px) { .block-container { zoom: 0.9; } }
-@media (max-width: 1200px) { .block-container { zoom: 0.8; } }
 </style>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# DADOS E LIMPEZA
+# DADOS
 # ===========================================================
 data = load_excel_data()
 df = data.get("job_profile", pd.DataFrame())
@@ -261,15 +261,14 @@ if df.empty:
     st.stop()
 
 # ===========================================================
-# PREPARAÇÃO DO GRID (COM LÓGICA DE MESCLAGEM)
+# PREPARAÇÃO DO GRID
 # ===========================================================
 active_families = [f for f in families_order if f in df["Job Family"].unique()]
 grades = sorted(df["Global Grade"].unique(), key=lambda x: int(x) if x.isdigit() else 999, reverse=True)
 
-# 1. Mapeamento de Colunas e Subfamílias
-subfamilias_map = {} # (Family, SubFamily) -> Column Index
-col_index = 2 # Começa na 2 (1 é GG)
-header_spans = {} # Family -> span count
+subfamilias_map = {}
+col_index = 2
+header_spans = {}
 
 for f in active_families:
     subs = sorted(df[df["Job Family"] == f]["Sub Job Family"].unique().tolist())
@@ -278,46 +277,38 @@ for f in active_families:
         subfamilias_map[(f, sf)] = col_index
         col_index += 1
 
-# 2. Pré-calculo do conteúdo de cada célula para detectar mesclagens
-# content_map[(grade, col_idx)] = "assinatura" única do conteúdo
 content_map = {}
-cell_html_cache = {} # Guarda o HTML gerado para não refazer
+cell_html_cache = {}
+cards_count_map = {}
 
 for g in grades:
     for (f, sf), c_idx in subfamilias_map.items():
         cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
-        if cell_df.empty:
-            content_map[(g, c_idx)] = None # Célula vazia
+        count = len(cell_df)
+        cards_count_map[(g, c_idx)] = count
+
+        if count == 0:
+            content_map[(g, c_idx)] = None
             continue
         
-        # Assinatura baseada nos cargos e trilhas (se forem idênticos, mescla)
         jobs_sig = "|".join(sorted((cell_df["Job Profile"] + cell_df["Career Path"]).unique()))
         content_map[(g, c_idx)] = jobs_sig
         
-        # Gera os cards já com layout flex (lado a lado se houver múltiplos)
         cards_html = "".join([
             f"<div class='job-card'><b>{row['Job Profile']}</b><span>{row['Career Path']}</span></div>"
             for _, row in cell_df.iterrows()
         ])
         cell_html_cache[(g, c_idx)] = cards_html
 
-# 3. Cálculo de Spans (Mesclagem Vertical)
-# span_map[(grade, col_idx)] = quantas linhas essa célula ocupa
-# skip_set = células que não devem ser desenhadas pois estão cobertas por um span
 span_map = {}
 skip_set = set()
-
 for (_, c_idx) in subfamilias_map.items():
     for i, g in enumerate(grades):
-        if (g, c_idx) in skip_set:
-            continue
-            
+        if (g, c_idx) in skip_set: continue
         current_sig = content_map.get((g, c_idx))
         if current_sig is None:
             span_map[(g, c_idx)] = 1
             continue
-
-        # Verifica grades abaixo para ver se o conteúdo é idêntico
         span = 1
         for next_g in grades[i+1:]:
             if content_map.get((next_g, c_idx)) == current_sig:
@@ -328,15 +319,27 @@ for (_, c_idx) in subfamilias_map.items():
         span_map[(g, c_idx)] = span
 
 # ===========================================================
-# GERAÇÃO DO CSS GRID
+# CÁLCULO DE LARGURAS
 # ===========================================================
-# Definição das larguras das colunas
-def largura(text): return min(max(220, len(str(text)) * 8 + 50), 420)
-col_widths = ["120px"] # Coluna GG
-for (f, sf), _ in subfamilias_map.items():
+def largura_texto(text):
+    return len(str(text)) * 7 + 30 # Reduzido ligeiramente o multiplicador de texto
+
+col_widths = ["100px"] # Coluna GG um pouco menor
+
+for (f, sf), c_idx in subfamilias_map.items():
     cargos = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf)]["Job Profile"].tolist()
     maior_texto = max([sf] + cargos if cargos else [sf], key=len)
-    col_widths.append(f"{largura(maior_texto)}px")
+    width_by_text = largura_texto(maior_texto)
+    
+    max_cards_in_col = 0
+    for g in grades:
+        max_cards_in_col = max(max_cards_in_col, cards_count_map.get((g, c_idx), 0))
+    
+    # Ajustado para 135px por card (125px width + 10px gap aprox)
+    width_by_cards = min(max_cards_in_col, 3) * 135
+    
+    final_width = max(180, width_by_text, width_by_cards) # Mínimo reduzido para 180px
+    col_widths.append(f"{final_width}px")
 
 grid_template = f"grid-template-columns: {' '.join(col_widths)};"
 
@@ -346,43 +349,28 @@ map_cor_fam = {f: cores_fam[i % len(cores_fam)] for i, f in enumerate(families_o
 map_cor_sub = {f: cores_sub[i % len(cores_sub)] for i, f in enumerate(families_order)}
 
 # ===========================================================
-# MONTAGEM DO HTML
+# RENDERIZAÇÃO
 # ===========================================================
 html = ["<div class='map-wrapper'><div class='jobmap-grid' style='{grid_template}'>".format(grid_template=grid_template)]
-
-# 1. Cabeçalho GG (fixo nas linhas 1-2, col 1)
 html.append("<div class='gg-header'>GG</div>")
 
-# 2. Cabeçalhos Família (Linha 1)
 current_col = 2
 for f in active_families:
     span = header_spans[f]
     html.append(f"<div class='header-family' style='grid-column: {current_col} / span {span}; background:{map_cor_fam[f]};'>{f}</div>")
     current_col += span
 
-# 3. Cabeçalhos Subfamília (Linha 2)
 for (f, sf), c_idx in subfamilias_map.items():
     html.append(f"<div class='header-subfamily' style='grid-column: {c_idx}; background:{map_cor_sub[f]};'>{sf}</div>")
 
-# 4. Corpo do Grid (Grades + Células)
 for i, g in enumerate(grades):
-    row_idx = i + 3 # Linhas começam no índice 3 (após os 2 cabeçalhos)
-    
-    # Célula GG da linha
+    row_idx = i + 3
     html.append(f"<div class='gg-cell' style='grid-row: {row_idx};'>GG {g}</div>")
-    
-    # Células de Cargos
     for (f, sf), c_idx in subfamilias_map.items():
-        if (g, c_idx) in skip_set:
-            continue # Célula coberta por uma mesclagem acima
-            
+        if (g, c_idx) in skip_set: continue
         span = span_map.get((g, c_idx), 1)
-        row_style = f"grid-row: {row_idx} / span {span};" if span > 1 else f"grid-row: {row_idx};"
-        col_style = f"grid-column: {c_idx};"
-        
-        content = cell_html_cache.get((g, c_idx), "")
-        # Se tiver conteúdo, usa flex. Se vazio, mantém normal (ou pode deixar flex também, sem problemas)
-        html.append(f"<div class='cell' style='{col_style} {row_style}'>{content}</div>")
+        row_str = f"grid-row: {row_idx} / span {span};" if span > 1 else f"grid-row: {row_idx};"
+        html.append(f"<div class='cell' style='grid-column: {c_idx}; {row_str}'>{cell_html_cache.get((g, c_idx), '')}</div>")
 
 html.append("</div></div>")
 st.markdown("".join(html), unsafe_allow_html=True)
