@@ -21,7 +21,6 @@ st.markdown("""
   --blue: #145efc;
   --gray-line: #dadada;
   --gray-bg: #f8f9fa;
-  --dark-gray: #73706d;
 }
 
 /* ======= BLOCO PRINCIPAL ======= */
@@ -81,8 +80,9 @@ h1 {
   color: #fff;
   padding: 12px 10px;
   text-align: center;
-  background: var(--dark-gray);
+  background: var(--dark-family, #5A5E63);
   border-right: 1px solid white;
+  border-bottom: none !important; /* remove linha fantasma */
   position: sticky;
   top: 0;
   z-index: 55;
@@ -95,11 +95,11 @@ h1 {
   padding: 10px;
   text-align: center;
   border-right: 1px solid var(--gray-line);
+  border-top: none !important; /* remove linha fantasma */
   position: sticky;
   top: 52px;
   z-index: 54;
   white-space: normal;
-  border-top: none !important; /* remove linha fantasma */
 }
 
 /* ======= COLUNA GG ======= */
@@ -164,7 +164,7 @@ h1 {
   color: #444;
 }
 
-/* ======= Sombra vertical entre GG e Families ======= */
+/* ======= SOMBRA ENTRE GG E FAMÍLIAS ======= */
 .gg-header::after, .gg-cell::after {
   content: "";
   position: absolute;
@@ -210,7 +210,9 @@ families_order = [
     "Technical Engineering", "Operations", "Supply Chain & Logistics",
     "Quality Management", "Facility & Administrative Services"
 ]
-families = ["Todas"] + [f for f in families_order if f in df["Job Family"].unique()]
+
+# Mostrar todas as famílias mesmo que vazias
+families = ["Todas"] + families_order
 paths = ["Todas"] + sorted(df["Career Path"].dropna().unique().tolist())
 
 with col1:
@@ -230,13 +232,17 @@ if df.empty:
 # ===========================================================
 # ESTRUTURA DE GRID
 # ===========================================================
-familias = [f for f in families_order if f in df["Job Family"].unique()]
+familias = families_order
 cores_familia = [
-    "#4B4B4B", "#5E5D74", "#6D6268", "#5B686F", "#626A5E",
-    "#5C5E77", "#6E5F70", "#676E6F", "#707075", "#5F5D68",
-    "#605F67", "#6E6B6C", "#67686A", "#5E5E5E", "#646363"
+    "#5A5E63", "#6B6760", "#556670", "#5E6D65", "#6B6562",
+    "#60676E", "#64645E", "#6B6C6D", "#5D676C", "#67605F",
+    "#5E6365", "#696969", "#6D6A64", "#5C5F62", "#66625E"
 ]
-cores_sub = ["#EDEDED" for _ in cores_familia]
+cores_sub = [
+    "#E6E7E9", "#EAE8E6", "#E3E8EA", "#E7EAE7", "#E9E7E6",
+    "#E8E9EB", "#EAEAE8", "#E9EAEA", "#E8EAEB", "#EAE8E8",
+    "#E8E9E9", "#E9E9E8", "#EAE9E7", "#E7E8E9", "#E8E8E7"
+]
 map_cor_fam = {f: cores_familia[i % len(cores_familia)] for i, f in enumerate(familias)}
 map_cor_sub = {f: cores_sub[i % len(cores_sub)] for i, f in enumerate(familias)}
 
@@ -254,7 +260,7 @@ def largura(t):
 
 colunas = ["160px"]
 for f in familias:
-    for sf in subfamilias[f]:
+    for sf in subfamilias.get(f, []):
         maior = max([sf] + df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf)]["Job Profile"].tolist(), key=len)
         colunas.append(f"{largura(maior)}px")
 grid_template = f"grid-template-columns: {' '.join(colunas)};"
@@ -267,12 +273,13 @@ html = ["<div class='map-wrapper'><div class='jobmap-grid' style='{grid_template
 # Linha 1 — Famílias
 html.append("<div class='gg-header'>GG</div>")
 for f in familias:
-    span = len(subfamilias[f])
-    html.append(f"<div class='header-family' style='grid-column: span {span}; background:{map_cor_fam[f]};'>{f}</div>")
+    sub_count = len(subfamilias.get(f, []))
+    if sub_count == 0: sub_count = 1
+    html.append(f"<div class='header-family' style='grid-column: span {sub_count}; background:{map_cor_fam[f]};'>{f}</div>")
 
 # Linha 2 — Subfamílias
 for f in familias:
-    for sf in subfamilias[f]:
+    for sf in subfamilias.get(f, [" "]):
         html.append(f"<div class='header-subfamily' style='background:{map_cor_sub[f]};'>{sf}</div>")
 
 # Demais linhas (Grades + Cargos)
@@ -280,7 +287,7 @@ for g in grades:
     html.append(f"<div class='gg-cell'>GG {g}</div>")
     for f in familias:
         fam_df = df[df["Job Family"] == f]
-        for sf in subfamilias[f]:
+        for sf in subfamilias.get(f, [" "]):
             cell = fam_df[(fam_df["Sub Job Family"] == sf) & (fam_df["Global Grade"] == g)]
             if cell.empty:
                 html.append("<div class='cell'></div>")
@@ -300,4 +307,4 @@ st.markdown("".join(html), unsafe_allow_html=True)
 st.divider()
 st.caption("Visualização interativa (zoom, download e tela cheia disponíveis abaixo):")
 st.dataframe(df[["Job Family", "Sub Job Family", "Job Profile", "Career Path", "Global Grade"]],
-             use_container_width=True, height=450)
+             use_container_width=True, height=500)
