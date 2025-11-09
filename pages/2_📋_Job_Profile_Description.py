@@ -4,33 +4,35 @@ from utils.data_loader import load_job_profile_df
 from utils.ui_components import section
 
 # ===========================================================
-# CONFIGURAÇÃO INICIAL
+# CONFIGURAÇÃO DA PÁGINA
 # ===========================================================
-st.set_page_config(layout="wide")
-section("📘 Job Profile Description")
+st.set_page_config(layout="wide", page_title="📘 Job Profile Description")
 
 # ===========================================================
-# CSS — MANTÉM LAYOUT ORIGINAL + ALTURA IGUAL ENTRE CARDS
+# CSS — layout refinado e altura uniforme
 # ===========================================================
 st.markdown("""
 <style>
 .block-container {
   max-width: 1200px !important;
-  min-width: 900px !important;
   margin: 0 auto !important;
   padding: 2.5rem 1.5rem 2rem 1.5rem;
   zoom: 0.9;
 }
-html, body, [class*="css"] { font-size: calc(13px + 0.18vw) !important; }
+html, body, [class*="css"] {
+  font-size: calc(13px + 0.18vw) !important;
+}
+h1 { text-align: left; color:#1E56E0; font-size:1.9rem !important; margin-bottom:1.4rem; }
 
-h1 {
-  text-align: left !important;
-  margin-top: 0.8rem !important;
-  margin-bottom: 1.4rem !important;
-  font-size: 1.9rem !important;
+[data-testid="stSidebar"][aria-expanded="true"]{
+  width: 300px !important;
+  min-width: 300px !important;
+  max-width: 300px !important;
+  resize: none !important;
 }
 
 .ja-p { margin: 0 0 4px 0; text-align: left; line-height: 1.48; }
+
 .ja-hd { display:flex; flex-direction:column; align-items:flex-start; gap:4px; margin:0 0 6px 0; text-align:left; }
 .ja-hd-title { font-size:1.15rem; font-weight:700; }
 .ja-hd-grade { color:#1E56E0; font-weight:700; font-size:1rem; }
@@ -43,10 +45,9 @@ h1 {
   width:100%;
   text-align:left;
   min-height:130px;
-  box-sizing:border-box;
 }
 
-.ja-sec { margin: 0 !important; text-align:left; height:100%; display:flex; flex-direction:column; }
+.ja-sec { margin: 0 !important; text-align:left; }
 .ja-sec-h { display:flex; align-items:center; gap:6px; margin:0 0 3px 0 !important; }
 .ja-ic { width:18px; text-align:center; line-height:1; }
 .ja-ttl { font-weight:700; color:#1E56E0; font-size:0.95rem; }
@@ -59,33 +60,37 @@ h1 {
   box-shadow:0 1px 2px rgba(0,0,0,0.05);
   width:100%;
   text-align:left;
+  min-height:120px;
+  display:block;
   box-sizing:border-box;
-  flex-grow:1;                 /* Faz o card expandir na linha */
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-start;
 }
 
 .ja-grid {
   display:grid;
   gap:14px 14px;
   justify-items:stretch;
-  align-items:stretch;          /* 🔥 Altura uniforme por linha */
+  align-items:start;
   margin:6px 0 12px 0 !important;
 }
 .ja-grid.cols-1 { grid-template-columns: repeat(1, minmax(250px, 1fr)); }
 .ja-grid.cols-2 { grid-template-columns: repeat(2, minmax(300px, 1fr)); }
 .ja-grid.cols-3 { grid-template-columns: repeat(3, minmax(340px, 1fr)); }
 
+/* Igualar alturas dos cards na mesma linha */
+.ja-grid > div { display: flex; align-items: stretch; }
+.ja-card { flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+
 .compare-box { margin-top:-14px; }
-.compare-box .compare-label { margin:4px 0 5px 0; font-weight:600; color:#2b2d42; font-size:0.85rem; }
-div[data-baseweb="tag"] span { white-space: normal !important; word-break: break-word !important; font-weight:600 !important; font-size:0.82rem !important; }
+.compare-box .compare-label {
+  margin:4px 0 5px 0; font-weight:600; color:#2b2d42; font-size:0.85rem;
+}
+div[data-baseweb="tag"] span { white-space: normal !important; line-height: 1.15 !important; font-weight: 600 !important; font-size: 0.82rem !important; }
 div[data-baseweb="select"] > div { min-height:38px !important; height:auto !important; }
 </style>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# FUNÇÕES AUXILIARES
+# FUNÇÕES
 # ===========================================================
 def safe_get(row, keys, default=""):
     for k in keys if isinstance(keys, list) else [keys]:
@@ -103,11 +108,16 @@ def format_paragraphs(text):
     return "".join(f"<p class='ja-p'>{p.strip()}</p>" for p in parts if len(p.strip()) > 2)
 
 def header_badge(title, grade):
-    return f"<div class='ja-hd'><div class='ja-hd-title'>{title}</div><div class='ja-hd-grade'>GG {grade}</div></div>"
+    return f"""
+    <div class="ja-hd">
+      <div class="ja-hd-title">{title}</div>
+      <div class="ja-hd-grade">GG {grade}</div>
+    </div>
+    """
 
 def class_box(row):
     return f"""
-    <div class='ja-class'>
+    <div class="ja-class">
       <b>Família:</b> {row['Job Family']}<br>
       <b>Subfamília:</b> {row['Sub Job Family']}<br>
       <b>Carreira:</b> {row['Career Path']}<br>
@@ -119,25 +129,24 @@ def class_box(row):
 
 def cell_card(emoji, title, html_text):
     return f"""
-    <div class='ja-sec'>
-      <div class='ja-sec-h'><span class='ja-ic'>{emoji}</span><span class='ja-ttl'>{title}</span></div>
-      <div class='ja-card'>{html_text}</div>
+    <div class="ja-sec">
+      <div class="ja-sec-h">
+        <span class="ja-ic">{emoji}</span>
+        <span class="ja-ttl">{title}</span>
+      </div>
+      <div class="ja-card">{html_text}</div>
     </div>
     """
 
 # ===========================================================
-# LEITURA DO EXCEL
+# CONTEÚDO PRINCIPAL
 # ===========================================================
-df = load_job_profile_df()
-required = [
-    "Job Family", "Sub Job Family", "Job Profile",
-    "Job Profile Description", "Career Band Description",
-    "Role Description", "Grade Differentiator",
-    "Qualifications", "Career Path"
-]
-missing = [c for c in required if c not in df.columns]
-if missing:
-    st.error(f"As seguintes colunas não foram encontradas no Excel: {', '.join(missing)}")
+section("📘 Job Profile Description")
+
+try:
+    df = load_job_profile_df()
+except Exception as e:
+    st.error(f"❌ Erro ao carregar Job Profile.xlsx: {e}")
     st.stop()
 
 # ===========================================================
@@ -170,12 +179,13 @@ def option_label(row):
 career_df_sorted = career_df.sort_values(by="Global Grade", ascending=False)
 pick_options = career_df_sorted.apply(option_label, axis=1).tolist()
 
-st.markdown('<div class="compare-box"><div class="compare-label">Selecione até 3 cargos para comparar:</div>', unsafe_allow_html=True)
+st.markdown('<div class="compare-box">', unsafe_allow_html=True)
+st.markdown('<div class="compare-label">Selecione até 3 cargos para comparar:</div>', unsafe_allow_html=True)
 selected_labels = st.multiselect("", options=pick_options, max_selections=3, label_visibility="collapsed")
-st.markdown("</div>", unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ===========================================================
-# EXIBIÇÃO COMPARATIVA
+# RENDERIZAÇÃO COMPARATIVA
 # ===========================================================
 if selected_labels:
     st.markdown("---")
@@ -186,7 +196,9 @@ if selected_labels:
         parts = re.split(r"\s*[–—-]\s*", label)
         label_grade = parts[0].replace("GG", "").strip() if parts else ""
         label_title = parts[1].strip() if len(parts) > 1 else label.strip()
-        sel = career_df_sorted[career_df_sorted["Job Profile"].str.strip().str.lower() == label_title.lower()]
+        sel = career_df_sorted[
+            career_df_sorted["Job Profile"].str.strip().str.lower() == label_title.lower()
+        ]
         if label_grade:
             sel = sel[sel["Global Grade"].astype(str).str.strip() == label_grade]
         rows.append(sel.iloc[0] if not sel.empty else None)
@@ -194,28 +206,27 @@ if selected_labels:
     n = len(rows)
     grid_class = f"ja-grid cols-{n}"
 
-    # Cabeçalhos
-    st.markdown(f"<div class='{grid_class}'>" + "".join(
-        [f"<div>{header_badge(r['Job Profile'], r['Global Grade'])}</div>" if r is not None else "<div></div>" for r in rows]
-    ) + "</div>", unsafe_allow_html=True)
+    html_cells = [f"<div>{header_badge(r['Job Profile'], r['Global Grade'])}</div>" if r is not None else "<div></div>" for r in rows]
+    st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
 
-    # Bloco de Classificação
-    st.markdown(f"<div class='{grid_class}'>" + "".join(
-        [f"<div>{class_box(r)}</div>" if r is not None else "<div></div>" for r in rows]
-    ) + "</div>", unsafe_allow_html=True)
+    html_cells = [f"<div>{class_box(r)}</div>" if r is not None else "<div></div>" for r in rows]
+    st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
 
-    # Seções principais (incluindo Career Band Description)
     SECTIONS = [
         ("🧭", "Sub Job Family Description", lambda r: safe_get(r, "Sub Job Family Description")),
-        ("🧠", "Job Profile Description",   lambda r: safe_get(r, "Job Profile Description")),
-        ("🏢", "Career Band Description",   lambda r: safe_get(r, "Career Band Description")),
-        ("🎯", "Role Description",          lambda r: safe_get(r, "Role Description")),
-        ("🏅", "Grade Differentiator",      lambda r: safe_get(r, "Grade Differentiator")),
-        ("🎓", "Qualifications",            lambda r: safe_get(r, "Qualifications")),
+        ("🧠", "Job Profile Description", lambda r: safe_get(r, "Job Profile Description")),
+        ("💼", "Career Band Description", lambda r: safe_get(r, "Career Band Description")),
+        ("🎯", "Role Description", lambda r: safe_get(r, "Role Description")),
+        ("🏅", "Grade Differentiator", lambda r: safe_get(r, "Grade Differentiator")),
+        ("🎓", "Qualifications", lambda r: safe_get(r, "Qualifications")),
     ]
 
     for emoji, title, getter in SECTIONS:
         html_cells = []
         for r in rows:
-            html_cells.append("<div>" + cell_card(emoji, title, format_paragraphs(getter(r))) + "</div>" if r is not None else "<div></div>")
+            if r is None:
+                html_cells.append("<div></div>")
+            else:
+                raw = getter(r)
+                html_cells.append("<div>" + cell_card(emoji, title, format_paragraphs(raw)) + "</div>")
         st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
