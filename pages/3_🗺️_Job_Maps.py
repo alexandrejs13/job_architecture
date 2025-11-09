@@ -3,15 +3,10 @@ import pandas as pd
 from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar
 
-# ===========================================================
-# CONFIGURAÇÃO DA PÁGINA
-# ===========================================================
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
-# ===========================================================
-# CABEÇALHO FIXO
-# ===========================================================
+# =================== CSS ===================
 st.markdown("""
 <style>
 .block-container {
@@ -20,8 +15,6 @@ st.markdown("""
   margin: 0 auto !important;
   padding-top: 0 !important;
 }
-
-/* ===== CABEÇALHO FIXO ===== */
 .top-fixed {
   position: sticky;
   top: 0;
@@ -37,23 +30,8 @@ h1.app-title {
   margin: 0 !important;
   display:flex; align-items:center; gap:8px;
 }
-</style>
-""", unsafe_allow_html=True)
 
-st.markdown("<div class='top-fixed'>", unsafe_allow_html=True)
-st.markdown('<h1 class="app-title">🗺️ Job Map</h1>', unsafe_allow_html=True)
-col1, col2 = st.columns([2, 2])
-with col1:
-    family_filter = st.selectbox("Família", ["Todas"])
-with col2:
-    path_filter = st.selectbox("Trilha de Carreira", ["Todas"])
-st.markdown("</div>", unsafe_allow_html=True)
-
-# ===========================================================
-# CSS VISUAL DO GRID
-# ===========================================================
-st.markdown("""
-<style>
+/* ===== MAP WRAPPER ===== */
 .map-wrapper {
   overflow-x: auto;
   overflow-y: auto;
@@ -74,14 +52,12 @@ st.markdown("""
   position: relative;
   border-collapse: collapse;
 }
-
-/* ===== GRID LINES (toda planilha com grade leve) ===== */
 .jobmap-grid > div {
   border: 1px solid rgba(0,0,0,0.07);
   box-sizing: border-box;
 }
 
-/* ===== CABEÇALHOS ===== */
+/* ===== GG HEADER (MESCLADO) ===== */
 .grade-header {
   background: #000;
   color: #fff;
@@ -90,24 +66,28 @@ st.markdown("""
   align-items:center;
   justify-content:center;
   padding: 16px 12px;
-  grid-row: 1 / span 2;
+  grid-row: 1 / span 2; /* ocupa as duas linhas */
   position: sticky;
   left: 0;
   top: 0;
   z-index: 160;
   border-right: 2px solid #fff;
 }
+
+/* ===== FAMILY ===== */
 .header-family {
   color: #fff;
   font-weight: 800;
   padding: 12px 10px;
   text-align:center;
-  border-right: 1px solid rgba(255,255,255,0.6);
   position: sticky;
   top: 0;
   z-index: 140;
   white-space: normal;
+  border-right: 1px solid rgba(255,255,255,0.6);
 }
+
+/* ===== SUBFAMILY ===== */
 .header-subfamily {
   padding: 10px 8px;
   font-weight: 700;
@@ -117,7 +97,7 @@ st.markdown("""
   top: 52px;
   z-index: 135;
   border-right: 1px solid rgba(255,255,255,0.6);
-  background: transparent;
+  border-top: none !important; /* remove linha branca entre family/subfamily */
 }
 
 /* ===== PRIMEIRA COLUNA (GG) ===== */
@@ -132,16 +112,8 @@ st.markdown("""
   z-index: 120;
   border-right: 1px solid rgba(255,255,255,0.6);
 }
-.grade-cell.blank {
-  background: #000;
-  color: #fff;
-  position: sticky;
-  left: 0;
-  top: 52px;
-  z-index: 130;
-}
 
-/* ===== CÉLULAS ===== */
+/* ===== CELULAS ===== */
 .job-cell {
   padding: 6px 8px;
   text-align: left;
@@ -199,9 +171,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ===========================================================
-# DADOS
-# ===========================================================
+# =================== DADOS ===================
 data = load_excel_data()
 df = data.get("job_profile", pd.DataFrame())
 
@@ -214,33 +184,12 @@ if missing:
 df = df.dropna(subset=["Job Family", "Sub Job Family", "Job Profile", "Global Grade"])
 df["Global Grade"] = df["Global Grade"].astype(str).str.replace(r"\\.0$", "", regex=True)
 
-if family_filter != "Todas":
-    df = df[df["Job Family"] == family_filter]
-if path_filter != "Todas":
-    df = df[df["Career Path"] == path_filter]
-
-if df.empty:
-    st.warning("Nenhum cargo encontrado com os filtros selecionados.")
-    st.stop()
-
-# ===========================================================
-# CORES
-# ===========================================================
 families = sorted(df["Job Family"].unique().tolist())
-palette_dark = [
-    "#4B6FA3", "#7A5A8A", "#A46C49", "#5E7A85", "#6D8066", "#6B8899",
-    "#9B6F94", "#A07D5F", "#6F7F8F", "#7C6F85"
-]
-palette_light = [
-    "#e9eef8", "#f3ebf2", "#f7efe6", "#eef3f6", "#eef4eb", "#edf4f7",
-    "#fbf0f7", "#f7f4ea", "#eef2f4", "#f3eff6"
-]
+palette_dark = ["#4B6FA3", "#7A5A8A", "#A46C49", "#5E7A85", "#6D8066", "#6B8899", "#9B6F94", "#A07D5F", "#6F7F8F", "#7C6F85"]
+palette_light = ["#e9eef8", "#f3ebf2", "#f7efe6", "#eef3f6", "#eef4eb", "#edf4f7", "#fbf0f7", "#f7f4ea", "#eef2f4", "#f3eff6"]
 fam_colors_dark = {f: palette_dark[i % len(palette_dark)] for i, f in enumerate(families)}
 fam_colors_light = {f: palette_light[i % len(palette_light)] for i, f in enumerate(families)}
 
-# ===========================================================
-# GRID TEMPLATE
-# ===========================================================
 subfam_map = {f: sorted(df[df["Job Family"] == f]["Sub Job Family"].unique().tolist()) for f in families}
 grades = sorted(df["Global Grade"].unique(), key=lambda x: int(x) if str(x).isdigit() else x, reverse=True)
 
@@ -257,15 +206,12 @@ for f in families:
     for sf in subfam_map[f]:
         subdf = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf)]
         col_widths.append(col_width_for(subdf))
-
 grid_template = "grid-template-columns: " + " ".join(f"{w}px" for w in col_widths) + ";"
 
-# ===========================================================
-# GRID HTML
-# ===========================================================
+# =================== HTML ===================
 html = "<div class='map-wrapper'>"
 
-# Linha 1 — Famílias
+# Linha mesclada GG + Family
 html += f"<div class='jobmap-grid' style='{grid_template}'>"
 html += "<div class='grade-header'>GG</div>"
 for f in families:
@@ -274,16 +220,16 @@ for f in families:
     html += f"<div class='header-family' style='grid-column: span {span}; background:{color};'>{f}</div>"
 html += "</div>"
 
-# Linha 2 — Subfamílias
+# Subfamilies (sem linha branca)
 html += f"<div class='jobmap-grid' style='{grid_template}'>"
-html += "<div class='grade-cell blank'>GG</div>"
+html += ""  # sem célula antes
 for f in families:
     for sf in subfam_map[f]:
         color = fam_colors_light[f]
         html += f"<div class='header-subfamily' style='background:{color};'>{sf}</div>"
 html += "</div>"
 
-# Linhas de cargos
+# Demais linhas (GG)
 for g in grades:
     html += f"<div class='jobmap-grid grade-row' style='{grid_template}'>"
     html += f"<div class='grade-cell'>GG {g}</div>"
@@ -292,8 +238,8 @@ for g in grades:
             cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
             if not cell_df.empty:
                 cards = "".join(
-                    f"<div class='job-card'><b>{row['Job Profile']}</b><span>{row['Career Path']}</span></div>"
-                    for _, row in cell_df.iterrows()
+                    f"<div class='job-card'><b>{r['Job Profile']}</b><span>{r['Career Path']}</span></div>"
+                    for _, r in cell_df.iterrows()
                 )
                 html += f"<div class='job-cell'>{cards}</div>"
             else:
