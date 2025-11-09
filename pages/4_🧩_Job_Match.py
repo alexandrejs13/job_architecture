@@ -29,11 +29,19 @@ def load_data():
             st.error(f"Coluna ausente na base: {col}")
             st.stop()
 
-    # Normaliza texto e converte grade
     df["Family"] = df["Family"].astype(str).str.strip().str.title()
     df["Subfamily"] = df["Subfamily"].astype(str).str.strip().str.title()
     df["Job Title"] = df["Job Title"].astype(str).str.strip()
     df["Grade"] = df["Grade"].astype(str).str.extract(r"(\d+)").fillna("0").astype(int)
+
+    # 🔹 Cria a base de comparação com campos técnicos
+    df["Match_Text"] = (
+        df["Role Description"].fillna("") + " " +
+        df["Grade Differentiator"].fillna("") + " " +
+        df["KPIs / Specific Parameters"].fillna("") + " " +
+        df["Qualifications"].fillna("")
+    ).str.strip()
+
     return df
 
 
@@ -65,7 +73,7 @@ def detect_level(text):
     for k, v in LEVEL_KEYWORDS.items():
         if k in text_low:
             return v
-    return 6  # padrão = médio
+    return 6
 
 
 # ==========================================================
@@ -89,8 +97,7 @@ def find_best_match(df, family, subfamily, description):
     expected_grade = detect_level(description)
 
     query_emb = model.encode(desc_en, convert_to_tensor=True)
-    texts = df_filtered["Job Profile Description"].fillna("").astype(str).tolist()
-    corpus_emb = model.encode(texts, convert_to_tensor=True)
+    corpus_emb = model.encode(df_filtered["Match_Text"].tolist(), convert_to_tensor=True)
 
     scores = util.cos_sim(query_emb, corpus_emb)[0].cpu().numpy()
     df_filtered["similarity"] = scores
@@ -115,10 +122,10 @@ with col2:
 
 st.markdown("✍️ **Descreva brevemente suas atividades:**")
 example_text = (
-    "Exemplo: Executar atividades operacionais e de apoio técnico relacionadas aos processos contábeis da empresa, "
-    "assegurando o correto registro, classificação e conciliação das contas, conforme normas contábeis e políticas internas. "
-    "Contribuir para a apuração de resultados, elaboração de demonstrações financeiras e cumprimento das obrigações fiscais e societárias, "
-    "sob supervisão de profissionais mais experientes. Formação em Ciências Contábeis e até 3 anos de experiência."
+    "Exemplo: Realizar conciliações contábeis, lançamentos e classificações de contas; "
+    "elaborar demonstrações financeiras sob supervisão; apoiar processos de fechamento mensal; "
+    "assegurar conformidade com normas fiscais e políticas internas. "
+    "Formação em Ciências Contábeis e até 3 anos de experiência profissional."
 )
 description = st.text_area("", placeholder=example_text, height=180)
 
@@ -143,8 +150,6 @@ if st.button("🔍 Encontrar Job Match"):
                 st.markdown(f"### {title}")
                 st.markdown(str(text).replace("|", "\n"))
 
-        section("🧭 Sub Job Family Description", result.get("Sub Job Family Description", ""))
-        section("🧠 Job Profile Description", result.get("Job Profile Description", ""))
         section("🎯 Role Description", result.get("Role Description", ""))
         section("🏅 Grade Differentiator", result.get("Grade Differentiator", ""))
         section("📊 KPIs / Specific Parameters", result.get("KPIs / Specific Parameters", ""))
