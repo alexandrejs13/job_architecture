@@ -2,17 +2,17 @@ import streamlit as st
 import pandas as pd
 from utils.data_loader import load_job_profile_df
 
+# ===========================================================
+# CONFIGURAÇÃO
+# ===========================================================
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 
-# ===========================================================
-# CONFIG
-# ===========================================================
 FAM_H = 46
 SUB_H = 64
 GG_COL_W = 140
 
 # ===========================================================
-# CSS – Cores vibrantes, sem linha branca entre blocos
+# CSS — 2 LINHAS FIXAS + COLUNA GG MESCLADA
 # ===========================================================
 st.markdown(f"""
 <style>
@@ -60,7 +60,7 @@ h1 {{
   word-break: break-word;
 }}
 
-/* ===== Coluna GG ===== */
+/* ===== Coluna GG (preta, mesclada verticalmente) ===== */
 .gg-merged {{
   position: sticky;
   left: 0;
@@ -70,24 +70,17 @@ h1 {{
   background: #000;
   color: #fff;
   font-weight: 800;
+  font-size: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
   border-right: 2px solid #fff;
-}}
-.grade-cell {{
-  position: sticky;
-  left: 0;
-  z-index: 60;
-  background: #fff;
-  color: #000;
-  font-weight: 700;
-  width: var(--ggw);
-  border-right: 2px solid #000;
+  border-bottom: none;
+  border-top-left-radius: 6px;
 }}
 
-/* ===== Família ===== */
+/* ===== Linhas fixas ===== */
 .header-family {{
   position: sticky;
   top: 0;
@@ -97,12 +90,11 @@ h1 {{
   justify-content: center;
   color: #fff;
   font-weight: 700;
-  z-index: 80;
+  z-index: 90;
   padding: 0 10px;
-  border-bottom: none; /* remove a linha branca */
+  border-bottom: none;
 }}
 
-/* ===== Subfamília ===== */
 .header-subfamily {{
   position: sticky;
   top: var(--famH);
@@ -112,9 +104,9 @@ h1 {{
   justify-content: center;
   font-weight: 600;
   font-size: 0.9rem;
-  z-index: 70;
+  z-index: 80;
   padding: 6px 10px;
-  border-top: none; /* remove linha entre família/subfamília */
+  border-top: none;
 }}
 
 /* ===== Células de cargos ===== */
@@ -143,12 +135,23 @@ h1 {{
 }}
 .job-card:hover {{ background: #f5f7ff; }}
 
+.grade-cell {{
+  position: sticky;
+  left: 0;
+  z-index: 60;
+  background: #fff;
+  color: #000;
+  font-weight: 700;
+  width: var(--ggw);
+  border-right: 2px solid #000;
+}}
+
 .grade-row:nth-child(even) {{ background: #fcfcfc; }}
 </style>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# LEITURA DE DADOS
+# DADOS
 # ===========================================================
 try:
     df = load_job_profile_df()
@@ -188,26 +191,23 @@ if filtered.empty:
     st.stop()
 
 # ===========================================================
-# CORES — vibrantes e não repetitivas
+# PALETA CONTRASTANTE — sem tons próximos
 # ===========================================================
 families = sorted(filtered["Job Family"].unique().tolist())
-
-# Paleta de cores vibrantes (sem tons próximos)
 palette = [
-    ("#2E86C1", "#AED6F1"),  # azul
-    ("#148F77", "#A9DFBF"),  # verde
+    ("#145efc", "#9cc5ff"),  # azul SIG
+    ("#138D75", "#A9DFBF"),  # verde
+    ("#884EA0", "#D2B4DE"),  # roxo
+    ("#D68910", "#FAD7A0"),  # dourado
     ("#BA4A00", "#EDBB99"),  # laranja
-    ("#884EA0", "#D7BDE2"),  # roxo
     ("#2874A6", "#AED6F1"),  # azul médio
-    ("#7D6608", "#F9E79F"),  # amarelo oliva
+    ("#117A65", "#ABEBC6"),  # verde petróleo
     ("#633974", "#E8DAEF"),  # lilás
     ("#1B2631", "#D6DBDF"),  # grafite
-    ("#117864", "#ABEBC6"),  # verde petróleo
-    ("#6E2C00", "#FAD7A0")   # marrom dourado
+    ("#78281F", "#F5B7B1")   # vermelho terroso
 ]
 
-fam_color = {}
-sub_color = {}
+fam_color, sub_color = {}, {}
 for i, fam in enumerate(families):
     dark, light = palette[i % len(palette)]
     fam_color[fam] = dark
@@ -227,11 +227,11 @@ for f in families:
 grid_template = "grid-template-columns: " + " ".join(f"{w}px" for w in col_sizes) + ";"
 
 # ===========================================================
-# HTML
+# HTML — AGORA SÓ 2 LINHAS FIXAS (SEM ESPAÇO BRANCO)
 # ===========================================================
 html = "<div class='map-wrapper'>"
 
-# LINHA 1 — Família + GG mesclado
+# LINHA 1 — GG + FAMÍLIAS
 html += f"<div class='jobmap-grid' style='{grid_template}; z-index: 90;'>"
 html += "<div class='gg-merged'>GG</div>"
 for f in families:
@@ -240,9 +240,9 @@ for f in families:
     html += f"<div class='header-family' style='background:{bg}; grid-column: span {span};'>{f}</div>"
 html += "</div>"
 
-# LINHA 2 — Subfamília
+# LINHA 2 — SUBFAMÍLIAS (SEM LINHA INTERMEDIÁRIA)
 html += f"<div class='jobmap-grid' style='{grid_template}; z-index: 80;'>"
-html += "<div style='position:sticky; left:0; top:var(--famH); height:var(--subH); width:var(--ggw); background:#000;'></div>"
+html += f"<div class='header-subfamily' style='background:#000; color:#fff; position:sticky; left:0;'>Subfamília</div>"
 for f in families:
     for sf in subfam_map[f]:
         bg = sub_color[f]
