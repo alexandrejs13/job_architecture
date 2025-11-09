@@ -1,332 +1,157 @@
-import re
-import os
-import math
-import unicodedata
-import numpy as np
-import pandas as pd
 import streamlit as st
-from pathlib import Path
+import pandas as pd
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+from sentence_transformers import SentenceTransformer
+from utils.data_loader import load_excel_data
 
-# ───────────────────────────────────────────────
-# CONFIG
-# ───────────────────────────────────────────────
-st.set_page_config(page_title="Job Match", layout="wide")
-PRIMARY = "#1f6feb"
+# ===========================================================
+# CONFIGURAÇÃO DA PÁGINA
+# ===========================================================
+st.set_page_config(layout="wide", page_title="🧩 Job Match")
 
-# ───────────────────────────────────────────────
-# FUNÇÕES UTILITÁRIAS
-# ───────────────────────────────────────────────
-def norm(s: str) -> str:
-    s = str(s or "")
-    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
-    s = re.sub(r"\s+", " ", s.strip())
-    return s
-
-def keyify(s: str) -> str:
-    return re.sub(r"[^a-z0-9]", "", norm(s).lower())
-
-STOP = set("""
-a o os as um uma de do da das dos e ou para por com sem sobre entre em no na nos nas ao aos à às
-the and of to in on at for from with without as by into within about over under up down out off per
-que se sua seu seus suas mais menos muito pouco ja não sim
-""".split())
-
-def tokenize(text: str):
-    text = norm(text).lower()
-    tokens = re.findall(r"[a-z0-9]+", text)
-    return [t for t in tokens if t not in STOP and len(t) > 1]
-
-# ───────────────────────────────────────────────
-# MAPEAMENTO DE COLUNAS
-# ───────────────────────────────────────────────
-TARGETS = {
-    "Family": {"family", "jobfamily"},
-    "Subfamily": {"subfamily", "subjobfamily", "subjob", "subfamilia"},
-    "Job Title": {"jobtitle", "jobprofile", "job", "title"},
-    "Grade": {"grade", "gg", "globalgrade", "globalgradegg"},
-    "Sub Job Family Description": {"subjobfamilydescription", "subfamilydescription"},
-    "Job Profile Description": {"jobprofiledescription", "jobdescription"},
-    "Role Description": {"roledescription", "roles", "role"},
-    "Grade Differentiator": {"gradedifferentiator", "gradediffs", "gradediff"},
-    "KPIs / Specific Parameters": {"kpis", "kpispecificparameters", "parameters", "specificparameters"},
-    "Qualifications": {"qualifications", "qualification", "education"},
-    "Function": {"function", "funcao"},
-    "Discipline": {"discipline", "disciplina"},
-    "Code": {"code", "codigo", "jobcode"},
+st.markdown("""
+<style>
+.block-container {max-width: 1500px !important;}
+h1 {color: #1E56E0; font-weight: 800;}
+.job-card {
+    background: #f9fafc;
+    border-left: 5px solid #1E56E0;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
+.job-card h4 {
+    color: #1E56E0;
+    margin-bottom: 0.3rem;
+}
+.job-card small {
+    color: #555;
+}
+.job-card button {
+    margin-top: 0.5rem;
+}
+</style>
+""", unsafe_allow_html=True)
 
-def build_column_map(cols):
-    k2orig = {keyify(c): c for c in cols}
-    mapping = {}
-    for target, aliases in TARGETS.items():
-        for a in aliases:
-            if a in k2orig:
-                mapping[target] = k2orig[a]
-                break
-    return mapping
-
-# ───────────────────────────────────────────────
-# CARREGAMENTO DO CSV (ROBUSTO)
-# ───────────────────────────────────────────────
+# ===========================================================
+# FUNÇÃO DE CARGA
+# ===========================================================
 @st.cache_data(show_spinner=False)
 def load_data():
-    base_path = Path(__file__).parent
-    candidates = [
-        base_path / "data" / "Job Profile.csv",
-        base_path / "Job Profile.csv",
-        base_path.parent / "data" / "Job Profile.csv",
-    ]
-    df = None
-    for path in candidates:
-        if path.exists():
-            for sep in [",", ";"]:
-                for enc in ["utf-8", "utf-8-sig", "latin-1"]:
-                    try:
-                        df = pd.read_csv(path, sep=sep, encoding=enc, engine="python")
-                        break
-                    except Exception:
-                        continue
-                if df is not None:
-                    break
-        if df is not None:
-            break
+    data = load_excel_data()
+    if "job_profile" not in data:
+        st.error("⚠️ Arquivo 'Job Profile.xlsx' não encontrado.")
+        st.stop()
+    return data["job_profile"]
 
-    if df is None:
-        raise FileNotFoundError(
-            "❌ Não encontrei o arquivo 'Job Profile.csv'. "
-            "Coloque-o na pasta 'data' ou na raiz do app."
+# ===========================================================
+# EMBEDDINGS
+# ===========================================================
+@st.cache_resource
+def load_model():
+    return SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+
+model = load_model()
+df = load_data()
+
+# Normaliza colunas
+for c in ["Job Family", "Sub Job Family", "Job Profile", "Role Description", "Grade Differentiator",
+          "KPIs / Specific Parameters", "Qualifications", "Global Grade"]:
+    if c not in df.columns:
+        df[c] = ""
+
+df["Global Grade"] = df["Global Grade"].astype(str).str.extract(r"(\d+)").fillna("0").astype(int)
+
+# ===========================================================
+# INTERFACE
+# ===========================================================
+st.markdown("## 🧩 Job Match")
+st.markdown("""
+Selecione a Família e Subfamília, depois descreva suas atividades.  
+O sistema encontrará automaticamente o cargo mais compatível dentro da estrutura de cargos.
+""")
+
+col1, col2 = st.columns([2, 2])
+with col1:
+    families = sorted(df["Job Family"].dropna().unique().tolist())
+    family = st.selectbox("Família", ["Selecione..."] + families)
+with col2:
+    if family != "Selecione...":
+        subfamilies = sorted(df[df["Job Family"] == family]["Sub Job Family"].dropna().unique().tolist())
+    else:
+        subfamilies = []
+    subfamily = st.selectbox("Subfamília", ["Selecione..."] + subfamilies)
+
+desc = st.text_area(
+    "✍️ Descreva brevemente suas atividades:",
+    placeholder=(
+        "Exemplo: Responsável por realizar lançamentos contábeis, conciliações de contas, apoio na "
+        "elaboração de demonstrações financeiras e fechamento mensal. Graduação em Ciências Contábeis "
+        "com 3 anos de experiência na área."
+    ),
+    height=160
+)
+
+# ===========================================================
+# VALIDAÇÕES
+# ===========================================================
+if st.button("🔍 Encontrar Job Match"):
+    if family == "Selecione..." or subfamily == "Selecione...":
+        st.warning("⚠️ Por favor, selecione Família e Subfamília antes de continuar.")
+        st.stop()
+
+    word_count = len(desc.split())
+    if word_count < 50:
+        st.warning("⚠️ Por favor, descreva suas atividades com pelo menos 50 palavras para uma análise precisa.")
+        st.stop()
+
+    with st.spinner("🔎 Analisando compatibilidade..."):
+        # Filtra base
+        base = df[(df["Job Family"] == family) & (df["Sub Job Family"] == subfamily)].copy()
+
+        if base.empty:
+            st.error("Nenhum cargo encontrado nesta Família/Subfamília.")
+            st.stop()
+
+        # Prepara texto composto das descrições relevantes
+        base["Combined"] = (
+            base["Role Description"].fillna("") + " " +
+            base["Grade Differentiator"].fillna("") + " " +
+            base["KPIs / Specific Parameters"].fillna("") + " " +
+            base["Qualifications"].fillna("")
         )
 
-    cmap = build_column_map(list(df.columns))
-    needed = ["Family", "Subfamily", "Job Title", "Grade"]
-    missing = [n for n in needed if n not in cmap]
-    if missing:
-        raise KeyError(f"Coluna(s) ausente(s) na base: {', '.join(missing)}")
+        # Cria embeddings
+        query_emb = model.encode([desc])
+        job_embs = model.encode(base["Combined"].tolist())
 
-    ren = {v: k for k, v in cmap.items()}
-    df = df.rename(columns=ren)
+        # Similaridade
+        sims = cosine_similarity(query_emb, job_embs)[0]
+        base["Similarity"] = sims
 
-    for c in df.columns:
-        if df[c].dtype == object:
-            df[c] = df[c].astype(str).map(norm)
+        # Aplica coerência por grade
+        avg_grade = base["Global Grade"].median()
+        base["Grade_Penalty"] = (abs(base["Global Grade"] - avg_grade) / 10)
+        base["Adjusted_Sim"] = base["Similarity"] - base["Grade_Penalty"]
 
-    for c in [
-        "Role Description",
-        "Grade Differentiator",
-        "KPIs / Specific Parameters",
-        "Qualifications",
-        "Sub Job Family Description",
-        "Job Profile Description",
-    ]:
-        if c not in df.columns:
-            df[c] = ""
+        best = base.sort_values("Adjusted_Sim", ascending=False).head(1).iloc[0]
 
-    def fix_grade(g):
-        g = norm(g)
-        if not g:
-            return ""
-        m = re.search(r"(\d+)", g)
-        return f"GG {m.group(1)}" if m else g
-
-    df["Grade"] = df["Grade"].map(fix_grade)
-
-    df["Match_Text"] = (
-        df["Role Description"].fillna("")
-        + " "
-        + df["Grade Differentiator"].fillna("")
-        + " "
-        + df["KPIs / Specific Parameters"].fillna("")
-        + " "
-        + df["Qualifications"].fillna("")
-    ).map(norm)
-
-    return df
-
-# ───────────────────────────────────────────────
-# FUNÇÕES DE MATCH E SIMILARIDADE
-# ───────────────────────────────────────────────
-def text_to_vec(text, vocab):
-    tokens = tokenize(text)
-    vec = np.zeros(len(vocab), dtype=float)
-    for t in tokens:
-        if t in vocab:
-            vec[vocab[t]] += 1.0
-    n = np.linalg.norm(vec)
-    if n > 0:
-        vec /= n
-    return vec
-
-def cosine(a, b):
-    d = float(np.dot(a, b))
-    return max(0.0, min(1.0, d))
-
-def infer_grade_band(text):
-    t = norm(text).lower()
-    if re.search(r"\b(estagi|assistente|junior|jr)\b", t):
-        return "low"
-    if re.search(r"\b(gerent|manager|coordenador|supervisor|sr|senior)\b", t):
-        return "high"
-    return "mid"
-
-def grade_band_from_grade(grade_str):
-    m = re.search(r"(\d+)", grade_str or "")
-    if not m:
-        return "mid"
-    g = int(m.group(1))
-    if g <= 6:
-        return "low"
-    if g >= 11:
-        return "high"
-    return "mid"
-
-def band_compatible(user_band, job_band):
-    if user_band == "low":
-        return job_band in {"low", "mid"}
-    if user_band == "mid":
-        return job_band in {"low", "mid", "high"}
-    return job_band in {"mid", "high"}
-
-# ───────────────────────────────────────────────
-# INTERFACE
-# ───────────────────────────────────────────────
-st.markdown(
-    f"""
-<h1 style="margin-bottom:0">🧩 Job Match</h1>
-<p style="color:#666;margin-top:.25rem">
-Encontre automaticamente o cargo mais compatível com base na <b>Family</b>, <b>Subfamily</b> e na sua descrição detalhada de atividades.
-</p>
-""",
-    unsafe_allow_html=True,
-)
-
-try:
-    df = load_data()
-except Exception as e:
-    st.error(str(e))
-    st.stop()
-
-families = sorted([f for f in df["Family"].dropna().unique() if f])
-col1, col2 = st.columns([1, 1])
-with col1:
-    family = st.selectbox("Selecione a Family", ["—"] + families, index=0)
-sub_options = []
-if family and family != "—":
-    sub_options = sorted(df.loc[df["Family"] == family, "Subfamily"].dropna().unique())
-with col2:
-    subfamily = st.selectbox(
-        "Selecione a Subfamily",
-        ["—"] + sub_options if sub_options else ["—"],
-        index=0,
-        disabled=(family == "—"),
-    )
-
-st.markdown("**✍️ Descreva brevemente suas atividades:**", unsafe_allow_html=True)
-placeholder = (
-    "Exemplo (≥ 50 palavras): Executo rotinas de departamento pessoal, com foco em admissão, "
-    "lançamento de ponto, fechamento de folha, conferência de encargos (INSS/FGTS/IRRF), "
-    "emissão de guias, atendimento a colaboradores e apoio em benefícios. "
-    "Experiência de 2 anos como assistente, reportando a analista sênior, seguindo políticas internas "
-    "e legislação trabalhista. Faço conciliações simples, controles em planilhas e organização de documentos."
-)
-desc = st.text_area("", value="", height=140, placeholder=placeholder)
-go = st.button("🔎 Identificar Cargo", type="primary")
-
-def word_count(s: str) -> int:
-    return len(re.findall(r"\w+", s or ""))
-
-if go:
-    if family == "—":
-        st.warning("Selecione uma **Family**.")
-        st.stop()
-    if subfamily == "—":
-        st.warning("Selecione uma **Subfamily**.")
-        st.stop()
-    if word_count(desc) < 50:
-        st.warning("Descreva com **pelo menos 50 palavras** para um match preciso.")
-        st.stop()
-
-    base = df[(df["Family"] == family) & (df["Subfamily"] == subfamily)].copy()
-    if base.empty:
-        st.info("Não encontrei cargos nessa combinação de Family/Subfamily.")
-        st.stop()
-
-    vocab = {}
-    for txt in base["Match_Text"]:
-        for tok in tokenize(txt):
-            if tok not in vocab:
-                vocab[tok] = len(vocab)
-    if not vocab:
-        st.error("Base insuficiente para pontuar esta Subfamily.")
-        st.stop()
-
-    user_vec = text_to_vec(desc, vocab)
-    user_band = infer_grade_band(desc)
-
-    scores = []
-    for i, row in base.iterrows():
-        job_vec = text_to_vec(row["Match_Text"], vocab)
-        sim = cosine(user_vec, job_vec)
-        jb = grade_band_from_grade(row.get("Grade", ""))
-        if not band_compatible(user_band, jb):
-            sim *= 0.55
-        scores.append((i, sim))
-
-    scores.sort(key=lambda x: x[1], reverse=True)
-    top = scores[:3]
-
-    st.markdown("### 🎯 Cargos mais compatíveis:")
-    for idx, (i, sc) in enumerate(top, start=1):
-        r = base.loc[i]
-        gg = r.get("Grade", "")
-        title = r.get("Job Title", "")
-
-        with st.container(border=True):
-            c1, c2 = st.columns([0.8, 0.2])
-            with c1:
-                st.markdown(
-                    f"<div style='font-size:1.1rem;font-weight:700;color:{PRIMARY}'>{gg} — {title}</div>",
-                    unsafe_allow_html=True,
-                )
-                st.markdown(
-                    f"<div style='color:#666'>{r.get('Family','')} | {r.get('Subfamily','')}</div>",
-                    unsafe_allow_html=True,
-                )
-            with c2:
-                st.markdown(
-                    f"<div style='text-align:right;color:#555'>Similaridade: <b>{round(sc*100,1)}%</b></div>",
-                    unsafe_allow_html=True,
-                )
-
-            with st.expander("📋 Ver detalhes"):
-                st.markdown(
-                    f"""
-**{title}**  
-{gg}  
-
-**Família:** {r.get('Family','')}  
-**Subfamília:** {r.get('Subfamily','')}  
-**Carreira:** {r.get('Career','')}  
-**Função:** {r.get('Function','')}  
-**Disciplina:** {r.get('Discipline','')}  
-**Código:** {r.get('Code','')}
-""",
-                )
-
-                def section(label, col, icon=""):
-                    text = r.get(col, "")
-                    if not text or text == "nan":
-                        return
-                    st.markdown(f"**{icon}{label}**")
-                    if "•" in text or "●" in text:
-                        for b in re.split(r"[•●]\s*", text):
-                            if b.strip():
-                                st.markdown(f"- {b.strip()}")
-                    else:
-                        st.write(text)
-
-                section("Sub Job Family Description", "Sub Job Family Description", "🧭 ")
-                section("Job Profile Description", "Job Profile Description", "🧠 ")
-                section("Role Description", "Role Description", "🎯 ")
-                section("Grade Differentiator", "Grade Differentiator", "🏅 ")
-                section("KPIs / Specific Parameters", "KPIs / Specific Parameters", "📊 ")
-                section("Qualifications", "Qualifications", "🎓 ")
+    # =======================================================
+    # RESULTADO
+    # =======================================================
+    st.success(f"Cargo mais compatível encontrado com base em Family/Subfamily e descrição detalhada:")
+    with st.container():
+        st.markdown(f"""
+        <div class='job-card'>
+            <h4>GG {best['Global Grade']} — {best['Job Profile']}</h4>
+            <small><b>Família:</b> {best['Job Family']} | <b>Subfamília:</b> {best['Sub Job Family']}</small><br>
+            <small><b>Carreira:</b> {best.get('Career Path', '-')} | <b>Código:</b> {best.get('Full Job Code', '-')}</small>
+            <hr>
+            <b>🎯 Role Description</b><br>{best['Role Description']}<br><br>
+            <b>🏅 Grade Differentiator</b><br>{best['Grade Differentiator']}<br><br>
+            <b>📊 KPIs / Specific Parameters</b><br>{best['KPIs / Specific Parameters']}<br><br>
+            <b>🎓 Qualifications</b><br>{best['Qualifications']}
+        </div>
+        """, unsafe_allow_html=True)
