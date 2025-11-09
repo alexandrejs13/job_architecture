@@ -6,7 +6,7 @@ from utils.ui_components import section, lock_sidebar
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
-# =================== CSS ===================
+# =================== CSS COMPLETO ===================
 st.markdown("""
 <style>
 .block-container {
@@ -42,6 +42,8 @@ h1.app-title {
   background: #fff;
   white-space: nowrap;
   padding: 10px;
+  padding-left: 0 !important;   /* remove coluna fantasma */
+  margin-left: -1px !important; /* ajusta alinhamento */
 }
 
 /* ===== GRID BASE ===== */
@@ -55,7 +57,7 @@ h1.app-title {
   border-collapse: collapse;
 }
 .jobmap-grid > div {
-  border: 1px solid rgba(0,0,0,0.08);  /* grade sutil */
+  border: 1px solid rgba(0,0,0,0.08);
   box-sizing: border-box;
 }
 
@@ -72,18 +74,24 @@ h1.app-title {
   position: sticky;
   left: 0;
   top: 0;
-  z-index: 160;             /* acima de tudo */
+  z-index: 160;
   border-right: 2px solid #fff;
+  border-left: 1px solid #fff; /* grid branco lateral */
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #fff;
 }
 
-/* ===== FILLER PRETO EM A2 (para manter A preta e congelada também na 2ª linha) ===== */
+/* ===== FILLER PRETO EM A2 ===== */
 .grade-stub {
   background: #000;
   color: transparent;
   border-right: 2px solid #fff;
+  border-left: 1px solid #fff; /* borda branca lateral */
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #fff;
   position: sticky;
   left: 0;
-  top: 52px;                /* mesma altura do topo da subfamília */
+  top: 52px;
   z-index: 150;
   padding: 16px 12px;
 }
@@ -98,7 +106,6 @@ h1.app-title {
   top: 0;
   z-index: 140;
   white-space: normal;
-  /* sem borda inferior para não aparecer “linha branca” entre family/subfamily */
   border-bottom: none !important;
 }
 
@@ -109,9 +116,9 @@ h1.app-title {
   text-align:center;
   white-space: normal;
   position: sticky;
-  top: 52px;               /* fixa a 2ª linha */
+  top: 52px;
   z-index: 135;
-  border-top: none !important;   /* remove qualquer fenda entre family/subfamily */
+  border-top: none !important;
 }
 
 /* ===== PRIMEIRA COLUNA (GG das linhas) ===== */
@@ -125,11 +132,14 @@ h1.app-title {
   left: 0;
   z-index: 120;
   border-right: 2px solid #fff;
+  border-left: 1px solid #fff;
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #fff;
 }
 
 /* ===== CELULAS ===== */
 .job-cell {
-  padding: 6px 8px;         /* margem interna para não grudar nas bordas */
+  padding: 6px 8px;
   text-align: left;
   vertical-align: top;
   background: #fff;
@@ -139,19 +149,19 @@ h1.app-title {
   justify-content: flex-start;
 }
 
-/* ===== CARDS (menores, com quebra e espaçamento) ===== */
+/* ===== CARDS ===== */
 .job-card {
   background: #f9f9f9;
   border-left: 4px solid #145efc;
   border-radius: 6px;
   padding: 6px 8px;
-  margin: 6px 2px;         /* espaçamento vertical entre cards + margens laterais */
+  margin: 6px 2px;
   text-align: left;
   font-size: 0.80rem;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   word-wrap: break-word;
   overflow-wrap: break-word;
-  min-height: 56px;        /* altura padrão menor */
+  min-height: 56px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -176,8 +186,16 @@ h1.app-title {
   transition: all 0.15s ease-in-out;
 }
 
-/* ===== ZEBRA NAS LINHAS ===== */
+/* ===== ZEBRA ===== */
 .grade-row:nth-of-type(even) .job-cell { background: #fcfcfd; }
+
+/* ===== REFORÇO VISUAL ===== */
+.jobmap-grid:first-of-type > div {
+  border-bottom: none !important;
+}
+.jobmap-grid:nth-of-type(2) > div {
+  border-top: none !important;
+}
 
 /* ===== RESPONSIVIDADE ===== */
 @media (max-width: 1500px) { .block-container { zoom: 0.9; } }
@@ -198,7 +216,7 @@ if missing:
 df = df.dropna(subset=["Job Family", "Sub Job Family", "Job Profile", "Global Grade"])
 df["Global Grade"] = df["Global Grade"].astype(str).str.replace(r"\\.0$", "", regex=True)
 
-# Filtros (mantidos)
+# =================== FILTROS ===================
 st.markdown("<div class='top-fixed'>", unsafe_allow_html=True)
 section("🗺️ Job Map")
 c1, c2 = st.columns([2,2])
@@ -217,12 +235,12 @@ if df.empty:
     st.warning("Nenhum cargo encontrado com os filtros selecionados.")
     st.stop()
 
+# =================== CORES E ESTRUTURA ===================
 families = sorted(df["Job Family"].unique().tolist())
-# Paleta suave/harmônica
 palette_dark = ["#4B6FA3", "#7A5A8A", "#A46C49", "#5E7A85", "#6D8066", "#6B8899", "#9B6F94", "#A07D5F", "#6F7F8F", "#7C6F85"]
 palette_light = ["#e9eef8", "#f3ebf2", "#f7efe6", "#eef3f6", "#eef4eb", "#edf4f7", "#fbf0f7", "#f7f4ea", "#eef2f4", "#f3eff6"]
-fam_color_dark = {f: palette_dark[i % len(palette_dark)] for i, f in enumerate(families)}
-fam_color_light = {f: palette_light[i % len(palette_light)] for i, f in enumerate(families)}
+fam_dark = {f: palette_dark[i % len(palette_dark)] for i, f in enumerate(families)}
+fam_light = {f: palette_light[i % len(palette_light)] for i, f in enumerate(families)}
 
 subfam_map = {f: sorted(df[df["Job Family"] == f]["Sub Job Family"].unique().tolist()) for f in families}
 grades = sorted(df["Global Grade"].unique(), key=lambda x: int(x) if str(x).isdigit() else x, reverse=True)
@@ -231,67 +249,61 @@ def col_width_for(subfamily_df):
     if subfamily_df.empty:
         return 180
     max_len = subfamily_df["Job Profile"].astype(str).map(len).max()
-    px_per_char = 7.5        # um pouco menor pra não estourar
-    width = max(170, min(420, int(max_len * px_per_char + 56)))
-    return width
+    px_per_char = 7.5
+    return max(170, min(420, int(max_len * px_per_char + 56)))
 
-# Larguras reais por coluna (GG + todas as subfamilias na ordem)
 col_widths = [140]
-family_last_col_index = []   # guardaremos os índices absolutos (no grid) do “fim” de cada família
-absolute_index = 1           # começando depois do GG
+family_last_col = []
+abs_col = 1
 for f in families:
     sfs = subfam_map[f]
     for i, sf in enumerate(sfs):
-        subdf = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf)]
-        w = col_width_for(subdf)
+        w = col_width_for(df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf)])
         col_widths.append(w)
-        if i == len(sfs) - 1:
-            family_last_col_index.append(absolute_index)
-        absolute_index += 1
+        if i == len(sfs)-1:
+            family_last_col.append(abs_col)
+        abs_col += 1
 
 grid_template = "grid-template-columns: " + " ".join(f"{w}px" for w in col_widths) + ";"
 
-# Helper: retorna estilo de “borda branca grossa” ao final de cada família
-def family_separator_style(col_abs_index: int):
-    return "border-right: 3px solid #fff;" if col_abs_index in family_last_col_index else ""
+def family_sep_style(i): return "border-right: 3px solid #fff;" if i in family_last_col else ""
 
 # =================== HTML ===================
 html = "<div class='map-wrapper'>"
 
-# Linha 1 — GG (mesclado) + Famílias
+# Linha 1 - Family
 html += f"<div class='jobmap-grid' style='{grid_template}'>"
 html += "<div class='grade-header'>GG</div>"
-abs_idx = 1
+idx = 1
 for f in families:
     span = len(subfam_map[f])
-    color = fam_color_dark[f]
-    # aplica separador branco na última coluna da família (pelo header ficar sobre as colunas)
-    sep = family_separator_style(abs_idx + span - 1)
+    color = fam_dark[f]
+    sep = family_sep_style(idx + span - 1)
     html += f"<div class='header-family' style='grid-column: span {span}; background:{color}; {sep}'>{f}</div>"
-    abs_idx += span
+    idx += span
 html += "</div>"
 
-# Linha 2 — A2 preto + Subfamílias
+# Linha 2 - Subfamily
 html += f"<div class='jobmap-grid' style='{grid_template}'>"
 html += "<div class='grade-stub'>&nbsp;</div>"
-abs_idx = 1
+idx = 1
 for f in families:
-    for sf_i, sf in enumerate(subfam_map[f]):
-        color = fam_color_light[f]
-        sep = family_separator_style(abs_idx)
+    for sf in subfam_map[f]:
+        color = fam_light[f]
+        sep = family_sep_style(idx)
         html += f"<div class='header-subfamily' style='background:{color}; {sep}'>{sf}</div>"
-        abs_idx += 1
+        idx += 1
 html += "</div>"
 
-# Demais linhas — Grades e cargos
+# Linhas de cargos
 for g in grades:
     html += f"<div class='jobmap-grid grade-row' style='{grid_template}'>"
     html += f"<div class='grade-cell'>GG {g}</div>"
-    abs_idx = 1
+    idx = 1
     for f in families:
         for sf in subfam_map[f]:
             cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
-            sep = family_separator_style(abs_idx)
+            sep = family_sep_style(idx)
             if not cell_df.empty:
                 cards = "".join(
                     f"<div class='job-card'><b>{r['Job Profile']}</b><span>{r['Career Path']}</span></div>"
@@ -300,7 +312,7 @@ for g in grades:
                 html += f"<div class='job-cell' style='{sep}'>{cards}</div>"
             else:
                 html += f"<div class='job-cell' style='{sep}'></div>"
-            abs_idx += 1
+            idx += 1
     html += "</div>"
 
 html += "</div>"
