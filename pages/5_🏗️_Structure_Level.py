@@ -1,11 +1,17 @@
 import streamlit as st
-from utils.data_loader import load_data
-from utils.ui_components import section
+from utils.load_csv import load_csv_safe
 
-data = load_data()
-section("🏗️ Structure Level")
+st.set_page_config(page_title="Structure Level", layout="wide")
 
-if "level_structure" in data:
-    st.dataframe(data["level_structure"], use_container_width=True)
+st.markdown("<h1>🏗️ Structure Level</h1>", unsafe_allow_html=True)
+
+try:
+    df = load_csv_safe("Level Structure.csv")
+except Exception as e:
+    st.error(f"Erro ao carregar dados: {e}")
+    st.stop()
+
+if df.empty:
+    st.warning("Nenhum dado disponível.")
 else:
-    st.error("Level Structure.csv não encontrado em /data")
+    st.dataframe(df)
