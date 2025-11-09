@@ -3,30 +3,35 @@ import pandas as pd
 from utils.data_loader import load_job_profile_df
 
 # ===========================================================
-# CONFIGURAÇÃO
+# CONFIGURAÇÃO GERAL
 # ===========================================================
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 
 # ===========================================================
-# CSS — Visual Executivo Premium
+# CSS — Layout Executivo com Congelamento Real
 # ===========================================================
 st.markdown("""
 <style>
 .block-container {
-  max-width: 1700px !important;
+  max-width: 1750px !important;
   margin: 0 auto !important;
   overflow: hidden !important;
 }
 
-/* ======= TÍTULO ======= */
+/* ======= TÍTULO FIXO ======= */
 h1 {
   color: #1E56E0;
   font-weight: 800;
   font-size: 1.9rem;
   margin-bottom: 1.2rem;
+  position: sticky;
+  top: 0;
+  background: white;
+  padding-top: 8px;
+  z-index: 100;
 }
 
-/* ======= ÁREA SCROLL ======= */
+/* ======= ÁREA DE SCROLL ======= */
 .map-wrapper {
   max-height: 75vh;
   overflow: auto;
@@ -42,7 +47,7 @@ h1 {
   border-collapse: collapse;
   text-align: center;
   width: max-content;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
 }
 .jobmap-grid > div {
   border: 1px solid #ddd;
@@ -57,11 +62,19 @@ h1 {
   background: #000;
   color: #fff;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  text-align: center;
   position: sticky;
   left: 0;
   top: 0;
-  z-index: 60;
+  z-index: 70;
+  border-right: 2px solid #fff;
+}
+.grade-header span {
+  display: block;
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: 6px 0;
 }
 .grade-cell {
   background: #fff;
@@ -74,13 +87,13 @@ h1 {
   border-right: 2px solid #000;
 }
 
-/* ======= CABEÇALHOS ======= */
+/* ======= FAMÍLIA ======= */
 .header-family {
   font-weight: 700;
   color: #fff;
   padding: 10px;
   font-size: 1rem;
-  height: 48px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -88,23 +101,28 @@ h1 {
   text-align: center;
   position: sticky;
   top: 0;
-  z-index: 40;
+  z-index: 60;
   border-right: 2px solid #fff;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
 }
+
+/* ======= SUBFAMÍLIA ======= */
 .header-subfamily {
   font-weight: 600;
   padding: 10px;
-  height: 65px;
+  height: 70px;
   display: flex;
   align-items: center;
   justify-content: center;
   white-space: normal;
   text-align: center;
   font-size: 0.9rem;
-  line-height: 1.25;
+  line-height: 1.3;
   position: sticky;
-  top: 48px;
-  z-index: 35;
+  top: 50px;
+  z-index: 40;
+  border-bottom: 1px solid #d3d7e0;
 }
 
 /* ======= CELULAS DE CARGOS ======= */
@@ -135,11 +153,12 @@ h1 {
 .job-card:hover { background: #f5f7ff; }
 
 /* ======= CORES ======= */
-.family-blue { background: #1B4F72; } .sub-blue { background: #D6EAF8; }
-.family-green { background: #145A32; } .sub-green { background: #D5F5E3; }
-.family-orange { background: #784212; } .sub-orange { background: #F6DDCC; }
-.family-purple { background: #4A235A; } .sub-purple { background: #E8DAEF; }
-.family-gray { background: #424949; } .sub-gray { background: #EAEDED; }
+.family-finance { background: #154360; } .sub-finance { background: #D6EAF8; }
+.family-hr { background: #145A32; } .sub-hr { background: #D5F5E3; }
+.family-operations { background: #784212; } .sub-operations { background: #F6DDCC; }
+.family-it { background: #4A235A; } .sub-it { background: #E8DAEF; }
+.family-marketing { background: #1B4F72; } .sub-marketing { background: #D4E6F1; }
+.family-corporate { background: #4D5656; } .sub-corporate { background: #E5E8E8; }
 
 .grade-row:nth-child(even) { background: #fcfcfc; }
 
@@ -147,7 +166,7 @@ h1 {
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# LEITURA DOS DADOS
+# DADOS
 # ===========================================================
 try:
     df = load_job_profile_df()
@@ -184,11 +203,12 @@ if filtered.empty:
 # CORES POR FAMÍLIA
 # ===========================================================
 color_map = {
-    "Corporate Affairs": ("family-blue", "sub-blue"),
-    "Finance": ("family-green", "sub-green"),
-    "Operations": ("family-orange", "sub-orange"),
-    "People": ("family-purple", "sub-purple"),
-    "IT": ("family-gray", "sub-gray"),
+    "Finance": ("family-finance", "sub-finance"),
+    "HR": ("family-hr", "sub-hr"),
+    "Operations": ("family-operations", "sub-operations"),
+    "IT": ("family-it", "sub-it"),
+    "Marketing": ("family-marketing", "sub-marketing"),
+    "Corporate Affairs": ("family-corporate", "sub-corporate"),
 }
 
 families = sorted(filtered["Job Family"].unique().tolist())
@@ -198,7 +218,7 @@ subfam_map = {
     for f in families
 }
 
-col_sizes = [140]  # coluna GG
+col_sizes = [140]  # GG column
 for f in families:
     for sf in subfam_map[f]:
         width = max(180, len(sf) * 8)
@@ -210,20 +230,20 @@ grid_template = f"grid-template-columns: {' '.join(str(x)+'px' for x in col_size
 # ===========================================================
 html = "<div class='map-wrapper'>"
 
-# Famílias
-html += f"<div class='jobmap-grid' style='{grid_template}; z-index:5;'>"
-html += "<div class='grade-header'>GG</div>"
+# Cabeçalho GG mesclado
+html += f"<div class='jobmap-grid' style='{grid_template}; z-index:70;'>"
+html += "<div class='grade-header'><span>GG</span></div>"
 for f in families:
-    fam_class, sub_class = color_map.get(f, ("family-gray", "sub-gray"))
+    fam_class, sub_class = color_map.get(f, ("family-corporate", "sub-corporate"))
     span = len(subfam_map[f])
     html += f"<div class='header-family {fam_class}' style='grid-column: span {span};'>{f}</div>"
 html += "</div>"
 
 # Subfamílias
-html += f"<div class='jobmap-grid' style='{grid_template}; z-index:4;'>"
+html += f"<div class='jobmap-grid' style='{grid_template}; z-index:60;'>"
 html += "<div class='grade-cell'></div>"
 for f in families:
-    fam_class, sub_class = color_map.get(f, ("family-gray", "sub-gray"))
+    fam_class, sub_class = color_map.get(f, ("family-corporate", "sub-corporate"))
     for sf in subfam_map[f]:
         html += f"<div class='header-subfamily {sub_class}'>{sf}</div>"
 html += "</div>"
