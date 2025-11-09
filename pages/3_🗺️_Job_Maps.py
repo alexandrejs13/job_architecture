@@ -9,10 +9,10 @@ from utils.ui_components import section, lock_sidebar
 # ===========================================================
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
-st.write("⚙️ Versão ativa: v2025.11.09.3")
+st.write("⚙️ Versão ativa: v2025.11.09.4")
 
 # ===========================================================
-# CSS
+# CSS E ESTILO VISUAL
 # ===========================================================
 st.markdown("""
 <style>
@@ -59,8 +59,10 @@ h1 {
   position: relative;
 }
 .jobmap-grid > div {
-  border: 1px solid #d9d9d9; /* grid cinza no restante da planilha */
+  border: 1px solid #d9d9d9; /* grid cinza no restante */
   box-sizing: border-box;
+  min-height: 50px;
+  height: auto;
 }
 
 /* ===== COLUNA GG ===== */
@@ -146,7 +148,8 @@ h1 {
   white-space: normal;
   overflow-wrap: break-word;
   width: 100%;
-  max-width: 100%;
+  height: auto;
+  min-height: 65px;
 }
 .job-card b {
   display: block;
@@ -175,16 +178,6 @@ h1 {
 st.markdown("<div class='top-fixed'>", unsafe_allow_html=True)
 section("🗺️ Job Map")
 
-col1, col2 = st.columns([2, 2])
-with col1:
-    family_filter = st.selectbox("Família", ["Todas"])
-with col2:
-    path_filter = st.selectbox("Trilha de Carreira", ["Todas"])
-st.markdown("</div>", unsafe_allow_html=True)
-
-# ===========================================================
-# DADOS
-# ===========================================================
 data = load_excel_data()
 df = data.get("job_profile", pd.DataFrame())
 
@@ -197,6 +190,17 @@ if missing:
 df = df.dropna(subset=["Job Family", "Sub Job Family", "Job Profile", "Global Grade"])
 df["Global Grade"] = df["Global Grade"].astype(str).str.replace(r"\\.0$", "", regex=True)
 
+# popula as opções reais
+families = sorted(df["Job Family"].dropna().unique().tolist())
+paths = sorted(df["Career Path"].dropna().unique().tolist())
+
+col1, col2 = st.columns([2, 2])
+with col1:
+    family_filter = st.selectbox("Família", ["Todas"] + families)
+with col2:
+    path_filter = st.selectbox("Trilha de Carreira", ["Todas"] + paths)
+st.markdown("</div>", unsafe_allow_html=True)
+
 if family_filter != "Todas":
     df = df[df["Job Family"] == family_filter]
 if path_filter != "Todas":
@@ -207,18 +211,16 @@ if df.empty:
     st.stop()
 
 # ===========================================================
-# PALETA SIG
+# PALETA DE CORES ELEGANTE
 # ===========================================================
+families = sorted(df["Job Family"].unique().tolist())
 palette_dark = [
-    "#00493b", "#167665", "#4fa593", "#f5f073", "#c8b846", "#a09b05",
-    "#145efc", "#dca0ff", "#73706d", "#bfbaB5"
+    "#3B5BA9", "#4E7063", "#8B7B5A", "#2C4875", "#5C5C5C", "#6B4F6B"
 ]
 palette_light = [
-    "#e6f4f1", "#e1f5ef", "#eaf8f5", "#fefde5", "#f8f6e1", "#f9f8da",
-    "#e8edff", "#f8edff", "#efefef", "#f5f5f5"
+    "#E6EBF8", "#E8F1ED", "#F0EDE6", "#E8EEF9", "#F4F4F4", "#EDE8F1"
 ]
 
-families = sorted(df["Job Family"].unique().tolist())
 fam_colors_dark = {f: palette_dark[i % len(palette_dark)] for i, f in enumerate(families)}
 fam_colors_light = {f: palette_light[i % len(palette_light)] for i, f in enumerate(families)}
 
