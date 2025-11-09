@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import re
+import unicodedata
 from difflib import get_close_matches
 from utils.data_loader import load_job_profile_df
 
@@ -10,15 +11,39 @@ from utils.data_loader import load_job_profile_df
 st.set_page_config(layout="wide", page_title="📋 Job Profile Description")
 
 # ===========================================================
-# CSS
+# CSS — Mantém o layout original bonito e limpo
 # ===========================================================
 st.markdown("""
 <style>
-.block-container { max-width:1200px !important; min-width:900px !important; margin:0 auto !important; padding:2.5rem 1.5rem; zoom:0.9; }
-h1 { margin-bottom:1.4rem !important; font-size:1.9rem !important; color:#1E56E0; }
-.ja-card { background:#f9f9f9; padding:10px 14px; border-radius:6px; border-left:3px solid #1E56E0; min-height:120px; }
-.ja-ttl { font-weight:700; color:#1E56E0; font-size:0.95rem; }
-.ja-grid { display:grid; gap:14px; margin:6px 0 12px 0 !important; }
+.block-container {
+  max-width: 1200px !important;
+  min-width: 900px !important;
+  margin: 0 auto !important;
+  padding: 2.5rem 1.5rem;
+  zoom: 0.9;
+}
+h1 {
+  margin-bottom: 1.4rem !important;
+  font-size: 1.9rem !important;
+  color: #1E56E0;
+}
+.ja-card {
+  background: #f9f9f9;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border-left: 3px solid #1E56E0;
+  min-height: 120px;
+}
+.ja-ttl {
+  font-weight: 700;
+  color: #1E56E0;
+  font-size: 0.95rem;
+}
+.ja-grid {
+  display: grid;
+  gap: 14px;
+  margin: 6px 0 12px 0 !important;
+}
 .ja-grid.cols-1 { grid-template-columns: repeat(1, 1fr); }
 .ja-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
 .ja-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
@@ -28,18 +53,18 @@ h1 { margin-bottom:1.4rem !important; font-size:1.9rem !important; color:#1E56E0
 st.markdown("## 📘 Job Profile Description")
 
 # ===========================================================
-# FUNÇÃO DE LIMPEZA AVANÇADA
+# LIMPEZA AVANÇADA DE COLUNAS (Unicode-safe)
 # ===========================================================
 def normalize_columns(df):
     cleaned = {}
     for c in df.columns:
-        base = str(c)
+        base = unicodedata.normalize("NFKD", str(c))
         clean = (
             base.replace("\n", " ")
             .replace("\r", "")
             .replace("\t", "")
-            .replace("\xa0", " ")
-            .replace("\u200b", "")
+            .replace("\xa0", " ")  # espaço não quebrável
+            .replace("\u200b", "") # zero width space
             .replace("–", "-")
             .replace("—", "-")
             .strip()
@@ -50,41 +75,39 @@ def normalize_columns(df):
     return df
 
 # ===========================================================
-# LEITURA DO EXCEL
+# LEITURA DO ARQUIVO
 # ===========================================================
 df = load_job_profile_df()
 df = normalize_columns(df)
 
-st.caption("🧩 Colunas detectadas após limpeza:")
-st.code(df.columns.tolist())
+st.caption("✅ Colunas detectadas (após limpeza Unicode):")
+for col in df.columns:
+    st.text(f"→ [{col}] (len={len(col)})")
 
 # ===========================================================
-# MAPEAMENTO DE NOMES
+# MAPEAMENTO INTELIGENTE
 # ===========================================================
 expected = [
     "Job Profile", "Job Family", "Sub Job Family", "Career Path",
     "Function Code", "Discipline Code", "Global Grade", "Full Job Code",
     "Sub Job Family Description", "Job Profile Description",
-    "Career Band Description", "Role Description", "Grade Differentiator",
-    "Qualifications"
+    "Career Band Description", "Role Description",
+    "Grade Differentiator", "Qualifications"
 ]
 
-# Match aproximado (caso haja pequenas diferenças)
 column_map = {}
 for exp in expected:
     if exp in df.columns:
         column_map[exp] = exp
     else:
-        close = get_close_matches(exp, df.columns, n=1, cutoff=0.75)
+        close = get_close_matches(exp, df.columns, n=1, cutoff=0.7)
+        column_map[exp] = close[0] if close else None
         if close:
-            column_map[exp] = close[0]
             st.caption(f"⚙️ Coluna '{exp}' mapeada automaticamente para '{close[0]}'")
-        else:
-            column_map[exp] = None
 
 missing = [k for k, v in column_map.items() if v is None]
 if missing:
-    st.error(f"⚠️ As seguintes colunas não foram encontradas (nem por aproximação): {', '.join(missing)}")
+    st.error(f"⚠️ As seguintes colunas não foram encontradas nem por aproximação: {', '.join(missing)}")
     st.stop()
 
 df = df.rename(columns={v: k for k, v in column_map.items() if v})
@@ -169,6 +192,7 @@ if selected_labels:
     SECTIONS = [
         ("🧭 Sub Job Family Description", "Sub Job Family Description"),
         ("🧠 Job Profile Description", "Job Profile Description"),
+        ("🎓 Career Band Description", "Career Band Description"),
         ("🎯 Role Description", "Role Description"),
         ("🏅 Grade Differentiator", "Grade Differentiator"),
         ("📘 Qualifications", "Qualifications"),
