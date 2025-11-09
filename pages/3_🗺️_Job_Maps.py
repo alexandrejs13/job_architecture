@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (REFORÇADO PARA ELIMINAR LINHA BRANCA)
+# CSS COMPLETO
 # ===========================================================
 st.markdown("""
 <style>
@@ -54,7 +54,7 @@ h1 {
   overflow: auto;
   border-top: 3px solid var(--blue);
   border-bottom: 3px solid var(--blue);
-  background: white; /* Fundo branco padrão */
+  background: white;
   position: relative;
   will-change: transform;
   box-shadow: 0 0 15px rgba(0,0,0,0.05);
@@ -66,15 +66,10 @@ h1 {
   width: max-content;
   font-size: 0.88rem;
   grid-auto-rows: minmax(60px, auto);
-  /* REFORÇO: Garante zero espaço entre linhas e colunas */
-  row-gap: 0px !important;
-  column-gap: 0px !important;
-  /* REFORÇO: Cor de fundo do grid igual à linha divisória para mascarar gaps */
-  background-color: var(--gray-line); 
+  row-gap: 0 !important;
 }
 
 .jobmap-grid > div {
-  background-color: white; /* Garante que as células tenham fundo branco */
   border-right: 1px solid var(--gray-line);
   border-bottom: 1px solid var(--gray-line);
   box-sizing: border-box;
@@ -85,15 +80,12 @@ h1 {
   color: #fff;
   padding: 10px 5px;
   text-align: center;
-  background: var(--dark-gray) !important; /* Força a cor de fundo */
+  background: var(--dark-gray);
   border-right: 1px solid white !important;
-  /* REFORÇO: Remove qualquer borda ou margem inferior */
-  border-bottom: 0px none !important;
-  margin-bottom: 0px !important;
-  padding-bottom: 10px !important; /* Garante preenchimento até o fim */
+  border-bottom: none !important;
   position: sticky;
   top: 0;
-  z-index: 56; /* Aumentei um pouco para garantir prioridade */
+  z-index: 55;
   white-space: normal;
   height: 50px;
   display: flex;
@@ -105,16 +97,14 @@ h1 {
 
 .header-subfamily {
   font-weight: 600;
-  background: var(--gray-bg) !important;
+  background: var(--gray-bg);
   padding: 8px 5px;
   text-align: center;
   position: sticky;
-  top: 50px; /* Deve coincidir exatamente com a altura da .header-family */
+  top: 50px;
   z-index: 55;
   white-space: normal;
-  /* REFORÇO: Remove borda superior e margem */
-  border-top: 0px none !important;
-  margin-top: 0px !important;
+  border-top: none !important;
   border-bottom: 2px solid var(--gray-line) !important;
   min-height: 40px;
   display: flex;
@@ -125,7 +115,7 @@ h1 {
 }
 
 .gg-header {
-  background: #000 !important;
+  background: #000;
   color: white;
   font-weight: 800;
   text-align: center;
@@ -143,7 +133,7 @@ h1 {
 }
 
 .gg-cell {
-  background: #000 !important;
+  background: #000;
   color: white;
   font-weight: 700;
   display: flex;
@@ -159,7 +149,7 @@ h1 {
 }
 
 .cell {
-  background: white !important;
+  background: white;
   padding: 8px;
   text-align: left;
   vertical-align: middle;
@@ -228,7 +218,7 @@ h1 {
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# DADOS
+# DADOS E LIMPEZA
 # ===========================================================
 data = load_excel_data()
 df = data.get("job_profile", pd.DataFrame())
@@ -249,7 +239,7 @@ df = df[~df["Global Grade"].isin(['nan', 'None', ''])]
 df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True)
 
 # ===========================================================
-# FILTROS
+# FILTROS (COM DEPENDÊNCIA)
 # ===========================================================
 st.markdown("<div class='topbar'>", unsafe_allow_html=True)
 section("🗺️ Job Map")
@@ -269,6 +259,7 @@ families_order.extend(sorted(list(existing_families - set(families_order))))
 with col1:
     family_filter = st.selectbox("Família", ["Todas"] + families_order)
 
+# Lógica de dependência: filtra as trilhas disponíveis com base na família
 if family_filter != "Todas":
     available_paths = df[df["Job Family"] == family_filter]["Career Path"].unique().tolist()
 else:
@@ -281,6 +272,7 @@ with col2:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
+# Aplicação dos filtros
 if family_filter != "Todas":
     df = df[df["Job Family"] == family_filter]
 if path_filter != "Todas":
@@ -310,6 +302,7 @@ for f in active_families:
 content_map = {}
 cards_count_map = {}
 
+# 1. Detectar conteúdo e contar cards
 for g in grades:
     for (f, sf), c_idx in subfamilias_map.items():
         cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
@@ -323,6 +316,7 @@ for g in grades:
         jobs_sig = "|".join(sorted((cell_df["Job Profile"] + cell_df["Career Path"]).unique()))
         content_map[(g, c_idx)] = jobs_sig
 
+# 2. Calcular mesclagens verticais
 span_map = {}
 skip_set = set()
 for (_, c_idx) in subfamilias_map.items():
@@ -341,6 +335,7 @@ for (_, c_idx) in subfamilias_map.items():
                 break
         span_map[(g, c_idx)] = span
 
+# 3. Gerar HTML dos cards (com GG interno)
 cell_html_cache = {}
 for i, g in enumerate(grades):
     for (f, sf), c_idx in subfamilias_map.items():
@@ -367,7 +362,7 @@ for i, g in enumerate(grades):
         cell_html_cache[(g, c_idx)] = cards_html
 
 # ===========================================================
-# CÁLCULO DE LARGURAS
+# CÁLCULO DE LARGURAS DINÂMICAS
 # ===========================================================
 def largura_texto_minima(text):
     return len(str(text)) * 5 + 30
@@ -399,7 +394,7 @@ map_cor_fam = {f: cores_fam[i % len(cores_fam)] for i, f in enumerate(families_o
 map_cor_sub = {f: cores_sub[i % len(cores_sub)] for i, f in enumerate(families_order)}
 
 # ===========================================================
-# RENDERIZAÇÃO
+# RENDERIZAÇÃO FINAL
 # ===========================================================
 html = ["<div class='map-wrapper'><div class='jobmap-grid' style='{grid_template}'>".format(grid_template=grid_template)]
 html.append("<div class='gg-header'>GG</div>")
