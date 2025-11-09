@@ -1,5 +1,8 @@
 import streamlit as st
 import pandas as pd
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar
 
@@ -8,7 +11,6 @@ from utils.ui_components import section, lock_sidebar
 # ===========================================================
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
-
 section("🗺️ Job Map")
 
 # ===========================================================
@@ -168,14 +170,14 @@ if f.empty:
     st.stop()
 
 # ===========================================================
-# PALETA DISTINTA — 20 cores únicas
+# PALETA — 20 cores únicas e bem contrastantes
 # ===========================================================
 def generate_palette(n: int):
     import colorsys
     hues = [i / n for i in range(n)]
     palette = []
     for h in hues:
-        r,g,b = colorsys.hsv_to_rgb(h, 0.55, 0.55)
+        r,g,b = colorsys.hsv_to_rgb(h, 0.55, 0.65)
         palette.append('#%02x%02x%02x' % (int(r*255), int(g*255), int(b*255)))
     return palette
 
@@ -201,7 +203,7 @@ for fam in families:
 grid_template = "grid-template-columns: " + " ".join(f"{c}px" for c in col_sizes) + ";"
 
 # ===========================================================
-# HTML — FAMÍLIA + SUBFAMÍLIA FUNDIDAS
+# HTML — 2 LINHAS FIXAS E CONTÍNUAS
 # ===========================================================
 html = []
 html.append("<div class='map-wrap'>")
@@ -214,7 +216,7 @@ for fam in families:
     html.append(f"<div class='family' style='background:{fam_colors[fam]}; grid-column: span {span};'>{fam}</div>")
 html.append("</div>")
 
-# LINHA 2 — Subfamílias (sem linha branca intermediária)
+# LINHA 2 — Subfamílias (sem espaço branco)
 html.append(f"<div class='jmap row2 sticky-top-2 no-gap' style='{grid_template}'>")
 html.append("<div class='gg-head sticky-left' style='background:#000;'></div>")
 for fam in families:
