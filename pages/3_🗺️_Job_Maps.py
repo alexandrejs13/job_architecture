@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (COM CONGELAMENTO E AJUSTES VISUAIS)
+# CSS COMPLETO (CONGELAMENTO + AJUSTES VISUAIS)
 # ===========================================================
 st.markdown("""
 <style>
@@ -58,7 +58,7 @@ h1 {
   border-bottom: 3px solid var(--blue);
   background: white;
   position: relative;
-  will-change: transform;
+  will-change: transform; /* Melhora performance do scroll sticky */
 }
 
 /* ======= GRID PRINCIPAL ======= */
@@ -88,7 +88,7 @@ h1 {
   top: 0;
   z-index: 55;
   white-space: normal;
-  height: 52px;
+  height: 55px; /* Altura fixa para garantir alinhamento */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -103,10 +103,15 @@ h1 {
   border-right: 1px solid var(--gray-line);
   border-top: none;
   position: sticky;
-  top: 52px;
+  top: 55px; /* Começa exatamente onde a linha 1 termina */
   z-index: 55;
   white-space: normal;
   border-bottom: 2px solid var(--gray-line) !important;
+  height: auto;
+  min-height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ======= COLUNA GG (CANTO SUPERIOR ESQUERDO) ======= */
@@ -122,7 +127,7 @@ h1 {
   position: sticky;
   left: 0;
   top: 0;
-  z-index: 60;
+  z-index: 60; /* O mais alto para ficar no canto */
   border-right: 2px solid white;
   border-bottom: 2px solid var(--gray-line);
 }
@@ -147,7 +152,7 @@ h1 {
   background: white;
   padding: 8px;
   text-align: left;
-  min-height: 70px;
+  min-height: 80px;
   vertical-align: middle;
   z-index: 1;
 }
@@ -175,7 +180,7 @@ h1 {
   color: #444;
 }
 
-/* ======= Sombra vertical ======= */
+/* ======= Sombra vertical para profundidade ======= */
 .gg-header::after, .gg-cell::after {
   content: "";
   position: absolute;
@@ -183,7 +188,7 @@ h1 {
   top: 0;
   bottom: 0;
   width: 5px;
-  background: linear-gradient(to right, rgba(0,0,0,0.2), transparent);
+  background: linear-gradient(to right, rgba(0,0,0,0.15), transparent);
   pointer-events: none;
 }
 
@@ -194,7 +199,7 @@ h1 {
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# DADOS
+# DADOS E LIMPEZA
 # ===========================================================
 data = load_excel_data()
 df = data.get("job_profile", pd.DataFrame())
@@ -205,8 +210,20 @@ if missing:
     st.error(f"Colunas ausentes: {', '.join(missing)}")
     st.stop()
 
-df = df.dropna(subset=["Job Family", "Sub Job Family", "Job Profile", "Global Grade"])
-df["Global Grade"] = df["Global Grade"].astype(str).str.replace(r"\.0$", "", regex=True)
+# 1. Limpeza de espaços em branco
+for col in required:
+    df[col] = df[col].astype(str).str.strip()
+
+# 2. Tratamento de nulos críticos (evita perder Executivos sem subfamília)
+df["Sub Job Family"] = df["Sub Job Family"].replace(['nan', 'None', '', '<NA>'], '-')
+
+# 3. Filtragem de linhas inválidas
+df = df[~df["Job Family"].isin(['nan', 'None', ''])]
+df = df[~df["Job Profile"].isin(['nan', 'None', ''])]
+df = df[~df["Global Grade"].isin(['nan', 'None', ''])]
+
+# 4. Normalização do Grade
+df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True)
 
 # ===========================================================
 # FILTROS E CABEÇALHO
@@ -215,7 +232,8 @@ st.markdown("<div class='topbar'>", unsafe_allow_html=True)
 section("🗺️ Job Map")
 col1, col2 = st.columns([2, 2])
 
-families_order = [
+# Ordem preferencial das famílias
+preferred_order = [
     "Top Executive/General Management",
     "Corporate Affairs/Communications",
     "Legal & Internal Audit",
@@ -233,16 +251,22 @@ families_order = [
     "Facility & Administrative Services"
 ]
 
-families = ["Todas"] + families_order
-paths = ["Todas"] + sorted(df["Career Path"].dropna().unique().tolist())
+# Garante que usamos apenas famílias que existem nos dados
+existing_families = set(df["Job Family"].unique())
+families_order = [f for f in preferred_order if f in existing_families]
+# Adiciona outras famílias que possam existir no Excel mas não na lista preferencial
+families_order.extend(sorted(list(existing_families - set(families_order))))
+
+families_options = ["Todas"] + families_order
+paths_options = ["Todas"] + sorted(df["Career Path"].unique().tolist())
 
 with col1:
-    family_filter = st.selectbox("Família", families)
+    family_filter = st.selectbox("Família", families_options)
 with col2:
-    path_filter = st.selectbox("Trilha de Carreira", paths)
+    path_filter = st.selectbox("Trilha de Carreira", paths_options)
 st.markdown("</div>", unsafe_allow_html=True)
 
-# --- APLICAÇÃO DOS FILTROS ---
+# APLICAÇÃO DOS FILTROS
 if family_filter != "Todas":
     df = df[df["Job Family"] == family_filter]
 if path_filter != "Todas":
@@ -253,10 +277,9 @@ if df.empty:
     st.stop()
 
 # ===========================================================
-# PREPARAÇÃO DO GRID (baseado nos dados filtrados)
+# PREPARAÇÃO DO GRID (BASEADO NOS DADOS FILTRADOS)
 # ===========================================================
-
-# Determina quais famílias estão ativas após o filtro
+# Define as famílias ativas com base no dataframe JÁ FILTRADO
 active_families = [f for f in families_order if f in df["Job Family"].unique()]
 
 cores_familia = [
@@ -272,27 +295,29 @@ cores_sub = [
 map_cor_fam = {f: cores_familia[i % len(cores_familia)] for i, f in enumerate(families_order)}
 map_cor_sub = {f: cores_sub[i % len(cores_sub)] for i, f in enumerate(families_order)}
 
-# Subfamílias apenas para as famílias ativas
 subfamilias = {
-    f: sorted(df[df["Job Family"] == f]["Sub Job Family"].dropna().unique().tolist()) or [""]
+    f: sorted(df[df["Job Family"] == f]["Sub Job Family"].unique().tolist())
     for f in active_families
 }
+# Ordenação numérica decrescente para os Grades
 grades = sorted(df["Global Grade"].unique(), key=lambda x: int(x) if x.isdigit() else 999, reverse=True)
 
 # ===========================================================
 # CÁLCULO DE DIMENSÕES
 # ===========================================================
-def largura(t):
-    return min(max(220, len(str(t)) * 8 + 50), 420)
+def largura(text):
+    # Ajuste fino na largura das colunas baseado no tamanho do texto
+    return min(max(220, len(str(text)) * 8 + 50), 420)
 
-colunas = ["160px"] # Largura da coluna GG
+colunas_css = ["120px"] # Largura fixa da coluna GG
 for f in active_families:
     for sf in subfamilias[f]:
-        # Calcula a largura baseada no maior nome de cargo nesta subfamília
-        maior = max([sf] + df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf)]["Job Profile"].tolist() if not df.empty else [sf], key=len)
-        colunas.append(f"{largura(maior)}px")
+        # Encontra o maior texto (seja o nome da subfamília ou de um cargo nela)
+        cargos_na_sub = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf)]["Job Profile"].tolist()
+        maior_texto = max([sf] + cargos_na_sub if cargos_na_sub else [sf], key=len)
+        colunas_css.append(f"{largura(maior_texto)}px")
 
-grid_template = f"grid-template-columns: {' '.join(colunas)};"
+grid_template = f"grid-template-columns: {' '.join(colunas_css)};"
 
 # ===========================================================
 # GERAÇÃO DO HTML
