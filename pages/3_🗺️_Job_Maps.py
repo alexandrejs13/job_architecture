@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (COM CORREÇÃO DA LINHA BRANCA)
+# CSS COMPLETO
 # ===========================================================
 st.markdown("""
 <style>
@@ -66,7 +66,7 @@ h1 {
   width: max-content;
   font-size: 0.88rem;
   grid-auto-rows: minmax(60px, auto);
-  row-gap: 0 !important; /* Garante zero espaço entre linhas */
+  row-gap: 0 !important;
 }
 
 .jobmap-grid > div {
@@ -82,9 +82,7 @@ h1 {
   text-align: center;
   background: var(--dark-gray);
   border-right: 1px solid white !important;
-  /* REMOVE A BORDA INFERIOR PARA NÃO TER LINHA BRANCA */
   border-bottom: none !important;
-  margin-bottom: 0 !important;
   position: sticky;
   top: 0;
   z-index: 55;
@@ -106,7 +104,6 @@ h1 {
   top: 50px;
   z-index: 55;
   white-space: normal;
-  /* GARANTE QUE NÃO TENHA BORDA SUPERIOR */
   border-top: none !important;
   border-bottom: 2px solid var(--gray-line) !important;
   min-height: 40px;
@@ -221,7 +218,7 @@ h1 {
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# DADOS
+# DADOS E LIMPEZA
 # ===========================================================
 data = load_excel_data()
 df = data.get("job_profile", pd.DataFrame())
@@ -242,7 +239,7 @@ df = df[~df["Global Grade"].isin(['nan', 'None', ''])]
 df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True)
 
 # ===========================================================
-# FILTROS DEPENDENTES
+# FILTROS (COM DEPENDÊNCIA)
 # ===========================================================
 st.markdown("<div class='topbar'>", unsafe_allow_html=True)
 section("🗺️ Job Map")
@@ -262,4 +259,163 @@ families_order.extend(sorted(list(existing_families - set(families_order))))
 with col1:
     family_filter = st.selectbox("Família", ["Todas"] + families_order)
 
-if family_filter != "
+# Lógica de dependência: filtra as trilhas disponíveis com base na família
+if family_filter != "Todas":
+    available_paths = df[df["Job Family"] == family_filter]["Career Path"].unique().tolist()
+else:
+    available_paths = df["Career Path"].unique().tolist()
+
+paths_options = ["Todas"] + sorted([p for p in available_paths if pd.notna(p) and p != 'nan' and p != ''])
+
+with col2:
+    path_filter = st.selectbox("Trilha de Carreira", paths_options)
+
+st.markdown("</div>", unsafe_allow_html=True)
+
+# Aplicação dos filtros
+if family_filter != "Todas":
+    df = df[df["Job Family"] == family_filter]
+if path_filter != "Todas":
+    df = df[df["Career Path"] == path_filter]
+
+if df.empty:
+    st.warning("Nenhum cargo encontrado.")
+    st.stop()
+
+# ===========================================================
+# PREPARAÇÃO DO GRID
+# ===========================================================
+active_families = [f for f in families_order if f in df["Job Family"].unique()]
+grades = sorted(df["Global Grade"].unique(), key=lambda x: int(x) if x.isdigit() else 999, reverse=True)
+
+subfamilias_map = {}
+col_index = 2
+header_spans = {}
+
+for f in active_families:
+    subs = sorted(df[df["Job Family"] == f]["Sub Job Family"].unique().tolist())
+    header_spans[f] = len(subs)
+    for sf in subs:
+        subfamilias_map[(f, sf)] = col_index
+        col_index += 1
+
+content_map = {}
+cards_count_map = {}
+
+# 1. Detectar conteúdo e contar cards
+for g in grades:
+    for (f, sf), c_idx in subfamilias_map.items():
+        cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
+        count = len(cell_df)
+        cards_count_map[(g, c_idx)] = count
+
+        if count == 0:
+            content_map[(g, c_idx)] = None
+            continue
+        
+        jobs_sig = "|".join(sorted((cell_df["Job Profile"] + cell_df["Career Path"]).unique()))
+        content_map[(g, c_idx)] = jobs_sig
+
+# 2. Calcular mesclagens verticais
+span_map = {}
+skip_set = set()
+for (_, c_idx) in subfamilias_map.items():
+    for i, g in enumerate(grades):
+        if (g, c_idx) in skip_set: continue
+        current_sig = content_map.get((g, c_idx))
+        if current_sig is None:
+            span_map[(g, c_idx)] = 1
+            continue
+        span = 1
+        for next_g in grades[i+1:]:
+            if content_map.get((next_g, c_idx)) == current_sig:
+                span += 1
+                skip_set.add((next_g, c_idx))
+            else:
+                break
+        span_map[(g, c_idx)] = span
+
+# 3. Gerar HTML dos cards (com GG interno)
+cell_html_cache = {}
+for i, g in enumerate(grades):
+    for (f, sf), c_idx in subfamilias_map.items():
+        if (g, c_idx) in skip_set or content_map.get((g, c_idx)) is None:
+            continue
+
+        span = span_map.get((g, c_idx), 1)
+        
+        if span > 1:
+            covered = grades[i : i + span]
+            try:
+                nums = [int(x) for x in covered if x.isdigit()]
+                gg_label = f"GG {min(nums)}-{max(nums)}"
+            except:
+                gg_label = f"GG {covered[-1]}-{covered[0]}"
+        else:
+            gg_label = f"GG {g}"
+
+        cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
+        cards_html = "".join([
+            f"<div class='job-card'><b>{row['Job Profile']}</b><span>{row['Career Path']} - {gg_label}</span></div>"
+            for _, row in cell_df.iterrows()
+        ])
+        cell_html_cache[(g, c_idx)] = cards_html
+
+# ===========================================================
+# CÁLCULO DE LARGURAS DINÂMICAS
+# ===========================================================
+def largura_texto_minima(text):
+    return len(str(text)) * 5 + 30
+
+col_widths = ["100px"]
+
+for (f, sf), c_idx in subfamilias_map.items():
+    width_title = largura_texto_minima(sf)
+    max_cards = 0
+    for g in grades:
+        if (g, c_idx) not in skip_set:
+             max_cards = max(max_cards, cards_count_map.get((g, c_idx), 0))
+    
+    if max_cards <= 1:
+        width_cards = 135 + 25
+    elif max_cards == 2:
+        width_cards = (2 * 135) + 8 + 25
+    else:
+        cap = min(max(1, max_cards), 6)
+        width_cards = (cap * 135) + ((cap - 1) * 8) + 25
+        
+    col_widths.append(f"{max(width_title, width_cards)}px")
+
+grid_template = f"grid-template-columns: {' '.join(col_widths)};"
+
+cores_fam = ["#726C5B", "#5F6A73", "#6F5C60", "#5D6E70", "#6B715B", "#5B5F77", "#725E7A", "#666C5B", "#736A65", "#6C5F70", "#655C6F", "#6A6C64", "#6C6868", "#5F7073", "#70685E"]
+cores_sub = ["#EDEBE8", "#ECEEF0", "#F2ECEF", "#EEF2F2", "#F0F2ED", "#EDEDF3", "#F1EEF4", "#F1F2EE", "#F2EFED", "#EFEFF2", "#EFEDED", "#EFEFEF", "#F2F2F0", "#EFEFEF", "#EEEFEF"]
+map_cor_fam = {f: cores_fam[i % len(cores_fam)] for i, f in enumerate(families_order)}
+map_cor_sub = {f: cores_sub[i % len(cores_sub)] for i, f in enumerate(families_order)}
+
+# ===========================================================
+# RENDERIZAÇÃO FINAL
+# ===========================================================
+html = ["<div class='map-wrapper'><div class='jobmap-grid' style='{grid_template}'>".format(grid_template=grid_template)]
+html.append("<div class='gg-header'>GG</div>")
+
+current_col = 2
+for f in active_families:
+    span = header_spans[f]
+    html.append(f"<div class='header-family' style='grid-column: {current_col} / span {span}; background:{map_cor_fam[f]};'>{f}</div>")
+    current_col += span
+
+for (f, sf), c_idx in subfamilias_map.items():
+    html.append(f"<div class='header-subfamily' style='grid-column: {c_idx}; background:{map_cor_sub[f]};'>{sf}</div>")
+
+for i, g in enumerate(grades):
+    row_idx = i + 3
+    html.append(f"<div class='gg-cell' style='grid-row: {row_idx};'>GG {g}</div>")
+    for (f, sf), c_idx in subfamilias_map.items():
+        if (g, c_idx) in skip_set: continue
+        span = span_map.get((g, c_idx), 1)
+        row_str = f"grid-row: {row_idx} / span {span};" if span > 1 else f"grid-row: {row_idx};"
+        html.append(f"<div class='cell' style='grid-column: {c_idx}; {row_str}'>{cell_html_cache.get((g, c_idx), '')}</div>")
+
+html.append("</div></div>")
+st.markdown("".join(html), unsafe_allow_html=True)
