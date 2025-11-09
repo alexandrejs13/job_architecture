@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (CARDS MENORES E PADRONIZADOS)
+# CSS COMPLETO
 # ===========================================================
 st.markdown("""
 <style>
@@ -65,7 +65,7 @@ h1 {
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
-  grid-auto-rows: minmax(60px, auto); /* Altura mínima da linha reduzida */
+  grid-auto-rows: minmax(60px, auto);
 }
 
 .jobmap-grid > div {
@@ -81,6 +81,8 @@ h1 {
   text-align: center;
   background: var(--dark-gray);
   border-right: 1px solid white !important;
+  /* REMOÇÃO DA LINHA FANTASMA REFORÇADA */
+  border-bottom: 0px transparent !important;
   position: sticky;
   top: 0;
   z-index: 55;
@@ -145,7 +147,6 @@ h1 {
   font-size: 0.9rem;
 }
 
-/* === CÉLULAS (LAYOUT FLEX) === */
 .cell {
   background: white;
   padding: 6px;
@@ -160,22 +161,19 @@ h1 {
   align-content: center;
 }
 
-/* === CARDS PADRONIZADOS E MENORES === */
 .job-card {
   background: #f9f9f9;
   border-left: 3px solid var(--blue);
   border-radius: 4px;
   padding: 5px 6px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.08);
-  font-size: 0.75rem; /* Fonte menor */
+  font-size: 0.75rem;
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;
-  
-  /* Tamanho fixo e padronizado */
   width: 125px;
-  flex: 0 0 125px; /* Não cresce nem diminui, fica sempre com 125px */
-  min-height: 45px; /* Altura mínima para uniformidade visual */
+  flex: 0 0 125px;
+  min-height: 45px;
 }
 .job-card b {
   display: block;
@@ -319,26 +317,31 @@ for (_, c_idx) in subfamilias_map.items():
         span_map[(g, c_idx)] = span
 
 # ===========================================================
-# CÁLCULO DE LARGURAS
+# CÁLCULO DE LARGURAS DINÂMICAS
 # ===========================================================
 def largura_texto(text):
-    return len(str(text)) * 7 + 30 # Reduzido ligeiramente o multiplicador de texto
+    return len(str(text)) * 7 + 30
 
-col_widths = ["100px"] # Coluna GG um pouco menor
+col_widths = ["100px"] # Coluna GG
 
 for (f, sf), c_idx in subfamilias_map.items():
+    # 1. Largura mínima baseada no texto do cabeçalho/cargos
     cargos = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf)]["Job Profile"].tolist()
     maior_texto = max([sf] + cargos if cargos else [sf], key=len)
     width_by_text = largura_texto(maior_texto)
     
+    # 2. Largura baseada na quantidade MÁXIMA de cards na coluna
     max_cards_in_col = 0
     for g in grades:
-        max_cards_in_col = max(max_cards_in_col, cards_count_map.get((g, c_idx), 0))
+        # Considera mesclagens para não subestimar a largura necessária se uma célula mesclada tiver muitos cards
+        if (g, c_idx) not in skip_set:
+             max_cards_in_col = max(max_cards_in_col, cards_count_map.get((g, c_idx), 0))
     
-    # Ajustado para 135px por card (125px width + 10px gap aprox)
-    width_by_cards = min(max_cards_in_col, 3) * 135
+    # Permite até 6 cards lado a lado (aprox 810px). Se tiver mais, eles quebram linha.
+    cards_capacity = min(max(1, max_cards_in_col), 6)
+    width_by_cards = cards_capacity * 135 # 135px por card (125px + gap)
     
-    final_width = max(180, width_by_text, width_by_cards) # Mínimo reduzido para 180px
+    final_width = max(180, width_by_text, width_by_cards)
     col_widths.append(f"{final_width}px")
 
 grid_template = f"grid-template-columns: {' '.join(col_widths)};"
