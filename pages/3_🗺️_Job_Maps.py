@@ -1,15 +1,11 @@
 import streamlit as st
 import pandas as pd
-import random
 from utils.data_loader import load_job_profile_df
 
-# ===========================================================
-# CONFIGURAÇÃO DA PÁGINA
-# ===========================================================
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 
 # ===========================================================
-# CSS — Visual clean refinado
+# CSS — refinado e corporativo
 # ===========================================================
 st.markdown("""
 <style>
@@ -18,29 +14,28 @@ st.markdown("""
   margin: 0 auto !important;
 }
 
-/* ======= TÍTULO ======= */
+/* ===== TÍTULO ===== */
 h1 {
-  color: #1E56E0 !important;
-  font-weight: 800 !important;
-  font-size: 1.9rem !important;
-  margin-bottom: 1rem !important;
+  color: #1E56E0;
+  font-weight: 800;
+  font-size: 1.9rem;
+  margin-bottom: 1rem;
 }
 
-/* ======= ÁREA DE SCROLL ======= */
+/* ===== ÁREA DE SCROLL ===== */
 .map-wrapper {
   overflow: auto;
-  border-top: 3px solid #A3B8F0;
-  border-bottom: 3px solid #A3B8F0;
+  border-top: 2px solid #c7d3f7;
+  border-bottom: 2px solid #c7d3f7;
   background: #fff;
   padding-bottom: 1rem;
-  white-space: nowrap;
 }
 
-/* ======= GRID PRINCIPAL ======= */
+/* ===== GRID ===== */
 .jobmap-grid {
   display: grid;
   border-collapse: collapse;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   text-align: center;
   width: max-content;
   position: relative;
@@ -50,99 +45,105 @@ h1 {
   box-sizing: border-box;
 }
 
-/* ======= CABEÇALHOS ======= */
-.header-family {
-  font-weight: 800;
-  color: #fff;
-  padding: 8px;
-  background: #4A74E8;
-  white-space: normal;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 40px;
-}
-.header-subfamily {
-  font-weight: 600;
-  background: #E9ECF9;
-  padding: 6px;
-  white-space: normal;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #1E56E0;
-  height: 38px;
-}
-
-/* ======= FIXAR CABEÇALHOS ======= */
-.header-family, .header-subfamily {
-  position: sticky;
-  z-index: 35;
-}
-.header-family { top: 0; }
-.header-subfamily { top: 40px; }
-
-/* ======= COLUNA “GG” FIXA ======= */
+/* ===== PRIMEIRA COLUNA (GG) ===== */
 .grade-header {
-  font-weight: 800;
-  font-size: 0.95rem;
-  background: #1E56E0;
+  background: #000;
   color: #fff;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+  padding: 10px 6px;
+  text-align: center;
   position: sticky;
-  top: 0;
   left: 0;
-  z-index: 40 !important;
+  top: 0;
+  z-index: 50;
 }
 .grade-cell {
+  background: #fff;
+  color: #000;
   font-weight: 700;
-  background: #F3F6FD;
-  border-right: 2px solid #A3B8F0;
   padding: 6px 8px;
   position: sticky;
   left: 0;
-  z-index: 30 !important;
+  z-index: 40;
+  border-right: 2px solid #000;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 }
 
-/* ======= CÉLULAS DE CARGO ======= */
+/* ===== FAMÍLIAS ===== */
+.header-family {
+  font-weight: 700;
+  color: #fff;
+  padding: 8px 10px;
+  font-size: 1rem;
+  text-align: center;
+  height: 42px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-right: 2px solid #fff;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+/* ===== SUBFAMÍLIAS ===== */
+.header-subfamily {
+  font-weight: 600;
+  background: #E9ECF9;
+  color: #222;
+  padding: 6px 10px;
+  white-space: normal;
+  text-align: center;
+  font-size: 0.92rem;
+  height: 38px;
+  position: sticky;
+  top: 42px;
+  z-index: 38;
+  border-bottom: 1px solid #d3d7e0;
+}
+
+/* ===== CÉLULAS DE CARGO ===== */
 .job-card {
   background: #fafafa;
   border-left: 4px solid #A3B8F0;
   border-radius: 6px;
-  padding: 6px 8px;
+  padding: 8px 10px;
   margin: 3px 0;
   text-align: left;
   font-size: 0.85rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
   white-space: normal;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 .job-card b {
+  display: block;
   font-weight: 700;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .job-card span {
-  display: block;
   font-size: 0.78rem;
   color: #444;
   font-weight: 400;
 }
-.job-card:hover {
-  background: #f5f7ff;
-}
+.job-card:hover { background: #f5f7ff; }
 
-/* ======= ZEBRA ======= */
+/* ===== ZEBRA ===== */
 .grade-row:nth-child(even) { background: #fcfcfc; }
 
-/* ======= RESPONSIVIDADE ======= */
-@media (max-width: 1500px) { .block-container { zoom: 0.9; } }
-@media (max-width: 1200px) { .block-container { zoom: 0.85; } }
+/* ===== CORES ===== */
+.family-color-green { background: #3C7A4D; } /* escuro */
+.subfamily-color-green { background: #D8EBD9; } /* claro */
+.family-color-blue { background: #1E56E0; }
+.subfamily-color-blue { background: #E4E9FB; }
+.family-color-orange { background: #BF6E30; }
+.subfamily-color-orange { background: #F6E4D1; }
+.family-color-gray { background: #4A4A4A; }
+.subfamily-color-gray { background: #E8E8E8; }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -152,13 +153,7 @@ h1 {
 try:
     df = load_job_profile_df()
 except Exception as e:
-    st.error(f"❌ Erro ao carregar Job Profile.xlsx: {e}")
-    st.stop()
-
-required_cols = ["Job Family", "Sub Job Family", "Job Profile", "Career Path", "Global Grade", "Full Job Code"]
-missing = [c for c in required_cols if c not in df.columns]
-if missing:
-    st.error(f"Colunas ausentes no Excel: {', '.join(missing)}")
+    st.error(f"Erro ao carregar Job Profile.xlsx: {e}")
     st.stop()
 
 df = df.dropna(subset=["Job Family", "Sub Job Family", "Job Profile", "Global Grade"])
@@ -187,60 +182,56 @@ if filtered.empty:
     st.stop()
 
 # ===========================================================
-# CORES POR FAMÍLIA (SUAVES)
+# DEFINIÇÃO DE CORES POR FAMÍLIA
 # ===========================================================
-families = sorted(filtered["Job Family"].unique().tolist())
-random.seed(10)
-palette = [
-    "#A3B8F0", "#BFD8B8", "#F4C7AB", "#F7D9C4", "#C5DFF8", "#D0E8C5",
-    "#F8EDE3", "#FAD9C1", "#D6E2E9", "#CDEAC0", "#F9EBC8"
-]
-fam_colors = {f: palette[i % len(palette)] for i, f in enumerate(families)}
+family_colors = {
+    "Corporate Affairs": ("family-color-green", "subfamily-color-green"),
+    "Finance": ("family-color-blue", "subfamily-color-blue"),
+    "Operations": ("family-color-orange", "subfamily-color-orange"),
+    "General": ("family-color-gray", "subfamily-color-gray"),
+}
 
-# ===========================================================
-# GRADE HORIZONTAL
-# ===========================================================
-grades = sorted(
-    filtered["Global Grade"].unique(),
-    key=lambda x: int(x) if x.isdigit() else x,
-    reverse=True
-)
+families = sorted(filtered["Job Family"].unique().tolist())
+grades = sorted(filtered["Global Grade"].unique(), key=lambda x: int(x) if x.isdigit() else x, reverse=True)
 
 subfam_map = {
     f: sorted(filtered[filtered["Job Family"] == f]["Sub Job Family"].unique().tolist())
     for f in families
 }
 
-col_sizes = [110]
+col_sizes = [120]
 for f in families:
     for sf in subfam_map[f]:
-        width = max(140, len(sf) * 8)  # ajusta largura ao texto
+        width = max(150, len(sf) * 8)
         col_sizes.append(width)
-
 grid_template = f"grid-template-columns: {' '.join(str(x)+'px' for x in col_sizes)};"
 
+# ===========================================================
+# CONSTRUÇÃO DO MAPA
+# ===========================================================
 html = "<div class='map-wrapper'>"
 
-# Cabeçalho 1 (Família)
+# Cabeçalho 1 — FAMÍLIAS (mesclado A1:A2 para GG)
 html += f"<div class='jobmap-grid' style='{grid_template}; z-index:5;'>"
-html += "<div class='grade-header'>GG</div>"
+html += "<div class='grade-header' rowspan='2'>GG</div>"
 for f in families:
+    fam_class, sub_class = family_colors.get(f, ("family-color-gray", "subfamily-color-gray"))
     span = len(subfam_map[f])
-    color = fam_colors[f]
-    html += f"<div class='header-family' style='grid-column: span {span}; background:{color};'>{f}</div>"
+    html += f"<div class='header-family {fam_class}' style='grid-column: span {span};'>{f}</div>"
 html += "</div>"
 
-# Cabeçalho 2 (Subfamily)
+# Cabeçalho 2 — SUBFAMÍLIAS
 html += f"<div class='jobmap-grid' style='{grid_template}; z-index:4;'>"
 html += "<div class='grade-cell'></div>"
 for f in families:
+    fam_class, sub_class = family_colors.get(f, ("family-color-gray", "subfamily-color-gray"))
     for sf in subfam_map[f]:
-        html += f"<div class='header-subfamily'>{sf}</div>"
+        html += f"<div class='header-subfamily {sub_class}'>{sf}</div>"
 html += "</div>"
 
-# Linhas (Grades)
+# Linhas — Grades
 for g in grades:
-    html += f"<div class='jobmap-grid grade-row' style='{grid_template}; z-index:1;'>"
+    html += f"<div class='jobmap-grid grade-row' style='{grid_template};'>"
     html += f"<div class='grade-cell'>GG {g}</div>"
     for f in families:
         fam_df = filtered[filtered["Job Family"] == f]
