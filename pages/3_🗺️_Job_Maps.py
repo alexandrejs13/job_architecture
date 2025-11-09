@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (COM CORREÇÃO DEFINITIVA DA LINHA)
+# CSS COMPLETO
 # ===========================================================
 st.markdown("""
 <style>
@@ -68,8 +68,7 @@ h1 {
   grid-auto-rows: minmax(90px, auto);
   row-gap: 0px !important;
   column-gap: 0px !important;
-  /* ALTERAÇÃO CRÍTICA: Fundo branco para evitar que gaps pareçam linhas cinzas */
-  background-color: white !important; 
+  background-color: var(--gray-line);
 }
 
 .jobmap-grid > div {
@@ -84,17 +83,13 @@ h1 {
   color: #fff;
   padding: 10px 5px;
   text-align: center;
-  /* Borda direita semitransparente para separar famílias */
-  border-right: 1px solid rgba(255,255,255,0.3) !important;
-  /* SEM BORDA INFERIOR */
+  border-right: 1px solid rgba(255,255,255,0.5) !important;
   border-bottom: 0px none !important;
-  outline: none !important;
-  /* Margem negativa para garantir sobreposição e eliminar frestas */
-  margin-bottom: -1px !important; 
-  padding-bottom: 11px !important; /* Compensa a margem negativa */
+  margin-bottom: 0px !important;
+  padding-bottom: 10px !important;
   position: sticky;
   top: 0;
-  z-index: 57; /* Z-index maior para ficar por cima */
+  z-index: 56;
   white-space: normal;
   height: 50px;
   display: flex;
@@ -106,16 +101,15 @@ h1 {
 
 .header-subfamily {
   font-weight: 600;
-  background: var(--gray-bg) !important;
+  color: #333;
   padding: 8px 5px;
   text-align: center;
   position: sticky;
-  top: 50px; /* Deve coincidir com a altura da Family */
-  z-index: 56;
+  top: 50px;
+  z-index: 55;
   white-space: normal;
-  /* SEM BORDA SUPERIOR */
   border-top: 0px none !important;
-  outline: none !important;
+  margin-top: 0px !important;
   border-bottom: 2px solid var(--gray-line) !important;
   min-height: 40px;
   display: flex;
