@@ -1,7 +1,6 @@
 # pages/3_🗺️_Job_Maps.py
 # -*- coding: utf-8 -*-
 
-import re
 import streamlit as st
 import pandas as pd
 from utils.data_loader import load_excel_data
@@ -107,6 +106,9 @@ h1 {
   display:flex; align-items:center; justify-content:center;
   border-bottom: 1px solid white;
   white-space: normal; line-height: 1.25;
+  position: sticky;
+  top: 0;
+  z-index: 55;
 }
 .header-subfamily {
   font-weight: 700;
@@ -117,6 +119,9 @@ h1 {
   display:flex; align-items:center; justify-content:center;
   white-space: normal; line-height: 1.2;
   border-top: 1px solid white;
+  position: sticky;
+  top: 48px;
+  z-index: 54;
 }
 
 /* ===== CÉLULAS ===== */
@@ -136,11 +141,15 @@ h1 {
   text-align: left;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  white-space: normal;
+  line-height: 1.25;
 }
 .job-card b {
   display:block;
   font-weight:800;
   margin-bottom: 3px;
+  word-break: break-word;
+  white-space: normal;
 }
 .job-card span {
   display:block;
@@ -209,7 +218,7 @@ subfamilias = {f:sorted(df[df["Job Family"]==f]["Sub Job Family"].unique().tolis
 # CALCULAR LARGURA DAS COLUNAS (DINÂMICA)
 # ===========================================================
 def largura(text):
-    base=len(str(text)); return min(max(180,base*9+40),360)
+    base=len(str(text)); return min(max(200,base*9+40),420)
 col_larguras=["160px"]
 for f in familias:
     for s in subfamilias[f]:
