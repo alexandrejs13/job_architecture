@@ -83,7 +83,7 @@ h1 {
   text-align: center;
   background: var(--dark-gray);
   border-right: 1px solid white;
-  border-bottom: 1px solid white;
+  border-bottom: none; /* linha fantasma removida */
   position: sticky;
   top: 0;
   z-index: 55;
@@ -95,7 +95,7 @@ h1 {
   padding: 10px;
   text-align: center;
   border-right: 1px solid var(--gray-line);
-  border-bottom: 1px solid var(--gray-line);
+  border-top: none; /* remove linha fantasma */
   position: sticky;
   top: 52px;
   z-index: 54;
@@ -219,7 +219,9 @@ families_order = [
     "Quality Management",
     "Facility & Administrative Services"
 ]
-families = ["Todas"] + [f for f in families_order if f in df["Job Family"].unique()]
+
+# Forçar todas as famílias no dropdown, mesmo que vazias
+families = ["Todas"] + families_order
 paths = ["Todas"] + sorted(df["Career Path"].dropna().unique().tolist())
 
 with col1:
@@ -250,12 +252,12 @@ cores_sub = [
     "#EDEDF3", "#F1EEF4", "#F1F2EE", "#F2EFED", "#EFEFF2",
     "#EFEDED", "#EFEFEF", "#F2F2F0", "#EFEFEF", "#EEEFEF"
 ]
-map_cor_fam = {f: cores_familia[i % len(cores_familia)] for i, f in enumerate(familias)}
-map_cor_sub = {f: cores_sub[i % len(cores_sub)] for i, f in enumerate(familias)}
+map_cor_fam = {f: cores_familia[i % len(cores_familia)] for i, f in enumerate(families_order)}
+map_cor_sub = {f: cores_sub[i % len(cores_sub)] for i, f in enumerate(families_order)}
 
 subfamilias = {
-    f: sorted(df[df["Job Family"] == f]["Sub Job Family"].dropna().unique().tolist())
-    for f in familias
+    f: sorted(df[df["Job Family"] == f]["Sub Job Family"].dropna().unique().tolist()) or [""] 
+    for f in families_order
 }
 grades = sorted(df["Global Grade"].unique(), key=lambda x: int(x) if x.isdigit() else 999, reverse=True)
 
@@ -266,9 +268,9 @@ def largura(t):
     return min(max(220, len(str(t)) * 8 + 50), 420)
 
 colunas = ["160px"]
-for f in familias:
+for f in families_order:
     for sf in subfamilias[f]:
-        maior = max([sf] + df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf)]["Job Profile"].tolist(), key=len)
+        maior = max([sf] + df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf)]["Job Profile"].tolist() if not df.empty else [sf], key=len)
         colunas.append(f"{largura(maior)}px")
 grid_template = f"grid-template-columns: {' '.join(colunas)};"
 
@@ -279,19 +281,19 @@ html = ["<div class='map-wrapper'><div class='jobmap-grid' style='{grid_template
 
 # Linha 1 — Famílias
 html.append("<div class='gg-header'>GG</div>")
-for f in familias:
+for f in families_order:
     span = len(subfamilias[f])
     html.append(f"<div class='header-family' style='grid-column: span {span}; background:{map_cor_fam[f]};'>{f}</div>")
 
 # Linha 2 — Subfamílias
-for f in familias:
+for f in families_order:
     for sf in subfamilias[f]:
         html.append(f"<div class='header-subfamily' style='background:{map_cor_sub[f]};'>{sf}</div>")
 
 # Demais linhas (Grades + Cargos)
 for g in grades:
     html.append(f"<div class='gg-cell'>GG {g}</div>")
-    for f in familias:
+    for f in families_order:
         fam_df = df[df["Job Family"] == f]
         for sf in subfamilias[f]:
             cell = fam_df[(fam_df["Sub Job Family"] == sf) & (fam_df["Global Grade"] == g)]
