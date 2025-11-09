@@ -1,78 +1,59 @@
 import streamlit as st
 import pandas as pd
-from utils.data_loader import load_excel_data
+from utils.data_loader import load_excel_tables
 
-# ===========================================================
-# CONFIGURAÇÃO DA PÁGINA
-# ===========================================================
-st.set_page_config(layout="wide", page_title="🏗️ Level Structure")
+st.set_page_config(layout="wide", page_title="🏗️ Structure Level")
+st.markdown("## 🏗️ Structure Level")
 
-st.markdown("""
-<style>
-.block-container {max-width: 1500px !important;}
-h1 {
-    color: #1E56E0;
-    font-weight: 800;
-}
-.dataframe {
-    font-size: 0.9rem;
-}
-table {
-    border-collapse: collapse;
-}
-th {
-    background-color: #1E56E0;
-    color: white;
-    text-align: center !important;
-    padding: 8px;
-}
-td {
-    padding: 6px 10px;
-}
-tr:nth-child(even) {background-color: #f9f9f9;}
-</style>
-""", unsafe_allow_html=True)
-
-# ===========================================================
-# CARREGAR DADOS
-# ===========================================================
-data = load_excel_data()
-if "level_structure" not in data:
-    st.error("⚠️ Arquivo 'Level Structure.xlsx' não encontrado.")
+DATA = load_excel_tables()
+if "level_structure" not in DATA:
+    st.error("❌ Não encontrei `data/Level Structure.xlsx`.")
     st.stop()
 
-df = data["level_structure"].copy()
+df = DATA["level_structure"].copy()
 
-# Normaliza e ordena
-df.columns = df.columns.str.strip()
+# Tenta ordenar por grade quando existir
 if "Global Grade" in df.columns:
-    df["Global Grade"] = df["Global Grade"].astype(str).str.extract(r"(\d+)").fillna("0").astype(int)
-    df = df.sort_values("Global Grade", ascending=False)
+    df["__gg_sort__"] = df["Global Grade"].astype(str).str.extract(r"(\d+)").fillna("0").astype(int)
+else:
+    df["__gg_sort__"] = 0
 
-st.markdown("## 🏗️ Estrutura de Níveis Globais (Level Structure)")
-st.markdown("""
-Esta tabela mostra a hierarquia dos **Global Grades (GG)**, seus **nomes de nível**, **descrições** e **tipos de carreira**.
-Essas informações são usadas em páginas como *Job Maps* e *Job Match* para manter coerência hierárquica e precisão nas comparações.
-""")
+# Filtros amigáveis
+cols_possible = {
+    "Career Path": "Career Path",
+    "Structure Level": "Structure Level",
+    "Level Name": "Level Name",
+    "Level Description": "Level Description",
+    "Global Grade": "Global Grade",
+}
+present = [c for c in cols_possible.values() if c in df.columns]
 
-# ===========================================================
-# VISUALIZAÇÃO
-# ===========================================================
-st.dataframe(df, use_container_width=True, hide_index=True)
+col1, col2 = st.columns([2, 2])
+with col1:
+    if "Career Path" in df.columns:
+        paths = ["Todas"] + sorted(df["Career Path"].dropna().unique().tolist())
+        sel_path = st.selectbox("Trilha de Carreira", paths)
+    else:
+        sel_path = "Todas"
+with col2:
+    if "Structure Level" in df.columns:
+        levels = ["Todos"] + sorted(df["Structure Level"].dropna().unique().tolist())
+        sel_level = st.selectbox("Nível (Structure Level)", levels)
+    else:
+        sel_level = "Todos"
 
-# ===========================================================
-# DOWNLOAD
-# ===========================================================
-st.download_button(
-    "⬇️ Baixar Level Structure.xlsx",
-    data=df.to_excel(index=False),
-    file_name="Level Structure.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
+view = df.copy()
+if sel_path != "Todas" and "Career Path" in view.columns:
+    view = view[view["Career Path"] == sel_path]
+if sel_level != "Todos" and "Structure Level" in view.columns:
+    view = view[view["Structure Level"] == sel_level]
 
-# ===========================================================
-# INSIGHT VISUAL
-# ===========================================================
-if "Description" in df.columns and "Global Grade" in df.columns:
-    st.markdown("### 📊 Distribuição dos Níveis")
-    st.bar_chart(df.set_index("Global Grade")["Global Grade"].value_counts().sort_index(ascending=False))
+view = view.sort_values(by=["Career Path", "Structure Level", "__gg_sort__"], ascending=[True, True, False], na_position="last")
+
+# Mostra só colunas relevantes se existirem
+show_cols = [c for c in ["Career Path", "Structure Level", "Level Name", "Level Description", "Global Grade"] if c in view.columns]
+if not show_cols:
+    st.warning("Exibindo planilha completa (não encontrei colunas padrão).")
+    st.dataframe(view, use_container_width=True, hide_index=True)
+else:
+    st.dataframe(view[show_cols], use_container_width=True, hide_index=True)
