@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (AJUSTADO PARA CONGELAMENTO)
+# CSS COMPLETO (COM CONGELAMENTO E AJUSTES VISUAIS)
 # ===========================================================
 st.markdown("""
 <style>
@@ -58,8 +58,7 @@ h1 {
   border-bottom: 3px solid var(--blue);
   background: white;
   position: relative;
-  /* Importante para o sticky funcionar bem dentro deste container */
-  will-change: transform; 
+  will-change: transform;
 }
 
 /* ======= GRID PRINCIPAL ======= */
@@ -86,10 +85,10 @@ h1 {
   border-right: 1px solid white;
   border-bottom: none;
   position: sticky;
-  top: 0; /* Congela no topo */
-  z-index: 55; /* Acima das células normais */
+  top: 0;
+  z-index: 55;
   white-space: normal;
-  height: 52px; /* Altura fixa para garantir alinhamento da segunda linha */
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -104,10 +103,10 @@ h1 {
   border-right: 1px solid var(--gray-line);
   border-top: none;
   position: sticky;
-  top: 52px; /* Congela logo abaixo da primeira linha (que tem 52px de altura) */
+  top: 52px;
   z-index: 55;
   white-space: normal;
-  border-bottom: 2px solid var(--gray-line) !important; /* Reforço visual na separação */
+  border-bottom: 2px solid var(--gray-line) !important;
 }
 
 /* ======= COLUNA GG (CANTO SUPERIOR ESQUERDO) ======= */
@@ -121,11 +120,11 @@ h1 {
   justify-content: center;
   grid-row: span 2;
   position: sticky;
-  left: 0; /* Congela na esquerda */
-  top: 0;  /* Congela no topo (CRUCIAL para não sumir ao rolar para baixo) */
-  z-index: 60; /* Z-index mais alto para ficar acima de tudo no canto */
+  left: 0;
+  top: 0;
+  z-index: 60;
   border-right: 2px solid white;
-  border-bottom: 2px solid var(--gray-line); /* Alinha com a borda das subfamílias */
+  border-bottom: 2px solid var(--gray-line);
 }
 
 /* ======= CÉLULAS DA COLUNA GG (ESQUERDA) ======= */
@@ -137,8 +136,8 @@ h1 {
   align-items: center;
   justify-content: center;
   position: sticky;
-  left: 0; /* Congela na esquerda */
-  z-index: 55; /* Acima das células de conteúdo */
+  left: 0;
+  z-index: 55;
   border-right: 2px solid white;
   border-top: 1px solid white;
 }
@@ -150,7 +149,7 @@ h1 {
   text-align: left;
   min-height: 70px;
   vertical-align: middle;
-  z-index: 1; /* Garante que fique abaixo dos cabeçalhos */
+  z-index: 1;
 }
 .job-card {
   background: #f9f9f9;
@@ -176,11 +175,11 @@ h1 {
   color: #444;
 }
 
-/* ======= Sombra vertical para profundidade ao rolar ======= */
+/* ======= Sombra vertical ======= */
 .gg-header::after, .gg-cell::after {
   content: "";
   position: absolute;
-  right: -5px; /* Sombra ligeiramente para fora */
+  right: -5px;
   top: 0;
   bottom: 0;
   width: 5px;
@@ -243,18 +242,23 @@ with col2:
     path_filter = st.selectbox("Trilha de Carreira", paths)
 st.markdown("</div>", unsafe_allow_html=True)
 
+# --- APLICAÇÃO DOS FILTROS ---
 if family_filter != "Todas":
     df = df[df["Job Family"] == family_filter]
 if path_filter != "Todas":
     df = df[df["Career Path"] == path_filter]
+
 if df.empty:
     st.warning("Nenhum cargo encontrado com os filtros selecionados.")
     st.stop()
 
 # ===========================================================
-# MAPA ESTRUTURADO
+# PREPARAÇÃO DO GRID (baseado nos dados filtrados)
 # ===========================================================
-familias = [f for f in families_order if f in df["Job Family"].unique()]
+
+# Determina quais famílias estão ativas após o filtro
+active_families = [f for f in families_order if f in df["Job Family"].unique()]
+
 cores_familia = [
     "#726C5B", "#5F6A73", "#6F5C60", "#5D6E70", "#6B715B",
     "#5B5F77", "#725E7A", "#666C5B", "#736A65", "#6C5F70",
@@ -268,45 +272,48 @@ cores_sub = [
 map_cor_fam = {f: cores_familia[i % len(cores_familia)] for i, f in enumerate(families_order)}
 map_cor_sub = {f: cores_sub[i % len(cores_sub)] for i, f in enumerate(families_order)}
 
+# Subfamílias apenas para as famílias ativas
 subfamilias = {
-    f: sorted(df[df["Job Family"] == f]["Sub Job Family"].dropna().unique().tolist()) or [""] 
-    for f in families_order
+    f: sorted(df[df["Job Family"] == f]["Sub Job Family"].dropna().unique().tolist()) or [""]
+    for f in active_families
 }
 grades = sorted(df["Global Grade"].unique(), key=lambda x: int(x) if x.isdigit() else 999, reverse=True)
 
 # ===========================================================
-# DIMENSÕES
+# CÁLCULO DE DIMENSÕES
 # ===========================================================
 def largura(t):
     return min(max(220, len(str(t)) * 8 + 50), 420)
 
-colunas = ["160px"]
-for f in families_order:
+colunas = ["160px"] # Largura da coluna GG
+for f in active_families:
     for sf in subfamilias[f]:
+        # Calcula a largura baseada no maior nome de cargo nesta subfamília
         maior = max([sf] + df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf)]["Job Profile"].tolist() if not df.empty else [sf], key=len)
         colunas.append(f"{largura(maior)}px")
+
 grid_template = f"grid-template-columns: {' '.join(colunas)};"
 
 # ===========================================================
-# HTML DO GRID
+# GERAÇÃO DO HTML
 # ===========================================================
 html = ["<div class='map-wrapper'><div class='jobmap-grid' style='{grid_template}'>".format(grid_template=grid_template)]
 
-# Linha 1 — Famílias
+# --- Linha 1: Cabeçalhos das Famílias ---
 html.append("<div class='gg-header'>GG</div>")
-for f in families_order:
+for f in active_families:
     span = len(subfamilias[f])
     html.append(f"<div class='header-family' style='grid-column: span {span}; background:{map_cor_fam[f]};'>{f}</div>")
 
-# Linha 2 — Subfamílias
-for f in families_order:
+# --- Linha 2: Cabeçalhos das Subfamílias ---
+for f in active_families:
     for sf in subfamilias[f]:
         html.append(f"<div class='header-subfamily' style='background:{map_cor_sub[f]};'>{sf}</div>")
 
-# Demais linhas (Grades + Cargos)
+# --- Demais linhas: Grades + Cargos ---
 for g in grades:
     html.append(f"<div class='gg-cell'>GG {g}</div>")
-    for f in families_order:
+    for f in active_families:
         fam_df = df[df["Job Family"] == f]
         for sf in subfamilias[f]:
             cell = fam_df[(fam_df["Sub Job Family"] == sf) & (fam_df["Global Grade"] == g)]
