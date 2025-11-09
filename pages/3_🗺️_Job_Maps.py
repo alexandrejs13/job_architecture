@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (CARDS COM TAMANHO FIXO E UNIFORME)
+# CSS COMPLETO
 # ===========================================================
 st.markdown("""
 <style>
@@ -65,7 +65,7 @@ h1 {
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
-  grid-auto-rows: minmax(80px, auto); /* Altura mínima da linha ajustada para os novos cards */
+  grid-auto-rows: minmax(80px, auto);
 }
 
 .jobmap-grid > div {
@@ -156,11 +156,11 @@ h1 {
   flex-direction: row;
   flex-wrap: wrap;
   gap: 8px;
-  align-items: center; /* Centraliza os cards verticalmente na célula se sobrar espaço */
+  align-items: center;
   align-content: center;
 }
 
-/* === CARDS COM TAMANHO 100% PADRONIZADO === */
+/* === CARDS (COM TAMANHO FIXO) === */
 .job-card {
   background: #f9f9f9;
   border-left: 4px solid var(--blue);
@@ -172,16 +172,14 @@ h1 {
   overflow-wrap: break-word;
   white-space: normal;
   
-  /* TAMANHO FIXO PARA TODOS */
   width: 135px;
-  height: 75px;      /* Altura fixa garante uniformidade estética */
-  flex: 0 0 135px;   /* Impede o flexbox de alterar a largura */
+  height: 75px;
+  flex: 0 0 135px;
   
-  /* Centralização interna do conteúdo do card */
   display: flex;
   flex-direction: column;
-  justify-content: center; /* Centraliza verticalmente textos curtos */
-  overflow: hidden;        /* Garante que nada vaze do tamanho fixo */
+  justify-content: center;
+  overflow: hidden;
 }
 .job-card b {
   display: block;
@@ -189,7 +187,6 @@ h1 {
   margin-bottom: 3px;
   line-height: 1.15;
   color: #222;
-  /* Limita o título a 3 linhas para não estourar o card fixo */
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -201,6 +198,10 @@ h1 {
   color: #666;
   line-height: 1.1;
   margin-top: 2px;
+  /* Garante que o GG não quebre de forma feia se for longo */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .gg-header::after, .gg-cell::after {
@@ -290,9 +291,9 @@ for f in active_families:
         col_index += 1
 
 content_map = {}
-cell_html_cache = {}
 cards_count_map = {}
 
+# 1. Primeira passada: Detectar conteúdo e assinaturas para mesclagem
 for g in grades:
     for (f, sf), c_idx in subfamilias_map.items():
         cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
@@ -305,13 +306,8 @@ for g in grades:
         
         jobs_sig = "|".join(sorted((cell_df["Job Profile"] + cell_df["Career Path"]).unique()))
         content_map[(g, c_idx)] = jobs_sig
-        
-        cards_html = "".join([
-            f"<div class='job-card'><b>{row['Job Profile']}</b><span>{row['Career Path']}</span></div>"
-            for _, row in cell_df.iterrows()
-        ])
-        cell_html_cache[(g, c_idx)] = cards_html
 
+# 2. Calcular mesclagens (spans)
 span_map = {}
 skip_set = set()
 for (_, c_idx) in subfamilias_map.items():
@@ -330,6 +326,38 @@ for (_, c_idx) in subfamilias_map.items():
                 break
         span_map[(g, c_idx)] = span
 
+# 3. Gerar HTML dos cards com o GG correto (Individual ou Faixa)
+cell_html_cache = {}
+for i, g in enumerate(grades):
+    for (f, sf), c_idx in subfamilias_map.items():
+        if (g, c_idx) in skip_set or content_map.get((g, c_idx)) is None:
+            continue
+
+        span = span_map.get((g, c_idx), 1)
+        
+        # Determina a label do GG (ex: "15" ou "14-15")
+        if span > 1:
+            # Pega os grades cobertos por este span
+            covered_grades = grades[i : i + span]
+            # Garante ordem numérica para a label (menor-maior)
+            try:
+                min_g = min([int(x) for x in covered_grades if x.isdigit()])
+                max_g = max([int(x) for x in covered_grades if x.isdigit()])
+                gg_label = f"GG {min_g}-{max_g}"
+            except:
+                # Fallback se houver grades não numéricos
+                gg_label = f"GG {covered_grades[-1]}-{covered_grades[0]}"
+        else:
+            gg_label = f"GG {g}"
+
+        # Gera os cards com a nova label de GG
+        cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
+        cards_html = "".join([
+            f"<div class='job-card'><b>{row['Job Profile']}</b><span>{row['Career Path']} - {gg_label}</span></div>"
+            for _, row in cell_df.iterrows()
+        ])
+        cell_html_cache[(g, c_idx)] = cards_html
+
 # ===========================================================
 # CÁLCULO DE LARGURAS
 # ===========================================================
@@ -340,13 +368,11 @@ col_widths = ["100px"]
 
 for (f, sf), c_idx in subfamilias_map.items():
     width_by_title = largura_texto_minima(sf)
-    
     max_cards = 0
     for g in grades:
         if (g, c_idx) not in skip_set:
              max_cards = max(max_cards, cards_count_map.get((g, c_idx), 0))
     
-    # Agora usamos 135px como base (largura do card novo) + 8px gap
     if max_cards <= 1:
         width_by_cards = 135 + 25
     elif max_cards == 2:
