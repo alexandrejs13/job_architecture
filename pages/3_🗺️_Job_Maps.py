@@ -11,29 +11,32 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CABEÇALHO FIXO
+# TÍTULO E FILTROS FIXOS
 # ===========================================================
 st.markdown("""
 <style>
+/* ===== BLOCO PRINCIPAL ===== */
 .block-container {
-  max-width: 1800px !important;
+  max-width: 1700px !important;
+  min-width: 1400px !important;
+  margin: 0 auto !important;
   padding-top: 0 !important;
 }
 
-/* ======= CABEÇALHO ======= */
+/* ===== CABEÇALHO FIXO ===== */
 .top-fixed {
   position: sticky;
   top: 0;
-  z-index: 200;
+  z-index: 100;
   background-color: white;
-  padding: 10px 0 14px 0;
+  padding: 15px 0 10px 0;
   border-bottom: 2px solid #e0e0e0;
 }
 h1 {
   color: #145efc !important;
   font-weight: 800 !important;
   font-size: 1.8rem !important;
-  margin-bottom: 0.6rem !important;
+  margin: 0 !important;
   display: flex; align-items: center; gap: 8px;
 }
 </style>
@@ -50,7 +53,7 @@ with col2:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ===========================================================
-# CSS DO GRID
+# CSS PRINCIPAL DO MAPA
 # ===========================================================
 st.markdown("""
 <style>
@@ -60,67 +63,37 @@ st.markdown("""
   border-top: 3px solid #145efc;
   border-bottom: 3px solid #145efc;
   background: #fff;
-  scroll-behavior: smooth;
+  white-space: nowrap;
 }
 
-/* ======= GRADE PRINCIPAL ======= */
+/* ===== GRID ===== */
 .jobmap-grid {
   display: grid;
-  grid-template-columns: 140px repeat(auto-fill, minmax(180px, 1fr));
   border-collapse: collapse;
   font-size: 0.85rem;
-  width: max-content;
   text-align: center;
-  gap: 0;
+  width: max-content;
+  position: relative;
+}
+.jobmap-grid > div {
+  border: 1px solid #ffffff;
+  box-sizing: border-box;
 }
 
-/* ======= COLUNA GG ======= */
-.grade-header {
-  background: #000;
-  color: #fff;
-  font-weight: 800;
-  font-size: 1rem;
-  height: 88px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-right: 2px solid #fff;
-  position: sticky;
-  left: 0;
-  top: 92px;
-  z-index: 70 !important;
-}
-.grade-cell {
-  background: #000;
-  color: #fff;
-  font-weight: 700;
-  padding: 10px;
-  position: sticky;
-  left: 0;
-  z-index: 50 !important;
-  border-right: 2px solid #fff;
-}
-
-/* ======= FAMÍLIAS ======= */
+/* ===== CABEÇALHOS ===== */
 .header-family {
   font-weight: 800;
   color: #fff;
   padding: 12px 10px;
   font-size: 1rem;
-  border-right: 1px solid #fff;
-  border-bottom: 2px solid #fff;
-  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: sticky;
-  top: 92px;
-  z-index: 60 !important;
+  border-right: 1px solid #fff;
 }
-
-/* ======= SUBFAMÍLIAS ======= */
 .header-subfamily {
   font-weight: 600;
+  background: #f3f4f9;
   padding: 10px;
   font-size: 0.9rem;
   display: flex;
@@ -130,51 +103,79 @@ st.markdown("""
   white-space: normal;
   line-height: 1.25;
   border-right: 1px solid #fff;
-  border-bottom: 2px solid #fff;
-  height: 40px;
-  position: sticky;
-  top: 140px;
-  z-index: 55 !important;
 }
 
-/* ======= CÉLULAS ======= */
-.job-cell {
-  padding: 12px 10px;
-  text-align: left;
-  background: #fff;
-  vertical-align: top;
-  box-sizing: border-box;
+/* ===== COLUNA GG ===== */
+.grade-header {
+  font-weight: 800;
+  font-size: 1rem;
+  background: #000;
+  color: #fff;
+  padding: 10px;
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 60 !important;
+  border-right: 2px solid #fff;
 }
+.grade-cell {
+  font-weight: 700;
+  background: #000;
+  color: #fff;
+  padding: 10px;
+  position: sticky;
+  left: 0;
+  z-index: 50 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== CABEÇALHOS FIXOS ===== */
+.sticky-family {
+  position: sticky;
+  top: 90px;
+  z-index: 55 !important;
+}
+.sticky-subfamily {
+  position: sticky;
+  top: 135px;
+  z-index: 54 !important;
+}
+
+/* ===== CÉLULAS ===== */
 .job-card {
   background: #f9f9f9;
   border-left: 4px solid #145efc;
   border-radius: 8px;
-  padding: 10px 12px;
-  margin: 8px 0;
+  padding: 8px 10px;
+  margin: 5px 4px;
   text-align: left;
   font-size: 0.82rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  white-space: normal;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 .job-card b {
-  font-weight: 700;
   display: block;
-  margin-bottom: 3px;
+  font-weight: 700;
+  margin-bottom: 2px;
 }
 .job-card span {
   display: block;
   font-size: 0.75rem;
   color: #555;
 }
+.job-card:hover {
+  background: #eef4ff;
+}
 
-/* ======= LINHAS ZEBRADAS ======= */
+/* ===== ESTILO GERAL ===== */
 .grade-row:nth-child(even) {
   background: #fcfcfc;
 }
 
-/* ======= SCROLL E ZOOM ======= */
+/* ===== RESPONSIVIDADE ===== */
 @media (max-width: 1500px) { .block-container { zoom: 0.9; } }
 @media (max-width: 1200px) { .block-container { zoom: 0.8; } }
 </style>
@@ -205,16 +206,16 @@ if df.empty:
     st.stop()
 
 # ===========================================================
-# CORES (familia + subfamilia)
+# CORES SUAVES E HARMÔNICAS
 # ===========================================================
 families = sorted(df["Job Family"].unique().tolist())
 palette_dark = [
-    "#5b6a91", "#85677b", "#8b6a3e", "#607d8b", "#5b8060", "#6d7388",
-    "#a76a87", "#8b805a", "#708090", "#776c82"
+    "#596b9d", "#7b658b", "#9d7463", "#607d8b", "#71806f", "#6d8295",
+    "#a77b9a", "#9c8b65", "#708090", "#786d8b"
 ]
 palette_light = [
-    "#edf0f9", "#f2edf3", "#f7f3ea", "#edf2f4", "#f1f4f1", "#f0f3f9",
-    "#f9edf1", "#f7f5ea", "#eff3f4", "#f3f0f7"
+    "#e8ebf7", "#f2ecf6", "#f7f0ea", "#edf2f4", "#f1f4f0", "#edf2f7",
+    "#f9edf7", "#f7f4ea", "#eef2f4", "#f1eff6"
 ]
 
 fam_colors_dark = {f: palette_dark[i % len(palette_dark)] for i, f in enumerate(families)}
@@ -226,30 +227,37 @@ subfam_map = {
     for f in families
 }
 
+col_sizes = [140]
+for f in families:
+    col_sizes += [200 for _ in subfam_map[f]]
+grid_template = f"grid-template-columns: {' '.join(str(x)+'px' for x in col_sizes)};"
+
 # ===========================================================
-# HTML GRID
+# CONSTRUÇÃO VISUAL DO GRID
 # ===========================================================
 html = "<div class='map-wrapper'>"
 
-# ===== LINHA 1 (Famílias)
-html += "<div class='jobmap-grid'>"
+# LINHA 1 — Famílias
+html += f"<div class='jobmap-grid sticky-family' style='{grid_template};'>"
 html += "<div class='grade-header'>GG</div>"
 for f in families:
     span = len(subfam_map[f])
-    html += f"<div class='header-family' style='grid-column: span {span}; background:{fam_colors_dark[f]};'>{f}</div>"
+    color = fam_colors_dark[f]
+    html += f"<div class='header-family' style='grid-column: span {span}; background:{color};'>{f}</div>"
 html += "</div>"
 
-# ===== LINHA 2 (Subfamílias)
-html += "<div class='jobmap-grid'>"
+# LINHA 2 — Subfamílias
+html += f"<div class='jobmap-grid sticky-subfamily' style='{grid_template};'>"
 html += "<div class='grade-cell'></div>"
 for f in families:
     for sf in subfam_map[f]:
-        html += f"<div class='header-subfamily' style='background:{fam_colors_light[f]};'>{sf}</div>"
+        color = fam_colors_light[f]
+        html += f"<div class='header-subfamily' style='background:{color};'>{sf}</div>"
 html += "</div>"
 
-# ===== DEMAIS LINHAS (Cargos)
+# DEMAIS LINHAS — Grades e cargos
 for g in grades:
-    html += "<div class='jobmap-grid grade-row'>"
+    html += f"<div class='jobmap-grid grade-row' style='{grid_template};'>"
     html += f"<div class='grade-cell'>GG {g}</div>"
     for f in families:
         fam_df = df[df["Job Family"] == f]
@@ -260,9 +268,9 @@ for g in grades:
                     f"<div class='job-card'><b>{r['Job Profile']}</b><span>{r['Career Path']}</span></div>"
                     for _, r in cell_df.iterrows()
                 ])
-                html += f"<div class='job-cell'>{cards}</div>"
+                html += f"<div>{cards}</div>"
             else:
-                html += "<div class='job-cell'></div>"
+                html += "<div></div>"
     html += "</div>"
 
 html += "</div>"
