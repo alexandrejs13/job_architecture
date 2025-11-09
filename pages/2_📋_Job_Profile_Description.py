@@ -10,27 +10,73 @@ st.set_page_config(layout="wide")
 section("📘 Job Profile Description")
 
 # ===========================================================
-# CSS — IDÊNTICO AO LAYOUT APROVADO
+# CSS — MANTÉM LAYOUT ORIGINAL + ALTURA IGUAL ENTRE CARDS
 # ===========================================================
 st.markdown("""
 <style>
-.block-container { max-width: 1200px !important; min-width: 900px !important; margin: 0 auto !important; padding: 2.5rem 1.5rem 2rem 1.5rem; zoom: 0.9; }
+.block-container {
+  max-width: 1200px !important;
+  min-width: 900px !important;
+  margin: 0 auto !important;
+  padding: 2.5rem 1.5rem 2rem 1.5rem;
+  zoom: 0.9;
+}
 html, body, [class*="css"] { font-size: calc(13px + 0.18vw) !important; }
-h1 { text-align: left !important; margin-top: 0.8rem !important; margin-bottom: 1.4rem !important; font-size: 1.9rem !important; }
+
+h1 {
+  text-align: left !important;
+  margin-top: 0.8rem !important;
+  margin-bottom: 1.4rem !important;
+  font-size: 1.9rem !important;
+}
+
 .ja-p { margin: 0 0 4px 0; text-align: left; line-height: 1.48; }
 .ja-hd { display:flex; flex-direction:column; align-items:flex-start; gap:4px; margin:0 0 6px 0; text-align:left; }
 .ja-hd-title { font-size:1.15rem; font-weight:700; }
 .ja-hd-grade { color:#1E56E0; font-weight:700; font-size:1rem; }
-.ja-class { background:#fff; border:1px solid #e0e4f0; border-radius:6px; padding:8px 12px; width:100%; text-align:left; min-height:130px; }
-.ja-sec { margin: 0 !important; text-align:left; }
+
+.ja-class {
+  background:#fff;
+  border:1px solid #e0e4f0;
+  border-radius:6px;
+  padding:8px 12px;
+  width:100%;
+  text-align:left;
+  min-height:130px;
+  box-sizing:border-box;
+}
+
+.ja-sec { margin: 0 !important; text-align:left; height:100%; display:flex; flex-direction:column; }
 .ja-sec-h { display:flex; align-items:center; gap:6px; margin:0 0 3px 0 !important; }
 .ja-ic { width:18px; text-align:center; line-height:1; }
 .ja-ttl { font-weight:700; color:#1E56E0; font-size:0.95rem; }
-.ja-card { background:#f9f9f9; padding:10px 14px; border-radius:6px; border-left:3px solid #1E56E0; box-shadow:0 1px 2px rgba(0,0,0,0.05); width:100%; text-align:left; min-height:120px; box-sizing:border-box; }
-.ja-grid { display:grid; gap:14px 14px; justify-items:stretch; align-items:start; margin:6px 0 12px 0 !important; }
+
+.ja-card {
+  background:#f9f9f9;
+  padding:10px 14px;
+  border-radius:6px;
+  border-left:3px solid #1E56E0;
+  box-shadow:0 1px 2px rgba(0,0,0,0.05);
+  width:100%;
+  text-align:left;
+  box-sizing:border-box;
+  flex-grow:1;                 /* Faz o card expandir na linha */
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+}
+
+.ja-grid {
+  display:grid;
+  gap:14px 14px;
+  justify-items:stretch;
+  align-items:stretch;          /* 🔥 Altura uniforme por linha */
+  margin:6px 0 12px 0 !important;
+}
 .ja-grid.cols-1 { grid-template-columns: repeat(1, minmax(250px, 1fr)); }
 .ja-grid.cols-2 { grid-template-columns: repeat(2, minmax(300px, 1fr)); }
 .ja-grid.cols-3 { grid-template-columns: repeat(3, minmax(340px, 1fr)); }
+
 .compare-box { margin-top:-14px; }
 .compare-box .compare-label { margin:4px 0 5px 0; font-weight:600; color:#2b2d42; font-size:0.85rem; }
 div[data-baseweb="tag"] span { white-space: normal !important; word-break: break-word !important; font-weight:600 !important; font-size:0.82rem !important; }
@@ -84,8 +130,10 @@ def cell_card(emoji, title, html_text):
 # ===========================================================
 df = load_job_profile_df()
 required = [
-    "Job Family", "Sub Job Family", "Job Profile", "Job Profile Description",
-    "Role Description", "Grade Differentiator", "Qualifications", "Career Path"
+    "Job Family", "Sub Job Family", "Job Profile",
+    "Job Profile Description", "Career Band Description",
+    "Role Description", "Grade Differentiator",
+    "Qualifications", "Career Path"
 ]
 missing = [c for c in required if c not in df.columns]
 if missing:
@@ -156,10 +204,11 @@ if selected_labels:
         [f"<div>{class_box(r)}</div>" if r is not None else "<div></div>" for r in rows]
     ) + "</div>", unsafe_allow_html=True)
 
-    # Seções principais
+    # Seções principais (incluindo Career Band Description)
     SECTIONS = [
         ("🧭", "Sub Job Family Description", lambda r: safe_get(r, "Sub Job Family Description")),
         ("🧠", "Job Profile Description",   lambda r: safe_get(r, "Job Profile Description")),
+        ("🏢", "Career Band Description",   lambda r: safe_get(r, "Career Band Description")),
         ("🎯", "Role Description",          lambda r: safe_get(r, "Role Description")),
         ("🏅", "Grade Differentiator",      lambda r: safe_get(r, "Grade Differentiator")),
         ("🎓", "Qualifications",            lambda r: safe_get(r, "Qualifications")),
