@@ -1,242 +1,262 @@
-import re
 import streamlit as st
-from utils.data_loader import load_job_profile_df
+import pandas as pd
+import random
+from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar
 
 # ===========================================================
-# CONFIGURAÇÃO
+# CONFIGURAÇÃO DA PÁGINA
 # ===========================================================
-st.set_page_config(layout="wide", page_title="📋 Job Profile Description")
+st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
-section("📘 Job Profile Description")
+section("🗺️ Job Map")
 
 # ===========================================================
-# CSS — layout completo e ajuste de altura dos cards
+# CSS
 # ===========================================================
 st.markdown("""
 <style>
 .block-container {
-  max-width: 1200px !important;
-  min-width: 900px !important;
+  max-width: 1700px !important;
+  min-width: 1500px !important;
   margin: 0 auto !important;
-  padding: 2.5rem 1.5rem 2rem 1.5rem;
-  zoom: 0.9;
 }
-
-/* ===== TÍTULOS ===== */
 h1 {
-  text-align: left !important;
-  margin-top: 0.8rem !important;
-  margin-bottom: 1.4rem !important;
-  font-size: 1.9rem !important;
-  line-height: 1.25 !important;
-  font-weight: 800 !important;
   color: #145efc !important;
+  font-weight: 800 !important;
+  font-size: 1.9rem !important;
+  margin-bottom: 1rem !important;
+  display: flex; align-items: center; gap: 8px;
 }
 
-/* ===== CARDS ===== */
-.ja-grid {
-  display: grid;
-  gap: 14px 14px;
-  justify-items: stretch;
-  align-items: stretch;
-  margin: 6px 0 12px 0 !important;
+/* ======= ÁREA DE SCROLL ======= */
+.map-wrapper {
+  overflow-x: auto;
+  overflow-y: auto;
+  border-top: 3px solid #145efc;
+  border-bottom: 3px solid #145efc;
+  background: #fff;
+  padding-bottom: 1rem;
+  white-space: nowrap;
 }
-.ja-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  background: #f9f9f9;
-  padding: 10px 14px;
-  border-radius: 6px;
-  border-left: 3px solid #1E56E0;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  width: 100%;
-  text-align: left;
-  min-height: 120px;
+
+/* ======= GRID PRINCIPAL ======= */
+.jobmap-grid {
+  display: grid;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  text-align: center;
+  width: max-content;
+  position: relative;
+}
+.jobmap-grid > div {
+  border: 1px solid #e0e0e0;
   box-sizing: border-box;
 }
-.ja-sec { margin: 0 !important; text-align: left; }
-.ja-sec-h {
+
+/* ======= CABEÇALHOS ======= */
+.header-family {
+  font-weight: 800;
+  color: #fff;
+  padding: 10px;
+  font-size: 1rem;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 6px;
-  margin: 0 0 3px 0 !important;
+  justify-content: center;
+  text-align: center;
 }
-.ja-ic { width: 18px; text-align: center; line-height: 1; }
-.ja-ttl {
-  font-weight: 700;
-  color: #1E56E0;
-  font-size: 0.95rem;
-}
-
-/* ===== HEADER CARGO ===== */
-.ja-hd {
+.header-subfamily {
+  font-weight: 600;
+  background: #f0f2ff;
+  padding: 8px 10px;
+  font-size: 0.9rem;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 4px;
-  margin: 0 0 6px 0;
-  text-align: left;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  word-wrap: break-word;
+  white-space: normal;
+  line-height: 1.2;
 }
-.ja-hd-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-}
-.ja-hd-grade {
-  color: #1E56E0;
-  font-weight: 700;
+
+/* ======= COLUNA GG FIXA ======= */
+.grade-header {
+  font-weight: 800;
   font-size: 1rem;
+  background: #000;
+  color: #fff;
+  padding: 12px 10px;
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 50 !important;
+}
+.grade-cell {
+  font-weight: 700;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  position: sticky;
+  left: 0;
+  z-index: 40 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* ===== BLOCO CLASSIFICAÇÃO ===== */
-.ja-class {
-  background: #fff;
-  border: 1px solid #e0e4f0;
+/* ======= CÉLULAS DE CARGO ======= */
+.job-card {
+  background: #fafafa;
+  border-left: 4px solid #145efc;
   border-radius: 6px;
-  padding: 8px 12px;
-  width: 100%;
+  padding: 6px 10px;
+  margin: 4px 4px;
   text-align: left;
-  box-sizing: border-box;
-  min-height: 130px;
+  font-size: 0.82rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  white-space: normal;
+}
+.job-card span {
+  display: block;
+  font-size: 0.75rem;
+  color: #555;
+}
+.job-card:hover {
+  background: #eef3ff;
 }
 
-/* ===== GRID ===== */
-.ja-grid.cols-1 { grid-template-columns: repeat(1, minmax(250px, 1fr)); }
-.ja-grid.cols-2 { grid-template-columns: repeat(2, minmax(300px, 1fr)); }
-.ja-grid.cols-3 { grid-template-columns: repeat(3, minmax(340px, 1fr)); }
-
-.ja-p {
-  margin: 0 0 4px 0;
-  text-align: left;
-  line-height: 1.48;
+/* ======= ZEBRA ======= */
+.grade-row:nth-child(even) {
+  background: #fcfcfc;
 }
+
+/* ======= CABEÇALHOS FIXOS ======= */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 45 !important;
+}
+.sticky-subheader {
+  position: sticky;
+  top: 42px;
+  z-index: 44 !important;
+}
+
+/* ======= RESPONSIVIDADE ======= */
+@media (max-width: 1500px) { .block-container { zoom: 0.9; } }
+@media (max-width: 1200px) { .block-container { zoom: 0.8; } }
 </style>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# FUNÇÕES AUXILIARES
-# ===========================================================
-def safe_get(row, key, default=""):
-    val = row.get(key, "")
-    return str(val).strip() if val and str(val).lower() != "nan" else default
-
-def format_paragraphs(text):
-    if not text:
-        return "-"
-    parts = re.split(r"\n+|•|\r", text.strip())
-    return "".join(f"<p class='ja-p'>{p.strip()}</p>" for p in parts if len(p.strip()) > 2)
-
-def header_badge(title, grade):
-    return f"""
-    <div class="ja-hd">
-      <div class="ja-hd-title">{title}</div>
-      <div class="ja-hd-grade">GG {grade}</div>
-    </div>
-    """
-
-def class_box(row):
-    return f"""
-    <div class="ja-class">
-      <b>Família:</b> {row['Job Family']}<br>
-      <b>Subfamília:</b> {row['Sub Job Family']}<br>
-      <b>Carreira:</b> {row['Career Path']}<br>
-      <b>Função:</b> {row['Function Code']}<br>
-      <b>Disciplina:</b> {row['Discipline Code']}<br>
-      <b>Código:</b> {row['Full Job Code']}
-    </div>
-    """
-
-def cell_card(emoji, title, html_text):
-    return f"""
-    <div class="ja-sec">
-      <div class="ja-sec-h">
-        <span class="ja-ic">{emoji}</span>
-        <span class="ja-ttl">{title}</span>
-      </div>
-      <div class="ja-card">{html_text}</div>
-    </div>
-    """
-
-# ===========================================================
 # DADOS
 # ===========================================================
-df = load_job_profile_df()
+data = load_excel_data()
+df = data.get("job_profile", pd.DataFrame())
 
-col1, col2, col3 = st.columns([1.2, 2.2, 1])
+required_cols = ["Job Family", "Sub Job Family", "Job Profile", "Career Path", "Global Grade", "Full Job Code"]
+missing = [c for c in required_cols if c not in df.columns]
+if missing:
+    st.error(f"Colunas ausentes no Excel: {', '.join(missing)}")
+    st.stop()
+
+df = df.dropna(subset=["Job Family", "Sub Job Family", "Job Profile", "Global Grade"])
+df["Global Grade"] = df["Global Grade"].astype(str).str.replace(r"\\.0$", "", regex=True)
+
+# ===========================================================
+# FILTROS
+# ===========================================================
+col1, col2 = st.columns([2, 2])
 with col1:
-    families = sorted(df["Job Family"].dropna().unique())
-    fam = st.selectbox("Família", families)
-filtered = df[df["Job Family"] == fam]
-
+    fam_opts = ["Todas"] + sorted(df["Job Family"].dropna().unique().tolist())
+    selected_family = st.selectbox("Família", fam_opts)
 with col2:
-    subs = sorted(filtered["Sub Job Family"].dropna().unique())
-    sub = st.selectbox("Subfamília", subs)
-sub_df = filtered[filtered["Sub Job Family"] == sub]
+    path_opts = ["Todas"] + sorted(df["Career Path"].dropna().unique().tolist())
+    selected_path = st.selectbox("Trilha de Carreira", path_opts)
 
-with col3:
-    careers = sorted(sub_df["Career Path"].dropna().unique())
-    career = st.selectbox("Trilha de Carreira", careers)
-career_df = sub_df[sub_df["Career Path"] == career]
+filtered = df.copy()
+if selected_family != "Todas":
+    filtered = filtered[filtered["Job Family"] == selected_family]
+if selected_path != "Todas":
+    filtered = filtered[filtered["Career Path"] == selected_path]
 
-# ===========================================================
-# SELEÇÃO DE CARGOS
-# ===========================================================
-def option_label(row):
-    g = row.get("Global Grade", "")
-    p = row.get("Job Profile", "")
-    return f"GG{int(g)} — {p}" if str(g).isdigit() else p
-
-career_df_sorted = career_df.sort_values(by="Global Grade", ascending=False)
-pick_options = career_df_sorted.apply(option_label, axis=1).tolist()
-selected_labels = st.multiselect("Selecione até 3 cargos:", options=pick_options, max_selections=3)
+if filtered.empty:
+    st.warning("Nenhum cargo encontrado com os filtros selecionados.")
+    st.stop()
 
 # ===========================================================
-# RENDERIZAÇÃO
+# CORES — FAMÍLIAS E SUBFAMÍLIAS
 # ===========================================================
-if selected_labels:
-    rows = []
-    for label in selected_labels:
-        parts = re.split(r"\s*[–—-]\s*", label)
-        label_grade = parts[0].replace("GG", "").strip() if parts else ""
-        label_title = parts[1].strip() if len(parts) > 1 else label.strip()
-        sel = career_df_sorted[
-            career_df_sorted["Job Profile"].str.strip().str.lower() == label_title.lower()
-        ]
-        if label_grade:
-            sel = sel[sel["Global Grade"].astype(str).str.strip() == label_grade]
-        rows.append(sel.iloc[0] if not sel.empty else None)
+families = sorted(filtered["Job Family"].unique().tolist())
+# Paleta harmônica ampla, sem repetições próximas
+palette_dark = [
+    "#145efc", "#00796B", "#8E24AA", "#F57C00", "#388E3C", "#6D4C41",
+    "#0288D1", "#7B1FA2", "#C62828", "#2E7D32", "#5D4037", "#283593",
+    "#00897B", "#AD1457", "#512DA8", "#EF6C00", "#1976D2"
+]
+palette_light = [
+    "#dbe7ff", "#b2dfdb", "#e1bee7", "#ffe0b2", "#c8e6c9", "#d7ccc8",
+    "#b3e5fc", "#ce93d8", "#ffcdd2", "#a5d6a7", "#bcaaa4", "#c5cae9",
+    "#80cbc4", "#f48fb1", "#d1c4e9", "#ffcc80", "#90caf9"
+]
 
-    n = len(rows)
-    grid_class = f"ja-grid cols-{n}"
+fam_colors_dark = {f: palette_dark[i % len(palette_dark)] for i, f in enumerate(families)}
+fam_colors_light = {f: palette_light[i % len(palette_light)] for i, f in enumerate(families)}
 
-    # Cabeçalhos
-    html_cells = [f"<div>{header_badge(r['Job Profile'], r['Global Grade'])}</div>" if r is not None else "<div></div>" for r in rows]
-    st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
+# ===========================================================
+# GRADE — FAMÍLIA, SUBFAMÍLIA, GRADES
+# ===========================================================
+grades = sorted(filtered["Global Grade"].unique(), key=lambda x: int(x) if x.isdigit() else x, reverse=True)
+subfam_map = {
+    f: sorted(filtered[filtered["Job Family"] == f]["Sub Job Family"].unique().tolist())
+    for f in families
+}
 
-    # Classificação
-    html_cells = [f"<div>{class_box(r)}</div>" if r is not None else "<div></div>" for r in rows]
-    st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
+col_sizes = [120]
+for f in families:
+    col_sizes += [180 for _ in subfam_map[f]]
+grid_template = f"grid-template-columns: {' '.join(str(x)+'px' for x in col_sizes)};"
 
-    # Seções
-    SECTIONS = [
-        ("🧭", "Sub Job Family Description", lambda r: safe_get(r, "Sub Job Family Description")),
-        ("🧠", "Job Profile Description",   lambda r: safe_get(r, "Job Profile Description")),
-        ("🏛️", "Career Band Description",   lambda r: safe_get(r, "Career Band Description")),
-        ("🎯", "Role Description",          lambda r: safe_get(r, "Role Description")),
-        ("🏅", "Grade Differentiator",      lambda r: safe_get(r, "Grade Differentiator")),
-        ("🎓", "Qualifications",            lambda r: safe_get(r, "Qualifications")),
-    ]
+# ===========================================================
+# CONSTRUÇÃO HTML
+# ===========================================================
+html = "<div class='map-wrapper'>"
 
-    for emoji, title, getter in SECTIONS:
-        html_cells = []
-        for r in rows:
-            if r is None:
-                html_cells.append("<div></div>")
+# LINHA 1 — Famílias (GG mesclado)
+html += f"<div class='jobmap-grid sticky-header' style='{grid_template}; z-index:5;'>"
+html += "<div class='grade-header'>GG</div>"
+for f in families:
+    span = len(subfam_map[f])
+    color = fam_colors_dark[f]
+    html += f"<div class='header-family' style='grid-column: span {span}; background:{color};'>{f}</div>"
+html += "</div>"
+
+# LINHA 2 — Subfamílias (sem linha intermediária)
+html += f"<div class='jobmap-grid sticky-subheader' style='{grid_template}; z-index:4;'>"
+html += "<div class='grade-cell'></div>"
+for f in families:
+    for sf in subfam_map[f]:
+        color = fam_colors_light[f]
+        html += f"<div class='header-subfamily' style='background:{color};'>{sf}</div>"
+html += "</div>"
+
+# LINHAS DE GG
+for g in grades:
+    html += f"<div class='jobmap-grid grade-row' style='{grid_template}; z-index:1;'>"
+    html += f"<div class='grade-cell'>GG {g}</div>"
+    for f in families:
+        fam_df = filtered[filtered["Job Family"] == f]
+        for sf in subfam_map[f]:
+            cell_df = fam_df[(fam_df["Sub Job Family"] == sf) & (fam_df["Global Grade"] == g)]
+            if not cell_df.empty:
+                cards = "".join([
+                    f"<div class='job-card'><b>{r['Job Profile']}</b><span>{r['Career Path']}</span></div>"
+                    for _, r in cell_df.iterrows()
+                ])
+                html += f"<div>{cards}</div>"
             else:
-                raw = getter(r)
-                html_cells.append("<div>" + cell_card(emoji, title, format_paragraphs(raw)) + "</div>")
-        st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
+                html += "<div></div>"
+    html += "</div>"
+
+html += "</div>"
+st.markdown(html, unsafe_allow_html=True)
