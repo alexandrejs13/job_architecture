@@ -2,18 +2,17 @@ import streamlit as st
 import pandas as pd
 from utils.data_loader import load_job_profile_df
 
+st.set_page_config(layout="wide", page_title="🗺️ Job Map")
+
 # ===========================================================
 # CONFIG
 # ===========================================================
-st.set_page_config(layout="wide", page_title="🗺️ Job Map")
-
-# Alturas fixas dos cabeçalhos (família e subfamília)
-FAM_H = 46   # px
-SUB_H = 64   # px
-GG_COL_W = 140  # px (coluna GG)
+FAM_H = 46
+SUB_H = 64
+GG_COL_W = 140
 
 # ===========================================================
-# CSS – cabeçalhos fixos, coluna GG fixa e cores suaves
+# CSS – Cores vibrantes, sem linha branca entre blocos
 # ===========================================================
 st.markdown(f"""
 <style>
@@ -37,7 +36,7 @@ h1 {{
 
 .map-wrapper {{
   max-height: 76vh;
-  overflow: auto;          /* único container com scroll */
+  overflow: auto;
   border: 1px solid #e7ebf3;
   border-radius: 10px;
   background: #fff;
@@ -55,17 +54,17 @@ h1 {{
 .jobmap-grid > div {{
   border: 1px solid #e7ebf3;
   box-sizing: border-box;
-  padding: 10px 12px;                /* respiro nas células */
+  padding: 10px 12px;
   line-height: 1.3;
-  overflow-wrap: break-word;         /* quebra sem cortar */
+  overflow-wrap: break-word;
   word-break: break-word;
 }}
 
-/* ===== Coluna GG (preta, texto branco) ===== */
+/* ===== Coluna GG ===== */
 .gg-merged {{
   position: sticky;
   left: 0;
-  top: 0;                            /* ocupa as DUAS linhas */
+  top: 0;
   height: calc(var(--famH) + var(--subH));
   width: var(--ggw);
   background: #000;
@@ -87,18 +86,8 @@ h1 {{
   width: var(--ggw);
   border-right: 2px solid #000;
 }}
-/* um traço suave à direita da coluna fixa */
-.grade-cell::after {{
-  content: "";
-  position: absolute;
-  right: -1px;
-  top: 0;
-  height: 100%;
-  width: 1px;
-  background: rgba(0,0,0,0.08);
-}}
 
-/* ===== Linha 1: FAMÍLIA (fixa) ===== */
+/* ===== Família ===== */
 .header-family {{
   position: sticky;
   top: 0;
@@ -106,15 +95,14 @@ h1 {{
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;               /* texto branco em tom escuro */
+  color: #fff;
   font-weight: 700;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
   z-index: 80;
   padding: 0 10px;
+  border-bottom: none; /* remove a linha branca */
 }}
 
-/* ===== Linha 2: SUBFAMÍLIA (fixa) ===== */
+/* ===== Subfamília ===== */
 .header-subfamily {{
   position: sticky;
   top: var(--famH);
@@ -126,6 +114,7 @@ h1 {{
   font-size: 0.9rem;
   z-index: 70;
   padding: 6px 10px;
+  border-top: none; /* remove linha entre família/subfamília */
 }}
 
 /* ===== Células de cargos ===== */
@@ -134,7 +123,7 @@ h1 {{
   border-left: 4px solid #A4B8F5;
   border-radius: 8px;
   padding: 10px 12px;
-  margin: 8px 6px;           /* respiro entre cards */
+  margin: 8px 6px;
   text-align: left;
   font-size: 0.85rem;
   box-shadow: 0 1px 2px rgba(0,0,0,0.06);
@@ -145,22 +134,21 @@ h1 {{
 .job-card b {{
   font-weight: 700;
   display: block;
-  margin-bottom: 4px;         /* título do cargo em negrito */
+  margin-bottom: 4px;
 }}
 .job-card span {{
   font-size: 0.8rem;
-  color: #555;                /* Management/Professional sem negrito */
+  color: #555;
   font-weight: 500;
 }}
 .job-card:hover {{ background: #f5f7ff; }}
 
-/* zebra sutil nas linhas */
 .grade-row:nth-child(even) {{ background: #fcfcfc; }}
 </style>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# DADOS
+# LEITURA DE DADOS
 # ===========================================================
 try:
     df = load_job_profile_df()
@@ -168,14 +156,13 @@ except Exception as e:
     st.error(f"Erro ao carregar Job Profile.xlsx: {e}")
     st.stop()
 
-# Colunas necessárias
-req = ["Job Family", "Sub Job Family", "Job Profile", "Career Path", "Global Grade", "Full Job Code"]
+req = ["Job Family", "Sub Job Family", "Job Profile", "Career Path", "Global Grade"]
 missing = [c for c in req if c not in df.columns]
 if missing:
-    st.error(f"Colunas ausentes no Excel: {', '.join(missing)}")
+    st.error(f"Colunas ausentes: {', '.join(missing)}")
     st.stop()
 
-df = df.dropna(subset=["Job Family", "Sub Job Family", "Job Profile", "Global Grade"]).copy()
+df = df.dropna(subset=["Job Family", "Sub Job Family", "Job Profile", "Global Grade"])
 df["Global Grade"] = df["Global Grade"].astype(str).str.replace(r"\.0$", "", regex=True)
 
 # ===========================================================
@@ -201,39 +188,41 @@ if filtered.empty:
     st.stop()
 
 # ===========================================================
-# CORES — únicas por família (HSL), sub = tom mais claro
+# CORES — vibrantes e não repetitivas
 # ===========================================================
 families = sorted(filtered["Job Family"].unique().tolist())
 
-def hsl(i, n, sat=52, light=32):
-    # distribui tons no círculo HSL sem repetir
-    hue = int((360 / max(n,1)) * i) % 360
-    return f"hsl({hue}, {sat}%, {light}%)"
+# Paleta de cores vibrantes (sem tons próximos)
+palette = [
+    ("#2E86C1", "#AED6F1"),  # azul
+    ("#148F77", "#A9DFBF"),  # verde
+    ("#BA4A00", "#EDBB99"),  # laranja
+    ("#884EA0", "#D7BDE2"),  # roxo
+    ("#2874A6", "#AED6F1"),  # azul médio
+    ("#7D6608", "#F9E79F"),  # amarelo oliva
+    ("#633974", "#E8DAEF"),  # lilás
+    ("#1B2631", "#D6DBDF"),  # grafite
+    ("#117864", "#ABEBC6"),  # verde petróleo
+    ("#6E2C00", "#FAD7A0")   # marrom dourado
+]
 
 fam_color = {}
 sub_color = {}
 for i, fam in enumerate(families):
-    dark = hsl(i, len(families), sat=55, light=30)   # família: mais escuro
-    light = hsl(i, len(families), sat=55, light=85)  # subfamília: mais claro
+    dark, light = palette[i % len(palette)]
     fam_color[fam] = dark
     sub_color[fam] = light
 
-grades = sorted(
-    filtered["Global Grade"].unique(),
-    key=lambda x: int(x) if str(x).isdigit() else x,
-    reverse=True
-)
-
+grades = sorted(filtered["Global Grade"].unique(), key=lambda x: int(x) if str(x).isdigit() else x, reverse=True)
 subfam_map = {
     f: sorted(filtered[filtered["Job Family"] == f]["Sub Job Family"].dropna().unique().tolist())
     for f in families
 }
 
-# Monta largura de colunas: GG + uma por subfamília ajustada ao texto
 col_sizes = [GG_COL_W]
 for f in families:
     for sf in subfam_map[f]:
-        width = max(180, min(360, 14 * max(len(sf), 12)))  # ajusta ao título com folga
+        width = max(180, min(360, 14 * max(len(sf), 12)))
         col_sizes.append(width)
 grid_template = "grid-template-columns: " + " ".join(f"{w}px" for w in col_sizes) + ";"
 
@@ -242,9 +231,8 @@ grid_template = "grid-template-columns: " + " ".join(f"{w}px" for w in col_sizes
 # ===========================================================
 html = "<div class='map-wrapper'>"
 
-# LINHA 1 — Famílias + GG mesclado (A1+A2)
+# LINHA 1 — Família + GG mesclado
 html += f"<div class='jobmap-grid' style='{grid_template}; z-index: 90;'>"
-# GG mesclado vertical (A1+A2)
 html += "<div class='gg-merged'>GG</div>"
 for f in families:
     span = len(subfam_map[f])
@@ -252,17 +240,16 @@ for f in families:
     html += f"<div class='header-family' style='background:{bg}; grid-column: span {span};'>{f}</div>"
 html += "</div>"
 
-# LINHA 2 — Subfamílias (com placeholder invisível na 1ª coluna para alinhar)
+# LINHA 2 — Subfamília
 html += f"<div class='jobmap-grid' style='{grid_template}; z-index: 80;'>"
-# Placeholder alinhador da coluna GG (não exibe, só ocupa o slot)
-html += "<div style='position:sticky; left:0; top:var(--famH); height:var(--subH); width:var(--ggw); background:#000; color:#000; z-index: 0; border: none;'></div>"
+html += "<div style='position:sticky; left:0; top:var(--famH); height:var(--subH); width:var(--ggw); background:#000;'></div>"
 for f in families:
     for sf in subfam_map[f]:
         bg = sub_color[f]
         html += f"<div class='header-subfamily' style='background:{bg};'>{sf}</div>"
 html += "</div>"
 
-# DEMAIS LINHAS — grades + cards
+# LINHAS DE CARGOS
 for g in grades:
     html += f"<div class='jobmap-grid grade-row' style='{grid_template};'>"
     html += f"<div class='grade-cell'>GG {g}</div>"
