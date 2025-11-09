@@ -72,6 +72,13 @@ st.markdown("""
   font-size: 0.95rem;
   width: max-content;
   position: relative;
+  border-collapse: collapse;
+}
+
+/* ===== GRID LINES (toda planilha com grade leve) ===== */
+.jobmap-grid > div {
+  border: 1px solid rgba(0,0,0,0.07);
+  box-sizing: border-box;
 }
 
 /* ===== CABEÇALHOS ===== */
@@ -125,6 +132,14 @@ st.markdown("""
   z-index: 120;
   border-right: 1px solid rgba(255,255,255,0.6);
 }
+.grade-cell.blank {
+  background: #000;
+  color: #fff;
+  position: sticky;
+  left: 0;
+  top: 52px;
+  z-index: 130;
+}
 
 /* ===== CÉLULAS ===== */
 .job-cell {
@@ -175,7 +190,7 @@ st.markdown("""
   transition: all 0.15s ease-in-out;
 }
 
-/* ===== EFEITO ZEBRA ===== */
+/* ===== ZEBRA ===== */
 .grade-row:nth-of-type(even) .job-cell { background: #fcfcfd; }
 
 /* ===== RESPONSIVIDADE ===== */
@@ -224,7 +239,7 @@ fam_colors_dark = {f: palette_dark[i % len(palette_dark)] for i, f in enumerate(
 fam_colors_light = {f: palette_light[i % len(palette_light)] for i, f in enumerate(families)}
 
 # ===========================================================
-# MAPEAMENTO E LARGURAS
+# GRID TEMPLATE
 # ===========================================================
 subfam_map = {f: sorted(df[df["Job Family"] == f]["Sub Job Family"].unique().tolist()) for f in families}
 grades = sorted(df["Global Grade"].unique(), key=lambda x: int(x) if str(x).isdigit() else x, reverse=True)
@@ -246,11 +261,11 @@ for f in families:
 grid_template = "grid-template-columns: " + " ".join(f"{w}px" for w in col_widths) + ";"
 
 # ===========================================================
-# GRID VISUAL
+# GRID HTML
 # ===========================================================
 html = "<div class='map-wrapper'>"
 
-# Famílias
+# Linha 1 — Famílias
 html += f"<div class='jobmap-grid' style='{grid_template}'>"
 html += "<div class='grade-header'>GG</div>"
 for f in families:
@@ -259,16 +274,16 @@ for f in families:
     html += f"<div class='header-family' style='grid-column: span {span}; background:{color};'>{f}</div>"
 html += "</div>"
 
-# Subfamílias
+# Linha 2 — Subfamílias
 html += f"<div class='jobmap-grid' style='{grid_template}'>"
-html += "<div></div>"
+html += "<div class='grade-cell blank'>GG</div>"
 for f in families:
     for sf in subfam_map[f]:
         color = fam_colors_light[f]
         html += f"<div class='header-subfamily' style='background:{color};'>{sf}</div>"
 html += "</div>"
 
-# Linhas GG
+# Linhas de cargos
 for g in grades:
     html += f"<div class='jobmap-grid grade-row' style='{grid_template}'>"
     html += f"<div class='grade-cell'>GG {g}</div>"
