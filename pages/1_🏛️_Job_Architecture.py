@@ -12,8 +12,8 @@ df = data["job_family"]
 
 st.markdown("## 🏛️ Job Architecture Overview")
 st.markdown("""
-Explore a estrutura corporativa de cargos, famílias e subfamílias.
-Use este painel para visualizar a hierarquia global e entender como os papéis se relacionam.
+Visualize a estrutura organizacional completa de Famílias, Subfamílias e Trilhas de Carreira.
+Use este painel para compreender como os cargos se distribuem dentro da hierarquia global.
 """)
 
 st.dataframe(df, use_container_width=True)
