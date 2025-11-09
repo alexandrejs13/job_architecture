@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (LINHAS PADRONIZADAS)
+# CSS COMPLETO
 # ===========================================================
 st.markdown("""
 <style>
@@ -21,7 +21,7 @@ st.markdown("""
   --blue: #145efc;
   --gray-line: #dadada;
   --gray-bg: #f8f9fa;
-  --dark-gray: #73706d;
+  --dark-gray: #333333; /* Restaurado para um cinza mais escuro padrão */
 }
 
 .block-container {
@@ -65,8 +65,8 @@ h1 {
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
-  /* AJUSTE AQUI: Altura mínima de 140px para padronizar as linhas */
-  grid-auto-rows: minmax(140px, auto);
+  /* AJUSTE: Altura mínima de 90px (ligeiramente maior que o card de 75px) */
+  grid-auto-rows: minmax(90px, auto);
   row-gap: 0px !important;
   column-gap: 0px !important;
   background-color: var(--gray-line);
@@ -84,8 +84,8 @@ h1 {
   color: #fff;
   padding: 10px 5px;
   text-align: center;
-  background: var(--dark-gray) !important;
-  border-right: 1px solid white !important;
+  /* background será definido dinamicamente */
+  border-right: 1px solid rgba(255,255,255,0.5) !important;
   border-bottom: 0px none !important;
   margin-bottom: 0px !important;
   padding-bottom: 10px !important;
@@ -103,7 +103,7 @@ h1 {
 
 .header-subfamily {
   font-weight: 600;
-  background: var(--gray-bg) !important;
+  color: #333; /* Cor do texto da subfamília para contraste com fundo claro */
   padding: 8px 5px;
   text-align: center;
   position: sticky;
@@ -121,6 +121,7 @@ h1 {
   font-size: 0.85rem;
 }
 
+/* Restaurado estilo original do GG Header (preto) */
 .gg-header {
   background: #000 !important;
   color: white;
@@ -165,8 +166,8 @@ h1 {
   flex-direction: row;
   flex-wrap: wrap;
   gap: 8px;
-  align-items: center;     /* Centraliza verticalmente */
-  align-content: center;   /* Centraliza o bloco de cards verticalmente */
+  align-items: center;
+  align-content: center;
 }
 
 .job-card {
@@ -390,10 +391,25 @@ for (f, sf), c_idx in subfamilias_map.items():
 
 grid_template = f"grid-template-columns: {' '.join(col_widths)};"
 
-cores_fam = ["#726C5B", "#5F6A73", "#6F5C60", "#5D6E70", "#6B715B", "#5B5F77", "#725E7A", "#666C5B", "#736A65", "#6C5F70", "#655C6F", "#6A6C64", "#6C6868", "#5F7073", "#70685E"]
-cores_sub = ["#EDEBE8", "#ECEEF0", "#F2ECEF", "#EEF2F2", "#F0F2ED", "#EDEDF3", "#F1EEF4", "#F1F2EE", "#F2EFED", "#EFEFF2", "#EFEDED", "#EFEFEF", "#F2F2F0", "#EFEFEF", "#EEEFEF"]
-map_cor_fam = {f: cores_fam[i % len(cores_fam)] for i, f in enumerate(families_order)}
-map_cor_sub = {f: cores_sub[i % len(cores_sub)] for i, f in enumerate(families_order)}
+# ===========================================================
+# NOVA PALETA DE CORES (SUAVE, MAS DISTINTA)
+# ===========================================================
+# Pares de cores (Família mais forte suave, Subfamília tom claro correspondente)
+palette_pairs = [
+    ("#4F6D7A", "#E6EFF2"), # Azul acinzentado
+    ("#5C7A67", "#E8F2EB"), # Verde sálvia
+    ("#7A5C5C", "#F2E6E6"), # Terracota suave
+    ("#6B5C7A", "#EBE6F2"), # Roxo suave
+    ("#7A725C", "#F2EFE6"), # Oliva/Bege escuro
+    ("#5C6B7A", "#E6EBF2"), # Azul ardósia
+    ("#7A5C74", "#F2E6EF"), # Mauve
+    ("#5C7A78", "#E6F2F1"), # Verde azulado
+    ("#736A62", "#F0EDEB"), # Marrom acinzentado
+    ("#626A73", "#EBEDF0"), # Cinza chumbo suave
+]
+
+map_cor_fam = {f: palette_pairs[i % len(palette_pairs)][0] for i, f in enumerate(families_order)}
+map_cor_sub = {f: palette_pairs[i % len(palette_pairs)][1] for i, f in enumerate(families_order)}
 
 # ===========================================================
 # RENDERIZAÇÃO FINAL
