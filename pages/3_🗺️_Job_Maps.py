@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (COM CORREÇÃO DEFINITIVA DA LINHA)
+# CSS COMPLETO (CORREÇÃO AGRESSIVA DA LINHA)
 # ===========================================================
 st.markdown("""
 <style>
@@ -68,8 +68,7 @@ h1 {
   grid-auto-rows: minmax(90px, auto);
   row-gap: 0px !important;
   column-gap: 0px !important;
-  /* ALTERAÇÃO CRÍTICA: Fundo branco para evitar que gaps pareçam linhas cinzas */
-  background-color: white !important; 
+  background-color: white !important;
 }
 
 .jobmap-grid > div {
@@ -84,17 +83,15 @@ h1 {
   color: #fff;
   padding: 10px 5px;
   text-align: center;
-  /* Borda direita semitransparente para separar famílias */
   border-right: 1px solid rgba(255,255,255,0.3) !important;
   /* SEM BORDA INFERIOR */
-  border-bottom: 0px none !important;
+  border-bottom: none !important;
   outline: none !important;
-  /* Margem negativa para garantir sobreposição e eliminar frestas */
-  margin-bottom: -1px !important; 
-  padding-bottom: 11px !important; /* Compensa a margem negativa */
+  /* Margens zeradas */
+  margin-bottom: 0px !important; 
   position: sticky;
   top: 0;
-  z-index: 57; /* Z-index maior para ficar por cima */
+  z-index: 57; /* Fica por cima da subfamília se sobrepor */
   white-space: normal;
   height: 50px;
   display: flex;
@@ -110,11 +107,12 @@ h1 {
   padding: 8px 5px;
   text-align: center;
   position: sticky;
-  top: 50px; /* Deve coincidir com a altura da Family */
+  top: 50px;
   z-index: 56;
   white-space: normal;
-  /* SEM BORDA SUPERIOR */
-  border-top: 0px none !important;
+  /* SOLUÇÃO: Puxa 1px para cima para garantir que grude no cabeçalho de cima */
+  margin-top: -1px !important;
+  border-top: none !important;
   outline: none !important;
   border-bottom: 2px solid var(--gray-line) !important;
   min-height: 40px;
@@ -401,7 +399,8 @@ for (f, sf), c_idx in subfamilias_map.items():
         cap = min(max(1, max_cards), 6)
         width_cards = (cap * 135) + ((cap - 1) * 8) + 25
         
-    col_widths.append(f"{max(width_title, width_cards)}px")
+    final_width = max(width_title, width_cards)
+    col_widths.append(f"{final_width}px")
 
 grid_template = f"grid-template-columns: {' '.join(col_widths)};"
 
