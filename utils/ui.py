@@ -6,7 +6,7 @@ import os
 # 1. CONFIGURAÇÕES
 # ==============================================================================
 FONT_REGULAR = "assets/fonts/PPSIGFlow-Regular.ttf"
-FONT_SEMIBOLD = "assets.fonts/PPSIGFlow-SemiBold.ttf"
+FONT_SEMIBOLD = "assets/fonts/PPSIGFlow-SemiBold.ttf"
 LOGO_URL = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
 
 # --- CORES DA PALETA SIG ---
@@ -44,33 +44,19 @@ def setup_sidebar():
             /* --- FONTES --- */
             {font_css}
 
-            /* --- TIPOGRAFIA GLOBAL (Igual ao site SIG) --- */
+            /* --- TIPOGRAFIA GLOBAL --- */
             h1, h2, h3, h4, h5, h6 {{
-                color: #000000 !important; /* Títulos PRETOS */
-                font-weight: 700 !important; /* Sempre negrito (usa SemiBold) */
+                color: {TEXT_BLACK} !important;
+                font-weight: 700 !important;
             }}
             h1 {{ font-size: 2.4rem !important; }}
             h2 {{ font-size: 1.8rem !important; }}
             h3 {{ font-size: 1.4rem !important; }}
-            p, li, span, div {{ color: #333333; }}
-
-            /* --- CARDS ESTILO SIG (Classe personalizada) --- */
-            .sig-card {{
-                background-color: #f2efeb; /* Cor Sand do site */
-                padding: 30px;
-                border-radius: 30px;
-                margin-bottom: 25px;
-            }}
-            .sig-card h3, .sig-card h4 {{
-                margin-top: 0 !important;
-            }}
+            p, li, span, div {{ color: {TEXT_GRAY}; }}
 
             /* --- LIMPEZA --- */
-            header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ visibility: hidden; }}
+            header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ visibility: hidden !important; }}
             [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{ display: none !important; }}
-            /* Remove Emojis */
-            [data-testid="stSidebarNav"] a span:first-child {{ display: none !important; }}
-            [data-testid="stSidebarNav"] a span:last-child {{ display: inline-block !important; }}
 
             /* --- SIDEBAR --- */
             [data-testid="stSidebar"] {{
@@ -78,7 +64,7 @@ def setup_sidebar():
                 background-color: white !important;
                 border-right: 1px solid #f0f0f0;
             }}
-            div[data-testid="stSidebar"] > div:last-child {{ display: none; }}
+            div[data-testid="stSidebar"] > div:last-child {{ display: none !important; }}
 
             /* --- CABEÇALHO SIDEBAR --- */
             [data-testid="stSidebarNav"]::before {{
@@ -87,38 +73,45 @@ def setup_sidebar():
                 height: 180px;
                 background-image: url('{LOGO_URL}'); background-repeat: no-repeat;
                 background-position: center 10px; background-size: 100px auto;
-                color: {TEXT_BLACK} !important; /* COR PRETA NO TÍTULO */
+                color: {TEXT_BLACK} !important; /* Título Preto */
                 font-size: 1.5rem; font-weight: 900;
                 padding-bottom: 40px; margin-bottom: 20px;
                 border-bottom: 2px solid #f0f2f6;
             }}
 
-            /* --- MENU DE NAVEGAÇÃO (ESTILO PÍLULA) --- */
-            [data-testid="stSidebarNav"] > ul {{ padding: 0 15px; }}
+            /* --- MENU DE NAVEGAÇÃO (PÍLULA) --- */
+            [data-testid="stSidebarNav"] > ul {{ padding: 0 15px !important; }}
+            
+            /* Remove Emojis */
+            [data-testid="stSidebarNav"] a span:first-child {{ display: none !important; }}
+            [data-testid="stSidebarNav"] a span:last-child {{ display: inline-block !important; }}
+            
             [data-testid="stSidebarNav"] a {{
-                color: #333333 !important;
+                color: {TEXT_GRAY} !important;
                 font-weight: 500 !important;
                 border-radius: 50px !important;
                 padding: 8px 20px !important;
                 margin-bottom: 5px;
-                transition: none !important; /* REMOVE TRANSIÇÃO PARA PARAR O 'TILT' */
-                background-color: transparent !important; /* Garante fundo transparente */
-                border: 1px solid transparent !important; /* Evita 'tilt' de borda */
+                transition: none !important; /* <--- MATA O "TILT" (PISCA) */
+                background-color: transparent !important; /* Garante inativo transparente */
             }}
+            
+            /* Hover (Apenas texto azul) */
             [data-testid="stSidebarNav"] a:hover {{
-                background-color: transparent !important; /* Sem fundo no hover */
-                color: {SIG_SKY} !important; /* Apenas texto azul no hover */
+                background-color: transparent !important; /* <--- GARANTE SEM PÍLULA NO HOVER */
+                color: {SIG_SKY} !important;
             }}
             [data-testid="stSidebarNav"] a:hover span {{
                 color: {SIG_SKY} !important;
             }}
 
-            /* --- ITEM ATIVO (A PÍLULA AZUL FORÇADA) --- */
+            /* --- ITEM ATIVO (PÍLULA AZUL FORÇADA) --- */
+            /* Este é o seletor que você disse que funcionava, agora com !important em tudo */
             [data-testid="stSidebarNav"] a[aria-current="page"] {{
                 background-color: {SIG_SKY} !important; /* FORÇA O AZUL SIG SKY */
                 color: white !important;                 /* FORÇA O TEXTO BRANCO */
                 font-weight: 700 !important;
-                box-shadow: none !important; /* REMOVE SOMBRA PARA PARAR O 'TILT' */
+                box-shadow: none !important; /* <--- MATA O "TILT" (PISCA) */
             }}
             [data-testid="stSidebarNav"] a[aria-current="page"] span {{
                 color: white !important; /* FORÇA O SPAN INTERNO A SER BRANCO */
