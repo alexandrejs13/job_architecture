@@ -2,48 +2,53 @@ import streamlit as st
 
 def setup_sidebar():
     """
-    Configura o visual padrão da barra lateral:
-    - Fundo Preto (#000000)
-    - Logo SIG no topo
-    - Textos do menu em Branco (#ffffff)
+    Configura a barra lateral: Fundo Branco, Logo Azul SIG.
+    Ajusta o estilo do menu para ser limpo e profissional.
     """
+    # Caminho do novo logo azul
+    LOGO_PATH = "assets/SIG_Logo_RGB_Blue.png"
 
-    # 1. Definição do caminho do logo
-    LOGO_PATH = "assets/SIG_Logo_RGB_White.png"
-
-    # 2. Tenta usar o método nativo moderno (Streamlit 1.35+)
-    # Isso coloca o logo fixo no topo, acima do menu de navegação.
+    # 1. Aplica o Logo (tenta método moderno, fallback para antigo)
     try:
         st.logo(LOGO_PATH, icon_image=LOGO_PATH)
     except AttributeError:
-        # Fallback simples caso a versão do Streamlit seja antiga
-        st.sidebar.image(LOGO_PATH, use_column_width=True)
+        st.sidebar.image(LOGO_PATH, use_column_width=False, width=180)
 
-    # 3. CSS Hack para forçar as cores exatas (Fundo Preto / Texto Branco)
-    # O !important garante que este estilo vença qualquer padrão do Streamlit.
+    # 2. CSS para Refinamento do Visual
     st.markdown(
         """
         <style>
-            /* Força o fundo da barra lateral para Preto Absoluto */
+            /* --- BARRA LATERAL --- */
+            /* Garante fundo branco (redundância ao config.toml para segurança) */
             [data-testid="stSidebar"] {
-                background-color: #000000 !important;
+                background-color: #ffffff !important;
+                border-right: 1px solid #e0e0e0; /* Linha sutil separando o menu */
             }
-            /* Força TODOS os textos, ícones e links da barra lateral para Branco */
-            [data-testid="stSidebar"] *,
-            [data-testid="stSidebarNav"] span,
+
+            /* --- MENU DE NAVEGAÇÃO --- */
+            /* Texto dos links do menu: Preto suave, sem sublinhado */
             [data-testid="stSidebarNav"] a,
-            [data-testid="stSidebar"] p,
-            [data-testid="stSidebar"] div {
-                color: #ffffff !important;
-            }
-            /* Remove o sublinhado padrão dos links se houver */
-            [data-testid="stSidebarNav"] a {
+            [data-testid="stSidebarNav"] span {
+                color: #333333 !important;
                 text-decoration: none !important;
+                font-weight: 500;
             }
-             /* (Opcional) Aumenta um pouco o logo se ele estiver muito pequeno */
-            [data-testid="stLogo"] {
-                height: auto !important;
-                max-width: 90% !important;
+            /* Efeito Hover (quando passa o mouse): Fica azulzinho claro */
+            [data-testid="stSidebarNav"] a:hover {
+                background-color: #f0f5ff !important; /* Azul muito suave */
+                color: #145efc !important; /* Azul SIG Sky no texto */
+            }
+
+            /* --- AJUSTES GERAIS --- */
+            /* Título e textos na sidebar também escuros */
+            [data-testid="stSidebar"] .stMarkdown,
+            [data-testid="stSidebar"] p {
+                 color: #333333 !important;
+            }
+            /* Oculta o item 'app' ou 'Home' do menu se ele for o primeiro e redundante */
+            /* Remova as 3 linhas abaixo se quiser que o primeiro item apareça */
+            ul[data-testid="stSidebarNavItems"] > li:first-child {
+                display: none !important;
             }
         </style>
         """,
