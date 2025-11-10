@@ -1,71 +1,58 @@
 import streamlit as st
 
 def setup_sidebar():
-    # URL direta da imagem (RAW)
+    # URL do logo
     LOGO_URL = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
 
     st.markdown(
         f"""
         <style>
-            /* --- 1. ESCONDER ELEMENTOS INDESEJADOS --- */
+            /* --- 1. LIMPEZA GERAL --- */
             header {{visibility: hidden;}}
             footer {{visibility: hidden;}}
+            .st-emotion-cache-h5rgjs {{display: none;}} /* 'Made with Streamlit' */
             #MainMenu {{visibility: hidden;}}
-            .st-emotion-cache-h5rgjs {{visibility: hidden; height: 0;}} /* 'Made with Streamlit' */
 
-            /* Esconde especificamente o item 'app' do menu.
-               Geralmente é o primeiro <li> dentro da navegação. */
+            /* Esconde o maldito item 'app' do menu */
             [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{
                 display: none !important;
             }}
 
-            /* --- 2. ESTILO BASE DA BARRA LATERAL --- */
+            /* --- 2. INJEÇÃO DO CABEÇALHO VIA CSS --- */
+            /* Alvo: o container de navegação da sidebar */
+            [data-testid="stSidebarNav"] {{
+                background-image: url('{LOGO_URL}');
+                background-repeat: no-repeat;
+                background-position: center 20px; /* 20px do topo */
+                background-size: 120px auto; /* Largura do logo */
+                padding-top: 120px !important; /* Espaço para o logo + texto */
+            }}
+
+            /* Injeta o texto "Job Architecture" DEPOIS do logo (via background) mas ANTES do menu */
+            [data-testid="stSidebarNav"]::before {{
+                content: "Job Architecture";
+                display: block;
+                text-align: center;
+                font-weight: 900;
+                font-size: 1.5rem;
+                color: #145efc; /* Azul SIG */
+                margin-top: -30px; /* Puxa pra cima, perto do logo */
+                margin-bottom: 20px; /* Espaço até o primeiro item do menu */
+                border-bottom: 2px solid #f0f2f6;
+                padding-bottom: 15px;
+            }}
+
+            /* --- 3. ESTILO DA BARRA E MENU --- */
             [data-testid="stSidebar"] {{
                 background-color: white !important;
                 border-right: 1px solid #e0e0e0;
             }}
-            /* Remove padding padrão do topo para termos controle total */
-            [data-testid="stSidebar"] .block-container {{
-                padding-top: 0rem;
-            }}
 
-            /* --- 3. INJEÇÃO DO LOGO NO TOPO (CSS TRICK) --- */
-            /* Isso cria um elemento virtual ANTES do menu de navegação */
-            [data-testid="stSidebarNav"]::before {{
-                content: "";
-                display: block;
-                margin: 20px auto 20px auto; /* Espaçamento acima e abaixo do logo */
-                width: 120px;  /* Largura similar ao site SIG.biz */
-                height: 60px;  /* Altura estimada para manter proporção */
-                background-image: url('{LOGO_URL}');
-                background-size: contain;
-                background-repeat: no-repeat;
-                background-position: center;
-            }}
-
-            /* Adiciona o Título "Job Architecture" logo abaixo do logo virtual */
-            [data-testid="stSidebarNav"]::after {{
-                 content: "Job Architecture";
-                 display: block;
-                 text-align: center;
-                 font-weight: 900;
-                 font-size: 1.4rem;
-                 color: #145efc; /* Azul SIG */
-                 margin-bottom: 20px; /* Espaço entre o título e o início do menu */
-                 border-bottom: 2px solid #f0f2f6;
-                 padding-bottom: 15px;
-            }}
-
-            /* --- 4. ESTILIZAÇÃO DO MENU --- */
-            [data-testid="stSidebarNav"] {{
-                padding-top: 20px; /* Garante espaço para o logo injetado acima */
-            }}
-             /* Links normais */
-            [data-testid="stSidebarNav"] a, [data-testid="stSidebarNav"] span {{
+            /* Links do Menu */
+            [data-testid="stSidebarNav"] a {{
                 color: #333333 !important;
                 font-weight: 500 !important;
             }}
-            /* Hover */
             [data-testid="stSidebarNav"] a:hover {{
                 background-color: #eef6fc !important;
                 color: #145efc !important;
@@ -74,7 +61,6 @@ def setup_sidebar():
             [data-testid="stSidebarNav"] a[aria-current="page"] {{
                 background-color: #145efc !important;
                 color: white !important;
-                font-weight: 700 !important;
             }}
             [data-testid="stSidebarNav"] a[aria-current="page"] span {{
                 color: white !important;
