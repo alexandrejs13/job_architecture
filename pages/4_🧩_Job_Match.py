@@ -30,10 +30,9 @@ st.markdown("""
 }
 .stTextArea textarea {font-size: 16px !important;}
 
-/* Grid Container Principal */
+/* Grid Container Principal - O template de colunas será definido via inline style no Python */
 .comparison-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
     margin-top: 20px;
 }
@@ -141,9 +140,8 @@ def load_data_and_embeddings():
     if not df_levels.empty:
         df_levels.columns = df_levels.columns.str.strip()
 
-    # Garante que Global Grade seja numérico para comparações de range
     df_jobs["Global Grade Num"] = pd.to_numeric(df_jobs["Global Grade"].astype(str).str.replace(r"\.0$", "", regex=True).str.strip(), errors='coerce').fillna(0).astype(int)
-    df_jobs["Global Grade"] = df_jobs["Global Grade Num"].astype(str) # Mantém versão string para exibição
+    df_jobs["Global Grade"] = df_jobs["Global Grade Num"].astype(str)
 
     if "Global Grade" in df_levels.columns:
         df_levels["Global Grade"] = df_levels["Global Grade"].astype(str).str.replace(r"\.0$", "", regex=True).str.strip()
@@ -169,58 +167,38 @@ except Exception as e:
     st.stop()
 
 # ===========================================================
-# MAPEAMENTO DE COERÊNCIA (NÍVEL -> GRADE RANGE)
+# MAPEAMENTO DE COERÊNCIA
 # ===========================================================
-# Define quais GGs são aceitáveis para cada nível detectado semanticamente.
-# Ajuste estes ranges conforme a realidade da sua organização.
 LEVEL_GG_MAPPING = {
-    # Operacional
     "W1": [1, 2, 3, 4, 5], "W2": [5, 6, 7, 8], "W3": [7, 8, 9, 10],
-    # Suporte Administrativo
     "U1": [4, 5, 6, 7], "U2": [6, 7, 8, 9], "U3": [8, 9, 10, 11],
-    # Profissional
     "P1": [8, 9, 10], "P2": [10, 11, 12], "P3": [12, 13, 14], "P4": [14, 15, 16, 17],
-    # Gestão
     "M1": [11, 12, 13, 14], "M2": [14, 15, 16], "M3": [16, 17, 18, 19],
-    # Executivo
     "E1": [18, 19, 20, 21], "E2": [21, 22, 23, 24, 25]
 }
 
 # ===========================================================
-# DETECÇÃO SEMÂNTICA DE NÍVEL
+# DETECÇÃO SEMÂNTICA
 # ===========================================================
 def detect_level_from_text(text, wtw_db):
     if not wtw_db or not text: return None, None, None, []
-
     text_lower = text.lower()
-    best_score = 0
-    best_band = None
-    best_level = None
-    best_level_key = None
-    matched_keywords = []
+    best_score, best_band, best_level, best_level_key, matched_keywords = 0, None, None, None, []
 
     for band_key, band_info in wtw_db.get("career_bands", {}).items():
         for lvl_key, lvl_info in band_info.get("levels", {}).items():
-            current_score = 0
-            current_matches = []
-            # Peso maior para palavras-chave principais
+            current_score, current_matches = 0, []
             for kw in lvl_info.get("core_keywords", []):
                 if re.search(r'\b' + re.escape(kw.lower()) + r'\b', text_lower):
                     current_score += 3
                     current_matches.append(kw)
-            # Peso menor para secundárias
             for ukw in lvl_info.get("user_keywords", []):
                 if ukw.lower() in text_lower:
                     current_score += 1
                     current_matches.append(ukw)
-            
             if current_score > best_score:
-                best_score = current_score
-                best_band = band_info
-                best_level = lvl_info
-                best_level_key = lvl_key
+                best_score, best_band, best_level, best_level_key = current_score, band_info, lvl_info, lvl_key
                 matched_keywords = list(set(current_matches))
-
     return best_band, best_level, best_level_key, matched_keywords
 
 # ===========================================================
@@ -249,22 +227,16 @@ st.caption(f"Contagem de palavras: {word_count} / 50")
 
 if st.button("🔍 Analisar Aderência", type="primary", use_container_width=True):
     if selected_family == "Selecione..." or selected_subfamily == "Selecione..." or word_count < 50:
-        st.warning("⚠️ Selecione Família, Subfamília e insira uma descrição com pelo menos 50 palavras.")
+        st.warning("⚠️ Para uma análise precisa, selecione Família, Subfamília e insira uma descrição com pelo menos 50 palavras.")
         st.stop()
 
-    # 1. Filtro Base (Família/Subfamília)
     mask = (df["Job Family"] == selected_family) & (df["Sub Job Family"] == selected_subfamily)
     
-    # 2. Detecção Semântica e Filtro de Coerência de Grade
     detected_band, detected_level, detected_key, keywords_found = detect_level_from_text(desc_input, wtw_data)
-    
     allowed_grades = []
     if detected_key and detected_key in LEVEL_GG_MAPPING:
         allowed_grades = LEVEL_GG_MAPPING[detected_key]
-        # Aplica a "Trava de Nível"
         mask &= df["Global Grade Num"].isin(allowed_grades)
-        
-        # Feedback para o usuário
         kws_formatted = ", ".join([f"'{k}'" for k in keywords_found[:3]])
         st.markdown(f"""
         <div class="ai-insight-box">
@@ -276,13 +248,9 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         """, unsafe_allow_html=True)
 
     if not mask.any():
-        if allowed_grades:
-             st.error(f"Não foram encontrados cargos na família '{selected_family}' compatíveis com o nível detectado ({detected_level['label']} - GG {min(allowed_grades)}-{max(allowed_grades)}). Tente ajustar a descrição ou a família.")
-        else:
-             st.error("Não foram encontrados cargos para esta combinação.")
+        st.error("Não foram encontrados cargos compatíveis com os filtros e o nível detectado.")
         st.stop()
 
-    # 3. Matching Vetorial (apenas nos cargos coerentes)
     filtered_indices = df[mask].index
     filtered_embeddings = job_embeddings[filtered_indices]
     query_emb = model.encode([desc_input])
@@ -292,7 +260,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     top3 = results.sort_values("similarity", ascending=False).head(3)
 
     # ===========================================================
-    # RENDERIZAÇÃO (GRID ALINHADO)
+    # RENDERIZAÇÃO DINÂMICA (1, 2 OU 3 COLUNAS)
     # ===========================================================
     st.markdown("---")
     st.subheader("🏆 Cargos Mais Compatíveis")
@@ -305,45 +273,40 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     for _, row in top3.iterrows():
         score_val = row["similarity"] * 100
         score_bg = "#28a745" if score_val > 85 else "#1E56E0" if score_val > 75 else "#fd7e14" if score_val > 60 else "#dc3545"
-        
         lvl_name = ""
         gg_val = str(row["Global Grade"]).strip()
         if not df_levels.empty and "Global Grade" in df_levels.columns and "Level Name" in df_levels.columns:
              match = df_levels[df_levels["Global Grade"].astype(str).str.strip() == gg_val]
-             if not match.empty:
-                 lvl_name = f"• {match['Level Name'].iloc[0]}"
-
+             if not match.empty: lvl_name = f"• {match['Level Name'].iloc[0]}"
         cards_data.append({"row": row, "score_fmt": f"{score_val:.1f}%", "score_bg": score_bg, "lvl": lvl_name})
 
-    while len(cards_data) < 3: cards_data.append(None)
-
-    grid_html = '<div class="comparison-grid">'
+    # --- GRID DINÂMICO ---
+    num_results = len(cards_data)
+    # Define o estilo inline para dividir o grid exatamente pelo número de resultados
+    grid_style = f"grid-template-columns: repeat({num_results}, 1fr);"
+    grid_html = f'<div class="comparison-grid" style="{grid_style}">'
 
     # 1. Cabeçalho
     for card in cards_data:
-        if card:
-            grid_html += f"""
-            <div class="grid-cell header-cell">
-                <div class="fjc-title">{html.escape(card['row']['Job Profile'])}</div>
-                <div class="fjc-gg-row">
-                    <div class="fjc-gg">GG {card['row']['Global Grade']} {card['lvl']}</div>
-                    <div class="fjc-score" style="background-color: {card['score_bg']};">{card['score_fmt']} Match</div>
-                </div>
-            </div>"""
-        else: grid_html += "<div></div>"
+        grid_html += f"""
+        <div class="grid-cell header-cell">
+            <div class="fjc-title">{html.escape(card['row']['Job Profile'])}</div>
+            <div class="fjc-gg-row">
+                <div class="fjc-gg">GG {card['row']['Global Grade']} {card['lvl']}</div>
+                <div class="fjc-score" style="background-color: {card['score_bg']};">{card['score_fmt']} Match</div>
+            </div>
+        </div>"""
 
     # 2. Metadados
     for card in cards_data:
-        if card:
-            d = card['row']
-            grid_html += f"""
-            <div class="grid-cell meta-cell">
-                <div class="meta-row"><strong>Família:</strong> {html.escape(str(d.get('Job Family','-')))}</div>
-                <div class="meta-row"><strong>Subfamília:</strong> {html.escape(str(d.get('Sub Job Family','-')))}</div>
-                <div class="meta-row"><strong>Carreira:</strong> {html.escape(str(d.get('Career Path','-')))}</div>
-                <div class="meta-row"><strong>Cód:</strong> {html.escape(str(d.get('Full Job Code','-')))}</div>
-            </div>"""
-        else: grid_html += "<div></div>"
+        d = card['row']
+        grid_html += f"""
+        <div class="grid-cell meta-cell">
+            <div class="meta-row"><strong>Família:</strong> {html.escape(str(d.get('Job Family','-')))}</div>
+            <div class="meta-row"><strong>Subfamília:</strong> {html.escape(str(d.get('Sub Job Family','-')))}</div>
+            <div class="meta-row"><strong>Carreira:</strong> {html.escape(str(d.get('Career Path','-')))}</div>
+            <div class="meta-row"><strong>Cód:</strong> {html.escape(str(d.get('Full Job Code','-')))}</div>
+        </div>"""
 
     # 3. Seções de Conteúdo
     sections = [
@@ -357,22 +320,19 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
 
     for title, field, color in sections:
         for card in cards_data:
-            if card:
-                content = str(card['row'].get(field, '-'))
-                if field == "Qualifications" and (len(content) < 2 or content.lower() == 'nan'):
-                     grid_html += f'<div class="grid-cell section-cell" style="border-left-color: transparent; background: transparent; border: none;"></div>'
-                else:
-                    grid_html += f"""
-                    <div class="grid-cell section-cell" style="border-left-color: {color};">
-                        <div class="section-title" style="color: {color};">{title}</div>
-                        <div class="section-content">{html.escape(content)}</div>
-                    </div>"""
-            else: grid_html += "<div></div>"
+            content = str(card['row'].get(field, '-'))
+            if field == "Qualifications" and (len(content) < 2 or content.lower() == 'nan'):
+                    grid_html += f'<div class="grid-cell section-cell" style="border-left-color: transparent; background: transparent; border: none;"></div>'
+            else:
+                grid_html += f"""
+                <div class="grid-cell section-cell" style="border-left-color: {color};">
+                    <div class="section-title" style="color: {color};">{title}</div>
+                    <div class="section-content">{html.escape(content)}</div>
+                </div>"""
 
     # 4. Rodapé
     for card in cards_data:
-        if card: grid_html += '<div class="grid-cell footer-cell"></div>'
-        else: grid_html += "<div></div>"
+        grid_html += '<div class="grid-cell footer-cell"></div>'
 
     grid_html += '</div>'
     st.markdown(grid_html, unsafe_allow_html=True)
