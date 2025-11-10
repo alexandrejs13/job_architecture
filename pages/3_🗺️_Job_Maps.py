@@ -3,6 +3,7 @@
 
 import streamlit as st
 import pandas as pd
+import io
 from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar
 
@@ -13,7 +14,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (VERSÃO ESTÁVEL E LIMPA)
+# CSS COMPLETO
 # ===========================================================
 st.markdown("""
 <style>
@@ -27,10 +28,17 @@ st.markdown("""
   --dark-gray: #333333;
 }
 
+/* === AJUSTE DE MARGENS E LARGURA MÁXIMA === */
 .block-container {
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 1rem 2rem !important;
+  /* Define uma largura máxima para não esticar infinitamente em monitores gigantes */
+  max-width: 1800px !important; 
+  /* Garante que fique centralizado se a tela for maior que 1800px */
+  margin-left: auto !important;
+  margin-right: auto !important;
+  /* Aumenta as margens laterais para desgrudar da sidebar e da direita */
+  padding-left: 5rem !important;
+  padding-right: 5rem !important;
+  padding-top: 2rem !important;
 }
 
 .topbar {
@@ -38,9 +46,9 @@ st.markdown("""
   top: 0;
   z-index: 200;
   background: white;
-  padding: 10px 0 5px 0;
-  border-bottom: 2px solid var(--blue);
-  margin-bottom: 15px;
+  padding: 10px 0 15px 0;
+  border-bottom: 3px solid var(--blue);
+  margin-bottom: 20px;
 }
 h1 {
   color: var(--blue);
@@ -68,7 +76,6 @@ h1 {
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
-  /* Garante alturas fixas e iguais para todas as linhas de conteúdo */
   grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
   grid-auto-rows: 110px !important;
   align-content: start !important;
@@ -183,11 +190,9 @@ h1 {
 
 .job-card {
   background: #f9f9f9;
-  /* Define a largura da borda, mas a cor vem do Python */
   border-left-width: 5px !important;
   border-left-style: solid !important;
-  /* Cor fallback caso o Python falhe */
-  border-left-color: var(--gray-line);
+  border-left-color: var(--blue);
   border-radius: 6px;
   padding: 6px 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -202,6 +207,15 @@ h1 {
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
+  transition: all 0.2s ease-in-out;
+}
+.job-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0,0,0,0.15);
+}
+.job-card.highlight {
+  background-color: #fff9e6 !important;
+  box-shadow: 0 0 0 2px #ffd700 inset !important;
 }
 .job-card b {
   display: block;
@@ -262,11 +276,13 @@ df = df[~df["Global Grade"].isin(['nan', 'None', ''])]
 df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True)
 
 # ===========================================================
-# FILTROS
+# FILTROS E FERRAMENTAS
 # ===========================================================
 st.markdown("<div class='topbar'>", unsafe_allow_html=True)
 section("🗺️ Job Map")
-col1, col2 = st.columns([2, 2])
+
+# Layout com 4 colunas para incluir ferramentas
+col1, col2, col3, col4 = st.columns([1.5, 1.5, 2, 0.8])
 
 preferred_order = [
     "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
@@ -274,7 +290,6 @@ preferred_order = [
     "Research & Development", "Technical Engineering", "Operations", "Supply Chain & Logistics",
     "Quality Management", "Facility & Administrative Services"
 ]
-
 existing_families = set(df["Job Family"].unique())
 families_order = [f for f in preferred_order if f in existing_families]
 families_order.extend(sorted(list(existing_families - set(families_order))))
@@ -286,27 +301,51 @@ if family_filter != "Todas":
     available_paths = df[df["Job Family"] == family_filter]["Career Path"].unique().tolist()
 else:
     available_paths = df["Career Path"].unique().tolist()
-
 paths_options = ["Todas"] + sorted([p for p in available_paths if pd.notna(p) and p != 'nan' and p != ''])
 
 with col2:
     path_filter = st.selectbox("Trilha de Carreira", paths_options)
 
+with col3:
+    search_term = st.text_input("🔍 Busca Rápida", placeholder="Digite para destacar cargos...")
+
+# --- APLICAÇÃO DOS FILTROS ---
+df_filtered = df.copy()
+if family_filter != "Todas":
+    df_filtered = df_filtered[df_filtered["Job Family"] == family_filter]
+if path_filter != "Todas":
+    df_filtered = df_filtered[df_filtered["Career Path"] == path_filter]
+
+# --- BOTÃO DE DOWNLOAD ---
+with col4:
+    st.write("") # Espaçador para alinhar verticalmente com as caixas de seleção
+    st.write("")
+    
+    def to_excel(df):
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='JobMap')
+        return output.getvalue()
+
+    if not df_filtered.empty:
+        st.download_button(
+            label="📥 Baixar Excel",
+            data=to_excel(df_filtered),
+            file_name='job_map_filtered.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            use_container_width=True
+        )
+
 st.markdown("</div>", unsafe_allow_html=True)
 
-if family_filter != "Todas":
-    df = df[df["Job Family"] == family_filter]
-if path_filter != "Todas":
-    df = df[df["Career Path"] == path_filter]
-
-if df.empty:
+if df_filtered.empty:
     st.warning("Nenhum cargo encontrado.")
     st.stop()
 
 # ===========================================================
 # PREPARAÇÃO DO GRID
 # ===========================================================
-active_families = [f for f in families_order if f in df["Job Family"].unique()]
+active_families = [f for f in families_order if f in df_filtered["Job Family"].unique()]
 grades = sorted(df["Global Grade"].unique(), key=lambda x: int(x) if x.isdigit() else 999, reverse=True)
 
 subfamilias_map = {}
@@ -314,7 +353,7 @@ col_index = 2
 header_spans = {}
 
 for f in active_families:
-    subs = sorted(df[df["Job Family"] == f]["Sub Job Family"].unique().tolist())
+    subs = sorted(df_filtered[df_filtered["Job Family"] == f]["Sub Job Family"].unique().tolist())
     header_spans[f] = len(subs)
     for sf in subs:
         subfamilias_map[(f, sf)] = col_index
@@ -325,14 +364,12 @@ cards_count_map = {}
 
 for g in grades:
     for (f, sf), c_idx in subfamilias_map.items():
-        cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
+        cell_df = df_filtered[(df_filtered["Job Family"] == f) & (df_filtered["Sub Job Family"] == sf) & (df_filtered["Global Grade"] == g)]
         count = len(cell_df)
         cards_count_map[(g, c_idx)] = count
-
         if count == 0:
             content_map[(g, c_idx)] = None
             continue
-        
         jobs_sig = "|".join(sorted((cell_df["Job Profile"] + cell_df["Career Path"]).unique()))
         content_map[(g, c_idx)] = jobs_sig
 
@@ -354,20 +391,18 @@ for (_, c_idx) in subfamilias_map.items():
                 break
         span_map[(g, c_idx)] = span
 
-# --- FUNÇÃO DE CORES POR TRILHA ---
 def get_path_color(path_name):
     p_lower = str(path_name).lower().strip()
     if "manage" in p_lower or "executive" in p_lower: return "var(--blue)"
     if "professional" in p_lower or "specialist" in p_lower: return "var(--green)"
     if "techni" in p_lower or "support" in p_lower: return "var(--orange)"
-    return "var(--purple)" # Outros
+    return "var(--purple)"
 
 cell_html_cache = {}
 for i, g in enumerate(grades):
     for (f, sf), c_idx in subfamilias_map.items():
-        if (g, c_idx) in skip_set or content_map.get((g, c_idx)) is None:
-            continue
-
+        if (g, c_idx) in skip_set or content_map.get((g, c_idx)) is None: continue
+        
         span = span_map.get((g, c_idx), 1)
         if span > 1:
             covered = grades[i : i + span]
@@ -379,15 +414,20 @@ for i, g in enumerate(grades):
         else:
             gg_label = f"GG {g}"
 
-        cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
+        cell_df = df_filtered[(df_filtered["Job Family"] == f) & (df_filtered["Sub Job Family"] == sf) & (df_filtered["Global Grade"] == g)]
         
         cards = []
         for _, row in cell_df.iterrows():
             path_color = get_path_color(row['Career Path'])
-            # Tooltip nativo simples
-            tooltip = f"{row['Job Profile']} | {row['Career Path']}"
+            tooltip = f"{row['Job Profile']} | {row['Career Path']} ({gg_label})"
+            
+            # Lógica de Highlight na busca
+            hl_class = ""
+            if search_term and search_term.lower() in row['Job Profile'].lower():
+                hl_class = " highlight"
+
             cards.append(
-                f"<div class='job-card' style='border-left-color: {path_color} !important;' title='{tooltip}'>"
+                f"<div class='job-card{hl_class}' style='border-left-color: {path_color} !important;' title='{tooltip}'>"
                 f"<b>{row['Job Profile']}</b>"
                 f"<span>{row['Career Path']} - {gg_label}</span>"
                 f"</div>"
@@ -397,28 +437,20 @@ for i, g in enumerate(grades):
 # ===========================================================
 # CÁLCULO DE LARGURAS
 # ===========================================================
-def largura_texto_minima(text):
-    return len(str(text)) * 5 + 30
-
+def largura_texto_minima(text): return len(str(text)) * 5 + 30
 col_widths = ["100px"]
-
 for (f, sf), c_idx in subfamilias_map.items():
     width_title = largura_texto_minima(sf)
     max_cards = 0
     for g in grades:
         if (g, c_idx) not in skip_set:
              max_cards = max(max_cards, cards_count_map.get((g, c_idx), 0))
-    
-    if max_cards <= 1:
-        width_cards = 135 + 25
-    elif max_cards == 2:
-        width_cards = (2 * 135) + 8 + 25
+    if max_cards <= 1: width_cards = 135 + 25
+    elif max_cards == 2: width_cards = (2 * 135) + 8 + 25
     else:
         cap = min(max(1, max_cards), 6)
         width_cards = (cap * 135) + ((cap - 1) * 8) + 25
-        
     col_widths.append(f"{max(width_title, width_cards)}px")
-
 grid_template = f"grid-template-columns: {' '.join(col_widths)};"
 
 # ===========================================================
