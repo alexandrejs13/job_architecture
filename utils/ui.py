@@ -17,33 +17,38 @@ def setup_sidebar():
                 display: none !important;
             }}
 
-            /* --- 2. POSICIONAMENTO DO LOGO (BACKGROUND) --- */
-            [data-testid="stSidebarNav"] {{
+            /* --- 2. CONTAINER DO CABEÇALHO (LOGO + TÍTULO) --- */
+            /* Usamos o ::before do container de navegação para criar toda a área do cabeçalho */
+            [data-testid="stSidebarNav"]::before {{
+                content: "Job Architecture"; /* Texto do Título */
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                /* Altura fixa para o cabeçalho. Ajuste se quiser maior/menor */
+                height: 180px;
+                /* Imagem de fundo (o Logo) */
                 background-image: url('{LOGO_URL}');
                 background-repeat: no-repeat;
-                background-position: center 20px; /* Logo 20px do topo */
-                background-size: 120px auto; /* Largura do logo */
-                padding-top: 120px !important; /* Espaço reservado para logo + título */
-            }}
-
-            /* --- 3. POSICIONAMENTO DO TÍTULO (TEXTO) --- */
-            [data-testid="stSidebarNav"]::before {{
-                content: "Job Architecture";
-                display: block;
-                text-align: center;
-                font-weight: 900;
-                font-size: 1.5rem;
+                background-position: center 30px; /* Posiciona o logo 30px do topo do container */
+                background-size: 120px auto; /* Tamanho do logo */
+                /* Estilo do Texto */
                 color: #145efc; /* Azul SIG */
-                margin-top: 0px; /* Ajuste fino da distância entre logo e texto */
-                margin-bottom: 20px; /* Espaço entre o título e o primeiro item do menu */
-                border-bottom: 2px solid #f0f2f6; /* Linha separadora */
-                padding-bottom: 15px;
+                font-size: 1.5rem;
+                font-weight: 900;
+                padding-top: 100px; /* Empurra o texto para baixo do logo */
+                margin-bottom: 20px; /* Espaço entre o cabeçalho e o menu */
+                border-bottom: 2px solid #f0f2f6; /* Linha divisória */
             }}
 
-            /* --- 4. ESTILO DA BARRA E MENU --- */
+            /* --- 3. ESTILO DA BARRA E MENU --- */
             [data-testid="stSidebar"] {{
                 background-color: white !important;
                 border-right: 1px solid #e0e0e0;
+            }}
+            /* Ajuste fino para o menu não colar na linha divisória */
+            [data-testid="stSidebarNav"] > ul {{
+                padding-top: 10px;
             }}
             /* Links do Menu - Estado Normal */
             [data-testid="stSidebarNav"] a {{
