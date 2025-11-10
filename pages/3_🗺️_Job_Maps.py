@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (CORREÇÃO DEFINITIVA DE LINHAS E GAPS)
+# CSS COMPLETO (CORES DE VOLTA + CORREÇÕES DE LINHA)
 # ===========================================================
 st.markdown("""
 <style>
@@ -65,12 +65,13 @@ h1 {
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
-  /* CORREÇÃO CRÍTICA: Trava a altura das duas primeiras linhas para não sobrar espaço cinza */
+  /* Trava a altura dos cabeçalhos e define altura base para conteúdo */
   grid-template-rows: 50px 45px !important;
-  grid-auto-rows: minmax(90px, auto) !important;
+  grid-auto-rows: minmax(95px, auto) !important;
+  align-content: start !important;
   row-gap: 0px !important;
   column-gap: 0px !important;
-  background-color: white !important; /* Fundo branco para evitar linhas fantasmas */
+  background-color: white !important;
 }
 
 .jobmap-grid > div {
@@ -83,10 +84,9 @@ h1 {
 .header-family {
   font-weight: 800;
   color: #fff;
-  padding: 0 5px; /* Padding vertical removido para usar flex align */
+  padding: 0 5px;
   text-align: center;
   border-right: 1px solid rgba(255,255,255,0.3) !important;
-  /* SEM BORDAS INFERIORES */
   border-bottom: 0px none !important;
   outline: none !important;
   margin-bottom: 0px !important; 
@@ -94,7 +94,7 @@ h1 {
   top: 0;
   z-index: 57;
   white-space: normal;
-  height: 50px !important; /* Altura forçada */
+  height: 50px !important;
   max-height: 50px !important;
   display: flex;
   align-items: center;
@@ -106,19 +106,18 @@ h1 {
 
 .header-subfamily {
   font-weight: 600;
-  background: var(--gray-bg) !important;
+  /* background removido daqui para usar o inline do Python */
   padding: 0 5px;
   text-align: center;
   position: sticky;
   top: 50px;
   z-index: 56;
   white-space: normal;
-  /* SEM BORDAS SUPERIORES OU INFERIORES (como solicitado) */
   border-top: 0px none !important;
   margin-top: 0px !important;
-  border-bottom: 0px none !important; /* Excluída a linha inferior também */
+  border-bottom: 0px none !important;
   outline: none !important;
-  height: 45px !important; /* Altura forçada */
+  height: 45px !important;
   max-height: 45px !important;
   display: flex;
   align-items: center;
@@ -143,8 +142,8 @@ h1 {
   top: 0;
   z-index: 60;
   border-right: 2px solid white !important;
-  border-bottom: 0px none !important; /* Sem borda embaixo do GG header também */
-  height: 95px !important; /* 50px + 45px exatos */
+  border-bottom: 0px none !important;
+  height: 95px !important;
 }
 
 .gg-cell {
