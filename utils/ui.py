@@ -11,7 +11,6 @@ LOGO_URL = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/mai
 
 # --- CORES DA PALETA SIG ---
 SIG_SKY = "#145efc"    # Azul Principal
-SIG_SAND = "#f2efeb"   # Bege Claro para Cards
 TEXT_BLACK = "#000000" # Preto Puro para Títulos
 TEXT_GRAY = "#333333"  # Cinza Escuro para Texto Corrido
 
@@ -24,7 +23,7 @@ def get_font_base64(file_path):
     return base64.b64encode(data).decode("utf-8")
 
 # ==============================================================================
-# 3. SETUP UI (CSS GLOBAL)
+# 3. SETUP UI (CSS GLOBAL DEFINITIVO)
 # ==============================================================================
 def setup_sidebar():
     font_reg_b64 = get_font_base64(FONT_REGULAR)
@@ -73,28 +72,23 @@ def setup_sidebar():
             /* --- MENU DE NAVEGAÇÃO --- */
             [data-testid="stSidebarNav"] > ul {{ padding: 0 15px; }}
             
-            /* Oculta emojis dos menus (primeiro span) */
-            [data-testid="stSidebarNav"] a span:first-child {{
-                display: none !important;
-            }}
-            [data-testid="stSidebarNav"] a span:last-child {{
-                display: inline-block !important;
-            }}
+            /* Remove Emojis (primeiro span dentro do link) */
+            [data-testid="stSidebarNav"] a span:first-child {{ display: none !important; }}
+            [data-testid="stSidebarNav"] a span:last-child {{ display: inline-block !important; }}
 
-            /* Links Normais (Inativos) */
+            /* ESTILO BASE DOS LINKS (Inativos) */
             [data-testid="stSidebarNav"] a {{
                 color: {TEXT_GRAY} !important;
                 font-weight: 500 !important;
-                /* Forma de Pílula Perfeita */
-                border-radius: 999px !important;
-                /* Padding para não colar o texto nas bordas da pílula */
+                border-radius: 999px !important; /* Pílula perfeita */
                 padding: 10px 24px !important;
                 margin-bottom: 5px;
                 transition: none !important;
-                background-color: transparent !important;
+                text-decoration: none !important;
+                background-color: transparent; /* Fundo transparente por padrão */
             }}
             
-            /* Hover (Passar o mouse) - SEM PÍLULA, SÓ TEXTO AZUL */
+            /* HOVER (Passar o mouse) - Apenas texto azul */
             [data-testid="stSidebarNav"] a:hover {{
                 background-color: transparent !important;
                 color: {SIG_SKY} !important;
@@ -103,15 +97,19 @@ def setup_sidebar():
                 color: {SIG_SKY} !important;
             }}
 
-            /* --- ITEM ATIVO (Página Atual) - PÍLULA AZUL + TEXTO BRANCO --- */
+            /* --- ITEM ATIVO (SELECIONADO) - AQUI A PÍLULA AZUL DEVE APARECER --- */
+            /* Reforçando seletores para garantir que pegue o item ativo */
             [data-testid="stSidebarNav"] a[aria-current="page"],
-            [data-testid="stSidebarNav"] a[data-active="true"] {{
-                background-color: {SIG_SKY} !important; /* Azul SIG Sky */
-                color: white !important;                 /* Texto Branco */
-                font-weight: 700 !important;             /* Negrito */
+            [data-testid="stSidebarNav"] a[data-active="true"],
+            [data-testid="stSidebarNav"] li[aria-selected="true"] a {{
+                background-color: {SIG_SKY} !important; /* Fundo AZUL SIG SKY */
+                color: white !important;                 /* Texto BRANCO */
+                font-weight: 700 !important;
             }}
+            /* Garante que o texto interno fique branco */
             [data-testid="stSidebarNav"] a[aria-current="page"] span,
-            [data-testid="stSidebarNav"] a[data-active="true"] span {{
+            [data-testid="stSidebarNav"] a[data-active="true"] span,
+            [data-testid="stSidebarNav"] li[aria-selected="true"] a span {{
                 color: white !important;
             }}
 
