@@ -1,117 +1,203 @@
 import streamlit as st
-from utils.ui_components import section
-# Importa nossa nova função de visual global
-from utils.ui import setup_sidebar
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DA PÁGINA
+# CONFIGURAÇÃO DA PÁGINA
 # ===========================================================
-st.set_page_config(layout="wide", page_title="🏛️ Job Architecture")
+st.set_page_config(layout="wide", page_title="SIG | Job Architecture")
 
-# ===========================================================
-# 2. APLICA O VISUAL GLOBAL
-# ===========================================================
-# Isso aplica a barra lateral branca, o logo azul e os ajustes de menu.
-# O fundo "Sand 1" já está garantido pelo arquivo .streamlit/config.toml
-setup_sidebar()
+# Paleta de cores SIG
+SIG_COLORS = {
+    "sky": "#145efc",
+    "spark": "#dca0ff",
+    "black": "#000000",
+    "sand1": "#f2efeb",
+    "sand4": "#73706d",
+    "forest2": "#167665",
+    "white": "#ffffff"
+}
 
-# ===========================================================
-# 3. ESTILOS ESPECÍFICOS DA PÁGINA
-# ===========================================================
-# Mantive seus estilos de texto originais. Eles devem contrastar bem com o fundo Sand.
-st.markdown("""
+# CSS estilizado
+st.markdown(f"""
 <style>
-.block-container {
-  max-width: 1400px !important;
-  padding: 2rem 2rem;
-}
-h1 { /* Título principal da 'section' */
-  color: #1E56E0;
-  font-weight: 800;
-  font-size: 2.2rem !important;
-  border-bottom: 2px solid #d0d0d0; /* Ajustei levemente a cor da borda para o fundo Sand */
-  padding-bottom: 10px;
-}
-h2 { /* Subtítulos principais (##) */
-  color: #1E56E0;
-  font-weight: 700;
-  font-size: 1.8rem !important;
-  margin-top: 2.5rem;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid #d0d0d0;
-  padding-bottom: 5px;
-}
-h3 { /* Subtítulos secundários (###) */
-  font-weight: 600;
-  font-size: 1.3rem !important;
-  color: #333;
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
-}
-p, li { /* Texto principal e itens de lista */
-  font-size: 1.05rem;
-  line-height: 1.6;
-  color: #222;
-}
-/* Estiliza o st.info como um callout */
-div[data-testid="stAlert"] {
-    border: 1px solid #1E56E0;
-    background-color: #e8f0fe; /* Ajustei levemente para combinar melhor com o fundo Sand */
-    border-radius: 8px;
-}
-div[data-testid="stAlert"] p {
-    color: #001f5c;
-    font-size: 1.05rem;
-}
+    /* Configurações Gerais do Container */
+    .block-container {{
+        padding-top: 3rem;
+        padding-bottom: 5rem;
+        max-width: 1200px !important;
+    }}
+    body, p, li {{
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        color: #333333;
+        line-height: 1.6;
+        font-size: 1.1rem;
+    }}
+
+    /* Header Padrão */
+    .sig-header {{
+        border-left: 6px solid {SIG_COLORS["sky"]};
+        padding-left: 1.5rem;
+        margin-bottom: 2rem;
+        margin-top: 1rem;
+    }}
+    .sig-header h1 {{
+        color: #2c3e50;
+        font-weight: 800;
+        font-size: 2.8rem !important;
+        margin: 0;
+        padding: 0;
+        line-height: 1.2;
+    }}
+    .sig-header .subtitle {{
+        color: {SIG_COLORS["sand4"]};
+        font-size: 1.3rem;
+        font-weight: 500;
+        margin-top: 0.5rem;
+    }}
+
+    /* Subtítulos */
+    h2 {{
+        color: {SIG_COLORS["sky"]};
+        font-weight: 700;
+        font-size: 1.8rem !important;
+        margin-top: 3rem !important;
+        margin-bottom: 1.5rem !important;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }}
+
+    /* Cards */
+    .sig-card {{
+        background-color: {SIG_COLORS["sand1"]};
+        border-radius: 12px;
+        padding: 1.5rem;
+        height: 100%;
+        border-left: 4px solid {SIG_COLORS["sand4"]};
+        transition: transform 0.2s ease-in-out;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }}
+    .sig-card:hover {{
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        border-left: 4px solid {SIG_COLORS["sky"]};
+    }}
+    .sig-card h4 {{
+        color: {SIG_COLORS["sky"]};
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        font-size: 1.2rem !important;
+    }}
+    .sig-card p {{
+        font-size: 1rem;
+        margin-bottom: 0;
+        color: #444;
+    }}
+
+    /* Info Box Customizado */
+    .custom-info {{
+        background-color: #eefaf8;
+        border-left: 6px solid {SIG_COLORS["forest2"]};
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-top: 2rem;
+        color: #0a3d35;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 4. TÍTULO E CONTEÚDO
+# CONTEÚDO DA PÁGINA
 # ===========================================================
 
-section("🏛️ Job Architecture")
-
+# Header
 st.markdown("""
-A Job Architecture (JA) é a estrutura fundamental de P&C na SIG, que organiza e nivela os cargos em toda a organização. Ela serve como base para processos críticos de pessoas, garantindo consistência e clareza.
+<div class="sig-header">
+    <h1>Job Architecture</h1>
+    <div class="subtitle">A estrutura fundamental de P&C na SIG</div>
+</div>
+""", unsafe_allow_html=True)
+
+# Intro
+st.markdown("""
+A **Job Architecture (JA)** organiza e nivela os cargos em toda a organização. Ela serve como base sólida para processos críticos de pessoas, garantindo consistência, clareza e justiça em todas as regiões.
 """)
 
-st.markdown("## O que é a nossa Job Architecture?")
-st.markdown("""
-### Os 4 Elementos Chave:
-* **Famílias de Cargos (Job Families):** Grandes grupos funcionais.
-* **Sub-Famílias (Sub-Job Families):** Especializações dentro das famílias.
-* **Níveis de Carreira (Career Levels):** Definem a senioridade e o foco do papel (ex: Gestão, Especialista, Projetos).
-* **Perfis Genéricos (Generic Profiles):** Descrições padronizadas que servem de base para cada função.
-""")
+# Seção 4 Elementos
+st.markdown("## Os 4 Elementos Chave")
+col1, col2, col3, col4 = st.columns(4)
 
+with col1:
+    st.markdown("""
+    <div class="sig-card">
+        <h4>1. Famílias de Cargos<br>(Job Families)</h4>
+        <p>Grandes grupos funcionais que agrupam papéis com características similares.</p>
+    </div>
+    """, unsafe_allow_html=True)
+with col2:
+    st.markdown("""
+    <div class="sig-card">
+        <h4>2. Sub-Famílias<br>(Sub-Job Families)</h4>
+        <p>Especializações funcionais dentro das grandes famílias.</p>
+    </div>
+    """, unsafe_allow_html=True)
+with col3:
+    st.markdown("""
+    <div class="sig-card">
+        <h4>3. Níveis de Carreira<br>(Career Levels)</h4>
+        <p>Definem a senioridade e o foco do papel (ex: Gestão, Especialista, Projetos).</p>
+    </div>
+    """, unsafe_allow_html=True)
+with col4:
+    st.markdown("""
+    <div class="sig-card">
+        <h4>4. Perfis Genéricos<br>(Generic Profiles)</h4>
+        <p>Descrições padronizadas que servem de base sólida para cada função.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Seção Importância
 st.markdown("## Por que é importante?")
-st.markdown("""
-A Job Architecture não é apenas sobre títulos; ela habilita:
-* **Caminhos de Carreira Claros:** Crescimento na SIG não se limita à gestão. Valorizamos e recompensamos a experiência funcional especializada através de bandas de carreira dedicadas (Especialista, Projetos, Vendas, Operações).
-* **Benchmarking e Remuneração Justa:** O código do cargo (Job Code) liga nossa estrutura aos dados de mercado, garantindo análises salariais justas e equidade de gênero.
-* **Desenvolvimento de Talento:** Facilita a identificação de próximos passos e oportunidades de desenvolvimento dentro e fora da função atual.
-""")
+col_a, col_b = st.columns(2)
+with col_a:
+    st.markdown("### 🎯 Caminhos de Carreira Claros")
+    st.markdown("Crescimento na SIG não se limita à gestão. Valorizamos a experiência funcional especializada através de bandas de carreira dedicadas.")
+    st.markdown("### ⚖️ Benchmarking e Remuneração")
+    st.markdown("O **Job Code** liga nossa estrutura aos dados de mercado, garantindo análises salariais justas e competitivas.")
+with col_b:
+    st.markdown("### 🚀 Desenvolvimento de Talento")
+    st.markdown("Facilita a identificação de próximos passos claros e oportunidades de desenvolvimento, dentro ou fora da função atual.")
 
-st.markdown("## Princípios de Mapeamento: Instruções Essenciais")
-st.markdown("""
-Ao criar ou revisar uma posição, siga estas regras de ouro para garantir o mapeamento correto:
-1.  **Foco no Conteúdo, Não na Pessoa:** O mapeamento baseia-se nas tarefas e responsabilidades do cargo, não nas habilidades ou desempenho do ocupante atual.
-2.  **A Regra dos 50%:** Uma posição deve ser mapeada para um Perfil Genérico que cubra a maioria (pelo menos 50%) de suas tarefas e atividades.
-3.  **Independência Hierárquica:** A arquitetura agrupa posições similares por natureza, independentemente de a quem reportam ou em que região estão.
-""")
+# Seção Princípios
+st.markdown("## Regras de Ouro para Mapeamento")
+p1, p2, p3 = st.columns(3)
+with p1:
+     st.markdown("""
+    <div class="sig-card" style="background-color: #fff; border: 1px solid #eee;">
+        <h4>📌 Foco no Conteúdo</h4>
+        <p>O mapeamento baseia-se nas tarefas e responsabilidades, <strong>nunca</strong> nas habilidades do ocupante atual.</p>
+    </div>
+    """, unsafe_allow_html=True)
+with p2:
+     st.markdown("""
+    <div class="sig-card" style="background-color: #fff; border: 1px solid #eee;">
+        <h4>📊 A Regra dos 50%</h4>
+        <p>Uma posição deve ser mapeada para um Perfil que cubra a maioria (pelo menos 50%) de suas atividades.</p>
+    </div>
+    """, unsafe_allow_html=True)
+with p3:
+     st.markdown("""
+    <div class="sig-card" style="background-color: #fff; border: 1px solid #eee;">
+        <h4>🌍 Independência</h4>
+        <p>A arquitetura agrupa posições por sua natureza funcional, independentemente de reporte ou região.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-st.markdown("## Quando é necessário agir?")
-st.markdown("""
-* **Nova Posição:** Sempre requer um novo mapeamento e criação de Job Code antes do início do recrutamento.
-* **Substituição (New Hire):** Se o conteúdo do trabalho permanece o mesmo, nenhum novo mapeamento é necessário. Se o escopo mudar significativamente (equipe, responsabilidades, requisitos), um novo mapeamento é exigido.
-""")
+# Seção Governança e Callout Final
+st.markdown("## Governança")
+st.markdown("A Diretiva de JA, ferramentas e formulários de aprovação estão disponíveis no **SharePoint de Global C&B**.")
 
-st.markdown("## Governança e Ferramentas")
-st.markdown("""
-A Diretiva de JA, a ferramenta de Job Architecture e os formulários de aprovação estão disponíveis no SharePoint de Global Compensation & Benefits. Alterações de nível de carreira ou família exigem aprovações específicas (do HRBP local ao GEB/CEO, dependendo da senioridade do cargo).
-""")
-
-st.info("""
-**Ponto de Atenção:** O Perfil Genérico não substitui a Descrição do Cargo (Job Description). Ao mapear a posição no SAP, ela herda automaticamente as características do perfil (grade, qualificações necessárias).
-""")
+st.markdown(f"""
+<div class="custom-info">
+    <strong>💡 Ponto de Atenção Essencial</strong><br>
+    O Perfil Genérico não substitui a Descrição do Cargo (Job Description). Ao mapear a posição no SAP, ela herda automaticamente as características chave do perfil.
+</div>
+""", unsafe_allow_html=True)
