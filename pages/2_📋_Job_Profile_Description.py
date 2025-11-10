@@ -1,133 +1,126 @@
 # -*- coding: utf-8 -*-
-import re
+# pages/2_📋_Job_Profile_Description.py
+
 import streamlit as st
+import pandas as pd
+import re
+import html
 from utils.data_loader import load_job_profile_df
 from utils.ui_components import section, lock_sidebar
 
 # ===========================================================
-# CONFIGURAÇÃO
+# CONFIGURAÇÃO DE PÁGINA
 # ===========================================================
 st.set_page_config(layout="wide", page_title="📋 Job Profile Description")
 lock_sidebar()
-section("📘 Job Profile Description")
 
 # ===========================================================
-# CSS — layout completo e ajuste de altura dos cards
+# CSS COMPLETO (ALINHADO COM O JOB MATCH)
 # ===========================================================
 st.markdown("""
 <style>
+:root {
+  --blue: #145efc;
+  --gray-line: #e0e0e0;
+  --gray-bg: #f8f9fa;
+  --dark-gray: #2c3e50;
+}
+
 .block-container {
-  max-width: 1200px !important;
-  min-width: 900px !important;
-  margin: 0 auto !important;
-  padding: 2.5rem 1.5rem 2rem 1.5rem;
-  zoom: 0.9;
+    max-width: 95% !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
 }
 
-/* ===== TÍTULOS ===== */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    background: white;
+    padding: 15px 0 15px 0;
+    border-bottom: 2px solid var(--blue);
+    margin-bottom: 25px;
+}
 h1 {
-  text-align: left !important;
-  margin-top: 0.8rem !important;
-  margin-bottom: 1.4rem !important;
-  font-size: 1.9rem !important;
-  line-height: 1.25 !important;
-  font-weight: 800 !important;
-  color: #145efc !important;
+    color: var(--blue);
+    font-weight: 900 !important;
+    font-size: 1.9rem !important;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 !important;
 }
 
-/* ===== GRID ===== */
-.ja-grid {
-  display: grid;
-  gap: 14px 14px;
-  justify-items: stretch;
-  align-items: stretch; /* garante que as células fiquem alinhadas pela altura */
-  margin: 6px 0 12px 0 !important;
+/* GRID DE COMPARAÇÃO DINÂMICO */
+.comparison-grid {
+    display: grid;
+    gap: 25px; /* Espaço entre colunas */
+    margin-top: 20px;
 }
 
-.ja-grid.cols-1 { grid-template-columns: repeat(1, minmax(250px, 1fr)); }
-.ja-grid.cols-2 { grid-template-columns: repeat(2, minmax(300px, 1fr)); }
-.ja-grid.cols-3 { grid-template-columns: repeat(3, minmax(340px, 1fr)); }
-
-/* ===== CARDS ===== */
-.ja-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  background: #f9f9f9;
-  padding: 10px 14px;
-  border-radius: 6px;
-  border-left: 3px solid #1E56E0;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  width: 100%;
-  text-align: left;
-  box-sizing: border-box;
-  flex: 1;
+/* CÉLULAS DO GRID */
+.grid-cell {
+    background: #fff;
+    border: 1px solid var(--gray-line);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
 }
 
-.ja-sec {
-  margin: 0 !important;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+/* CABEÇALHO (TÍTULO E GG) */
+.header-cell {
+    background: var(--gray-bg);
+    border-radius: 12px 12px 0 0;
+    border-bottom: none;
+    min-height: 100px;
+    justify-content: center;
 }
+.jp-title { font-size: 22px; font-weight: 800; color: var(--dark-gray); line-height: 1.2; margin-bottom: 8px; }
+.jp-gg { color: var(--blue); font-weight: 700; font-size: 1.1rem; }
 
-.ja-sec-h {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 6px;
-  margin: 0 0 3px 0 !important;
+/* METADADOS (CLASSIFICAÇÃO) */
+.meta-cell {
+    background: #fff;
+    border-top: 1px solid var(--gray-line);
+    border-bottom: 1px solid var(--gray-line);
+    font-size: 0.9rem;
+    color: #555;
+    gap: 8px;
+    padding: 15px 20px;
 }
+.meta-row { display: flex; flex-wrap: wrap; gap: 15px; }
+.meta-item strong { color: #333; font-weight: 700; }
 
-.ja-ic { width: 18px; text-align: center; line-height: 1; }
-
-.ja-ttl {
-  font-weight: 700;
-  color: #1E56E0;
-  font-size: 0.95rem;
+/* SEÇÕES DE CONTEÚDO */
+.section-cell {
+    border-left-width: 5px;
+    border-left-style: solid;
+    border-top: none;
+    background: #fdfdfd;
+    padding: 15px 20px;
 }
-
-/* ===== HEADER CARGO ===== */
-.ja-hd {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 4px;
-  margin: 0 0 6px 0;
-  text-align: left;
+.section-title {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
-
-.ja-hd-title {
-  font-size: 1.15rem;
-  font-weight: 700;
+.section-content {
+    color: #333;
+    line-height: 1.6;
+    font-size: 0.95rem;
 }
+/* Formatação dos parágrafos internos */
+.jp-p { margin: 0 0 8px 0; }
 
-.ja-hd-grade {
-  color: #1E56E0;
-  font-weight: 700;
-  font-size: 1rem;
-}
-
-/* ===== BLOCO CLASSIFICAÇÃO ===== */
-.ja-class {
-  background: #fff;
-  border: 1px solid #e0e4f0;
-  border-radius: 6px;
-  padding: 8px 12px;
-  width: 100%;
-  text-align: left;
-  box-sizing: border-box;
-  min-height: 130px;
-}
-
-/* ===== PARÁGRAFOS ===== */
-.ja-p {
-  margin: 0 0 4px 0;
-  text-align: left;
-  line-height: 1.48;
+/* RODAPÉ */
+.footer-cell {
+    height: 15px;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    background: #fff;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -135,123 +128,132 @@ h1 {
 # ===========================================================
 # FUNÇÕES AUXILIARES
 # ===========================================================
-def safe_get(row, key, default=""):
+def safe_get(row, key, default="-"):
     val = row.get(key, "")
     return str(val).strip() if val and str(val).lower() != "nan" else default
 
 def format_paragraphs(text):
-    if not text:
-        return "-"
+    if not text or text == "-": return "-"
+    # Quebra por novas linhas, bullets ou retornos de carro
     parts = re.split(r"\n+|•|\r", text.strip())
-    return "".join(f"<p class='ja-p'>{p.strip()}</p>" for p in parts if len(p.strip()) > 2)
-
-def header_badge(title, grade):
-    return f"""
-    <div class="ja-hd">
-      <div class="ja-hd-title">{title}</div>
-      <div class="ja-hd-grade">GG {grade}</div>
-    </div>
-    """
-
-def class_box(row):
-    return f"""
-    <div class="ja-class">
-      <b>Família:</b> {row['Job Family']}<br>
-      <b>Subfamília:</b> {row['Sub Job Family']}<br>
-      <b>Carreira:</b> {row['Career Path']}<br>
-      <b>Função:</b> {row['Function Code']}<br>
-      <b>Disciplina:</b> {row['Discipline Code']}<br>
-      <b>Código:</b> {row['Full Job Code']}
-    </div>
-    """
-
-def cell_card(emoji, title, html_text):
-    return f"""
-    <div class="ja-sec">
-      <div class="ja-sec-h">
-        <span class="ja-ic">{emoji}</span>
-        <span class="ja-ttl">{title}</span>
-      </div>
-      <div class="ja-card">{html_text}</div>
-    </div>
-    """
+    # Reconstrói com tags <p> para melhor espaçamento
+    return "".join(f"<p class='jp-p'>• {html.escape(p.strip())}</p>" for p in parts if len(p.strip()) > 1)
 
 # ===========================================================
-# DADOS
+# DADOS E FILTROS
 # ===========================================================
 df = load_job_profile_df()
 
-col1, col2, col3 = st.columns([1.2, 2.2, 1])
-with col1:
+st.markdown("<div class='topbar'>", unsafe_allow_html=True)
+section("📋 Job Profile Description")
+st.markdown("</div>", unsafe_allow_html=True)
+
+# --- FILTROS EM 3 COLUNAS ---
+c1, c2, c3 = st.columns([1.2, 1.5, 1])
+with c1:
     families = sorted(df["Job Family"].dropna().unique())
-    fam = st.selectbox("Família", families)
-filtered = df[df["Job Family"] == fam]
+    fam = st.selectbox("📂 Família", families)
+    filtered = df[df["Job Family"] == fam]
 
-with col2:
+with c2:
     subs = sorted(filtered["Sub Job Family"].dropna().unique())
-    sub = st.selectbox("Subfamília", subs)
-sub_df = filtered[filtered["Sub Job Family"] == sub]
+    sub = st.selectbox("📂 Subfamília", subs)
+    sub_df = filtered[filtered["Sub Job Family"] == sub]
 
-with col3:
+with c3:
     careers = sorted(sub_df["Career Path"].dropna().unique())
-    career = st.selectbox("Trilha de Carreira", careers)
-career_df = sub_df[sub_df["Career Path"] == career]
+    career = st.selectbox("🛤️ Trilha de Carreira", careers)
+    career_df = sub_df[sub_df["Career Path"] == career]
 
-# ===========================================================
-# SELEÇÃO DE CARGOS
-# ===========================================================
-def option_label(row):
-    g = row.get("Global Grade", "")
-    p = row.get("Job Profile", "")
-    return f"GG{int(g)} — {p}" if str(g).isdigit() else p
-
+# --- MULTISELECT DE CARGOS ---
 career_df_sorted = career_df.sort_values(by="Global Grade", ascending=False)
-pick_options = career_df_sorted.apply(option_label, axis=1).tolist()
-selected_labels = st.multiselect("Selecione até 3 cargos:", options=pick_options, max_selections=3)
+# Cria labels amigáveis: "GG15 - Nome do Cargo"
+career_df_sorted["Option Label"] = career_df_sorted.apply(
+    lambda x: f"GG{int(float(x['Global Grade']))} — {x['Job Profile']}" if str(x['Global Grade']).replace('.0','').isdigit() else x['Job Profile'], 
+    axis=1
+)
+
+selected_labels = st.multiselect(
+    "📌 Selecione até 3 cargos para visualizar/comparar:",
+    options=career_df_sorted["Option Label"].tolist(),
+    max_selections=3
+)
 
 # ===========================================================
-# RENDERIZAÇÃO
+# RENDERIZAÇÃO DINÂMICA
 # ===========================================================
 if selected_labels:
-    rows = []
+    # Recupera os dados completos das linhas selecionadas
+    selected_rows = []
     for label in selected_labels:
-        parts = re.split(r"\s*[–—-]\s*", label)
-        label_grade = parts[0].replace("GG", "").strip() if parts else ""
-        label_title = parts[1].strip() if len(parts) > 1 else label.strip()
-        sel = career_df_sorted[
-            career_df_sorted["Job Profile"].str.strip().str.lower() == label_title.lower()
-        ]
-        if label_grade:
-            sel = sel[sel["Global Grade"].astype(str).str.strip() == label_grade]
-        rows.append(sel.iloc[0] if not sel.empty else None)
+        row = career_df_sorted[career_df_sorted["Option Label"] == label].iloc[0]
+        selected_rows.append(row)
 
-    n = len(rows)
-    grid_class = f"ja-grid cols-{n}"
+    num_cols = len(selected_rows)
+    # Define o grid dinâmico com base no número de seleções
+    grid_style = f"grid-template-columns: repeat({num_cols}, 1fr);"
+    
+    grid_html = f'<div class="comparison-grid" style="{grid_style}">'
 
-    # Cabeçalhos
-    html_cells = [f"<div>{header_badge(r['Job Profile'], r['Global Grade'])}</div>" if r is not None else "<div></div>" for r in rows]
-    st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
+    # --- 1. LINHA DE CABEÇALHO ---
+    for row in selected_rows:
+        gg = safe_get(row, 'Global Grade').replace('.0', '')
+        grid_html += f"""
+        <div class="grid-cell header-cell">
+            <div class="jp-title">{html.escape(row['Job Profile'])}</div>
+            <div class="jp-gg">Global Grade {gg}</div>
+        </div>"""
 
-    # Classificação
-    html_cells = [f"<div>{class_box(r)}</div>" if r is not None else "<div></div>" for r in rows]
-    st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
+    # --- 2. LINHA DE METADADOS ---
+    for row in selected_rows:
+        grid_html += f"""
+        <div class="grid-cell meta-cell">
+            <div class="meta-row">
+                <div class="meta-item"><strong>Família:</strong> {html.escape(safe_get(row, 'Job Family'))}</div>
+                <div class="meta-item"><strong>Subfamília:</strong> {html.escape(safe_get(row, 'Sub Job Family'))}</div>
+            </div>
+            <div class="meta-row">
+                <div class="meta-item"><strong>Carreira:</strong> {html.escape(safe_get(row, 'Career Path'))}</div>
+                <div class="meta-item"><strong>Cód:</strong> {html.escape(safe_get(row, 'Full Job Code'))}</div>
+            </div>
+            <div class="meta-row">
+                 <div class="meta-item"><strong>Função:</strong> {html.escape(safe_get(row, 'Function Code'))}</div>
+                 <div class="meta-item"><strong>Disciplina:</strong> {html.escape(safe_get(row, 'Discipline Code'))}</div>
+            </div>
+        </div>"""
 
-    # Seções
-    SECTIONS = [
-        ("🧭", "Sub Job Family Description", lambda r: safe_get(r, "Sub Job Family Description")),
-        ("🧠", "Job Profile Description",   lambda r: safe_get(r, "Job Profile Description")),
-        ("🏛️", "Career Band Description",   lambda r: safe_get(r, "Career Band Description")),
-        ("🎯", "Role Description",          lambda r: safe_get(r, "Role Description")),
-        ("🏅", "Grade Differentiator",      lambda r: safe_get(r, "Grade Differentiator")),
-        ("🎓", "Qualifications",            lambda r: safe_get(r, "Qualifications")),
+    # --- 3. SEÇÕES DE CONTEÚDO (ALINHADAS) ---
+    # Lista de tuplas: (Emoji, Título, Nome da Coluna no DataFrame, Cor da Borda)
+    sections = [
+        ("🧭", "Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
+        ("🧠", "Job Profile Description", "Job Profile Description", "#e91e63"),
+        ("🏛️", "Career Band Description", "Career Band Description", "#673ab7"),
+        ("🎯", "Role Description", "Role Description", "#1E56E0"),
+        ("🏅", "Grade Differentiator", "Grade Differentiator", "#ff9800"),
+        ("🎓", "Qualifications", "Qualifications", "#009688")
     ]
 
-    for emoji, title, getter in SECTIONS:
-        html_cells = []
-        for r in rows:
-            if r is None:
-                html_cells.append("<div></div>")
-            else:
-                raw = getter(r)
-                html_cells.append("<div>" + cell_card(emoji, title, format_paragraphs(raw)) + "</div>")
-        st.markdown(f"<div class='{grid_class}'>" + "".join(html_cells) + "</div>", unsafe_allow_html=True)
+    for emoji, title, col_name, color in sections:
+        for row in selected_rows:
+            raw_text = safe_get(row, col_name)
+            # Formata o texto com bullets se não for vazio
+            formatted_text = format_paragraphs(raw_text) if raw_text != "-" else "-"
+            
+            grid_html += f"""
+            <div class="grid-cell section-cell" style="border-left-color: {color};">
+                <div class="section-title" style="color: {color};">
+                    <span>{emoji}</span> {title}
+                </div>
+                <div class="section-content">{formatted_text}</div>
+            </div>"""
+
+    # --- 4. RODAPÉ (FECHAMENTO) ---
+    for _ in selected_rows:
+        grid_html += '<div class="grid-cell footer-cell"></div>'
+
+    grid_html += '</div>' # Fim do Grid
+
+    st.markdown(grid_html, unsafe_allow_html=True)
+
+else:
+    st.info("👆 Utilize os filtros acima e selecione um ou mais cargos para visualizar.")
