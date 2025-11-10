@@ -15,12 +15,12 @@ from utils.ui_components import section, lock_sidebar
 from utils.ui import setup_sidebar
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA
+# 1. CONFIGURAÇÃO DE PÁGINA (TEM QUE SER O PRIMEIRO COMANDO ST)
 # ===========================================================
 st.set_page_config(layout="wide", page_title="🧩 Job Match")
 
 # ===========================================================
-# 2. APLICA O VISUAL GLOBAL (Barra Branca + Logo Azul)
+# 2. APLICA O VISUAL GLOBAL
 # ===========================================================
 setup_sidebar()
 lock_sidebar()
@@ -30,6 +30,17 @@ lock_sidebar()
 # ===========================================================
 st.markdown("""
 <style>
+/* h1 é controlado globalmente (preto) */
+h1 {
+    font-weight: 900 !important;
+    font-size: 1.9rem !important;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 !important;
+    padding-top: 15px;
+    margin-bottom: 25px !important;
+}
 .block-container {
     max-width: 95% !important;
     padding-left: 1rem !important;
@@ -37,14 +48,11 @@ st.markdown("""
 }
 .stTextArea textarea {font-size: 16px !important;}
 
-/* Grid Container Principal - O template de colunas será definido via inline style no Python */
 .comparison-grid {
     display: grid;
     gap: 20px;
     margin-top: 20px;
 }
-
-/* Estilo das Células do Grid */
 .grid-cell {
     background: #fff;
     border: 1px solid #e0e0e0;
@@ -52,8 +60,6 @@ st.markdown("""
     display: flex;
     flex-direction: column;
 }
-
-/* Cabeçalho (Título, GG, Score) */
 .header-cell {
     background: #f8f9fa;
     border-radius: 12px 12px 0 0;
@@ -63,8 +69,6 @@ st.markdown("""
 .fjc-gg-row { display: flex; justify-content: space-between; align-items: center; }
 .fjc-gg { color: #145efc; /* Azul SIG */ font-weight: 700; }
 .fjc-score { color: white; font-weight: 700; padding: 4px 10px; border-radius: 12px; font-size: 0.9rem; }
-
-/* Metadados */
 .meta-cell {
     border-top: 1px solid #eee;
     border-bottom: 1px solid #eee;
@@ -73,8 +77,6 @@ st.markdown("""
     min-height: 120px;
 }
 .meta-row { margin-bottom: 5px; }
-
-/* Seções de Conteúdo */
 .section-cell {
     border-left-width: 5px;
     border-left-style: solid;
@@ -83,16 +85,12 @@ st.markdown("""
 }
 .section-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; color: #333; display: flex; align-items: center; gap: 5px;}
 .section-content { color: #444; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; }
-
-/* Rodapé */
 .footer-cell {
     height: 10px;
     border-top: none;
     border-radius: 0 0 12px 12px;
     background: #fff;
 }
-
-/* Caixa de Sugestão de IA */
 .ai-insight-box {
     background-color: #eef6fc; /* Fundo azul bem claro */
     border-left: 5px solid #145efc; /* Azul SIG */
