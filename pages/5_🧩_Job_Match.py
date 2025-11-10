@@ -1,29 +1,16 @@
-# -*- coding: utf-8 -*-
-# pages/5_🧩_Job_Match.py
-
 import streamlit as st
-import pandas as pd
-import numpy as np
-import html
-import json
-import re
-from sklearn.metrics.pairwise import cosine_similarity
-from sentence_transformers import SentenceTransformer
-from utils.data_loader import load_excel_data
-from utils.ui_components import section, lock_sidebar
-# Importa a nossa função de visual global
+# Outros imports necessários
 from utils.ui import setup_sidebar
 
-# ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA (TEM QUE SER O PRIMEIRO COMANDO ST)
-# ===========================================================
-st.set_page_config(layout="wide", page_title="🧩 Job Match")
+# 1. Configuração da Página (SEMPRE EM PRIMEIRO se existir)
+st.set_page_config(
+    page_title="Job Architecture",
+    page_icon="🏛️",
+    layout="wide"
+)
 
-# ===========================================================
-# 2. APLICA O VISUAL GLOBAL
-# ===========================================================
+# 2. IMEDIATAMENTE INJETA O CSS
 setup_sidebar()
-lock_sidebar()
 
 # ===========================================================
 # 3. ESTILO DA PÁGINA
