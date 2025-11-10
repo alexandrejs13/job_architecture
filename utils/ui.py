@@ -21,7 +21,7 @@ def get_font_base64(file_path):
     return base64.b64encode(data).decode("utf-8")
 
 # ==============================================================================
-# 3. SETUP UI (SOLUÇÃO NUCLEAR)
+# 3. SETUP UI (CSS REFORÇADO)
 # ==============================================================================
 def setup_sidebar():
     font_reg_b64 = get_font_base64(FONT_REGULAR)
@@ -37,75 +37,64 @@ def setup_sidebar():
     st.markdown(
         f"""
         <style>
-            /* --- FONTES E LIMPEZA --- */
             {font_css}
+            /* Oculta elementos nativos */
             header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ visibility: hidden !important; }}
+            [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{ display: none !important; }}
 
-            /* Oculta o 'app' de forma agressiva */
-            [data-testid="stSidebarNav"] > ul:first-child {{ margin-top: 0 !important; }}
-            [data-testid="stSidebarNav"] div[data-testid="stSidebarNavItems"] + div {{ display: none !important; }}
-            /* Tenta pegar o título 'app' por posição se ele for um elemento solto */
-            [data-testid="stSidebarContent"] > div:first-child > div:first-child > div:first-child {{ display: none !important; }}
-
-            /* --- SIDEBAR TRAVADA --- */
+            /* Sidebar Travada */
             [data-testid="stSidebar"] {{
                 min-width: 300px !important; max-width: 300px !important; width: 300px !important;
                 background-color: white !important; border-right: 1px solid #f0f0f0 !important;
             }}
             div[data-testid="stSidebar"] > div:last-child {{ display: none !important; }}
 
-            /* --- CABEÇALHO CUSTOMIZADO --- */
-            [data-testid="stSidebarNav"] {{
-                background-image: url('{LOGO_URL}'); background-repeat: no-repeat;
-                background-position: center 20px; background-size: 100px auto;
-                padding-top: 180px !important; /* Espaço para logo e título */
-            }}
+            /* Cabeçalho */
             [data-testid="stSidebarNav"]::before {{
-                content: "Job Architecture"; display: block; text-align: center;
-                color: {TEXT_BLACK} !important; font-size: 1.5rem; font-weight: 900;
-                margin-top: -50px; margin-bottom: 30px;
-                border-bottom: 2px solid #f0f2f6; padding-bottom: 20px;
+                content: "Job Architecture"; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+                height: 180px; background-image: url('{LOGO_URL}'); background-repeat: no-repeat; background-position: center 10px; background-size: 100px auto;
+                color: {TEXT_BLACK} !important; font-size: 1.5rem; font-weight: 900; padding-bottom: 40px; margin-bottom: 20px; border-bottom: 2px solid #f0f2f6;
             }}
 
-            /* --- MENU NUCLEAR --- */
-            /* 1. Reseta TODOS os itens do menu para o estilo base (inativo) */
-            [data-testid="stSidebarNav"] a, [data-testid="stSidebarNav"] li {{
+            /* --- MENU DE NAVEGAÇÃO --- */
+            [data-testid="stSidebarNav"] > ul {{ padding: 0 15px !important; }}
+
+            /* Reset dos Links */
+            [data-testid="stSidebarNav"] li a {{
                 background-color: transparent !important;
                 color: {TEXT_GRAY} !important;
                 font-weight: 500 !important;
-                border: none !important;
-            }}
-            /* Transforma os links em pílulas */
-            [data-testid="stSidebarNav"] a {{
-                border-radius: 999px !important;
+                border-radius: 999px !important; /* Pílula */
                 padding: 10px 24px !important;
-                margin: 0px 10px 5px 10px !important; /* Margens laterais para não colar na borda */
-            }}
-            
-            /* 2. Oculta Emojis */
-            [data-testid="stSidebarNav"] a span:first-child {{ display: none !important; }}
-            [data-testid="stSidebarNav"] a span:last-child {{ display: inline-block !important; }}
-
-            /* 3. Hover (apenas texto azul) */
-            [data-testid="stSidebarNav"] a:hover {{
-                color: {SIG_SKY} !important;
-            }}
-            [data-testid="stSidebarNav"] a:hover span {{
-                color: {SIG_SKY} !important;
+                margin-bottom: 5px !important;
+                transition: none !important;
+                border: none !important;
+                text-decoration: none !important;
             }}
 
-            /* 4. ATIVO - FORÇA BRUTA PARA A PÍLULA AZUL */
-            /* Seletor que busca qualquer link que tenha o atributo de página atual */
-            a[aria-current="page"],
-            a[data-active="true"] {{
+            /* Remove emojis */
+            [data-testid="stSidebarNav"] li a span:first-child {{ display: none !important; }}
+            [data-testid="stSidebarNav"] li a span:last-child {{ display: inline-block !important; }}
+
+            /* Hover (SÓ TEXTO AZUL) */
+            [data-testid="stSidebarNav"] li a:hover {{
+                background-color: transparent !important;
+                color: {SIG_SKY} !important;
+            }}
+            [data-testid="stSidebarNav"] li a:hover span {{ color: {SIG_SKY} !important; }}
+
+            /* --- ITEM ATIVO (PÍLULA AZUL FORÇADA) --- */
+            /* Usa seletor mais específico para garantir precedência */
+            ul[data-testid="stSidebarNavItems"] li a[aria-current="page"],
+            [data-testid="stSidebarNav"] a[data-active="true"] {{
                 background-color: {SIG_SKY} !important;
+                color: #ffffff !important;
+                font-weight: 700 !important;
                 box-shadow: none !important;
             }}
-            /* Força a cor do texto dentro da pílula ativa */
-            a[aria-current="page"] span,
-            a[data-active="true"] span {{
-                color: white !important;
-                font-weight: 900 !important;
+            ul[data-testid="stSidebarNavItems"] li a[aria-current="page"] span,
+            [data-testid="stSidebarNav"] a[data-active="true"] span {{
+                color: #ffffff !important;
             }}
 
         </style>
