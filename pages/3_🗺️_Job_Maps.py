@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (VERSÃO ESTÁVEL E LIMPA)
+# CSS COMPLETO
 # ===========================================================
 st.markdown("""
 <style>
@@ -63,12 +63,19 @@ h1 {
   box-shadow: 0 0 15px rgba(0,0,0,0.05);
 }
 
+/* Ajuste para quando estiver em tela cheia */
+.map-wrapper:fullscreen {
+  height: 100vh !important;
+  border: none !important;
+  padding: 20px;
+  background-color: white; /* Garante fundo branco em fullscreen */
+}
+
 .jobmap-grid {
   display: grid;
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
-  /* Garante alturas fixas e iguais para todas as linhas de conteúdo */
   grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
   grid-auto-rows: 110px !important;
   align-content: start !important;
@@ -183,10 +190,8 @@ h1 {
 
 .job-card {
   background: #f9f9f9;
-  /* Define a largura da borda, mas a cor vem do Python */
   border-left-width: 5px !important;
   border-left-style: solid !important;
-  /* Cor fallback caso o Python falhe */
   border-left-color: var(--gray-line);
   border-radius: 6px;
   padding: 6px 8px;
@@ -236,6 +241,28 @@ h1 {
   pointer-events: none;
 }
 
+/* Botão de Fullscreen Customizado */
+.fullscreen-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    color: #333;
+    border: 1px solid #dadada;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 28px; /* Alinha visualmente com os selectboxes */
+}
+.fullscreen-btn:hover {
+    background-color: #f0f2f6;
+    border-color: var(--blue);
+    color: var(--blue);
+}
+
 @media (max-width: 1500px) { .block-container { zoom: 0.9; } }
 </style>
 """, unsafe_allow_html=True)
@@ -266,7 +293,7 @@ df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True)
 # ===========================================================
 st.markdown("<div class='topbar'>", unsafe_allow_html=True)
 section("🗺️ Job Map")
-col1, col2 = st.columns([2, 2])
+col1, col2, col3 = st.columns([2, 2, 1]) # Coluna 3 adicionada para o botão
 
 preferred_order = [
     "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
@@ -291,6 +318,17 @@ paths_options = ["Todas"] + sorted([p for p in available_paths if pd.notna(p) an
 
 with col2:
     path_filter = st.selectbox("Trilha de Carreira", paths_options)
+
+with col3:
+    # Botão HTML que aciona o Fullscreen via JavaScript
+    st.markdown(
+        """
+        <button class="fullscreen-btn" onclick="document.getElementById('main-map-container').requestFullscreen()">
+            ⛶ Tela Cheia
+        </button>
+        """,
+        unsafe_allow_html=True
+    )
 
 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -433,9 +471,10 @@ map_cor_fam = {f: palette_pairs[i % len(palette_pairs)][0] for i, f in enumerate
 map_cor_sub = {f: palette_pairs[i % len(palette_pairs)][1] for i, f in enumerate(families_order)}
 
 # ===========================================================
-# RENDERIZAÇÃO FINAL
+# RENDERIZAÇÃO FINAL (COM ID PARA FULLSCREEN)
 # ===========================================================
-html = ["<div class='map-wrapper'><div class='jobmap-grid' style='{grid_template}'>".format(grid_template=grid_template)]
+# ADICIONADO ID 'main-map-container' AQUI
+html = ["<div id='main-map-container' class='map-wrapper'><div class='jobmap-grid' style='{grid_template}'>".format(grid_template=grid_template)]
 html.append("<div class='gg-header'>GG</div>")
 
 current_col = 2
