@@ -1,29 +1,16 @@
-# -*- coding: utf-8 -*-
-# pages/4_🗺️_Job_Maps.py
-
 import streamlit as st
-import pandas as pd
-import streamlit.components.v1 as components
-from utils.data_loader import load_excel_data
-from utils.ui_components import section, lock_sidebar
+# Outros imports necessários
 from utils.ui import setup_sidebar
 
-# ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA E ESTADO (PRIMEIRO COMANDO ST)
-# ===========================================================
-st.set_page_config(layout="wide", page_title="🗺️ Job Map")
+# 1. Configuração da Página (SEMPRE EM PRIMEIRO se existir)
+st.set_page_config(
+    page_title="Job Architecture",
+    page_icon="🏛️",
+    layout="wide"
+)
 
-# ===========================================================
-# 2. APLICA VISUAL
-# ===========================================================
+# 2. IMEDIATAMENTE INJETA O CSS
 setup_sidebar()
-lock_sidebar()
-
-if 'fullscreen' not in st.session_state:
-    st.session_state.fullscreen = False
-
-def toggle_fullscreen():
-    st.session_state.fullscreen = not st.session_state.fullscreen
 
 # ===========================================================
 # 3. CSS BASE (ADAPTADO PARA O NOVO TEMA)
