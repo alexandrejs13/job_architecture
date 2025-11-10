@@ -32,15 +32,8 @@ st.markdown("""
     padding-right: 2rem !important;
 }
 
-.topbar {
-    position: sticky;
-    top: 0;
-    z-index: 200;
-    background: white;
-    padding: 15px 0 15px 0;
-    border-bottom: 2px solid var(--blue);
-    margin-bottom: 25px;
-}
+/* REMOVIDO: .topbar que criava a linha e o padding extra */
+
 h1 {
     color: var(--blue);
     font-weight: 900 !important;
@@ -49,6 +42,8 @@ h1 {
     align-items: center;
     gap: 10px;
     margin: 0 !important;
+    padding-top: 15px; /* Adicionado um padding top para compensar a remoção do topbar */
+    margin-bottom: 25px !important; /* Mantém o espaçamento inferior */
 }
 
 /* GRID DE COMPARAÇÃO DINÂMICO */
@@ -134,9 +129,7 @@ def safe_get(row, key, default="-"):
 
 def format_paragraphs(text):
     if not text or text == "-": return "-"
-    # Quebra por novas linhas, bullets ou retornos de carro
     parts = re.split(r"\n+|•|\r", text.strip())
-    # Reconstrói com tags <p> para melhor espaçamento
     return "".join(f"<p class='jp-p'>• {html.escape(p.strip())}</p>" for p in parts if len(p.strip()) > 1)
 
 # ===========================================================
@@ -144,9 +137,8 @@ def format_paragraphs(text):
 # ===========================================================
 df = load_job_profile_df()
 
-st.markdown("<div class='topbar'>", unsafe_allow_html=True)
+# REMOVIDO O DIV TOPBAR QUE ENVOLVIA A SECTION
 section("📋 Job Profile Description")
-st.markdown("</div>", unsafe_allow_html=True)
 
 # --- FILTROS EM 3 COLUNAS ---
 c1, c2, c3 = st.columns([1.2, 1.5, 1])
@@ -167,7 +159,6 @@ with c3:
 
 # --- MULTISELECT DE CARGOS ---
 career_df_sorted = career_df.sort_values(by="Global Grade", ascending=False)
-# Cria labels amigáveis: "GG15 - Nome do Cargo"
 career_df_sorted["Option Label"] = career_df_sorted.apply(
     lambda x: f"GG{int(float(x['Global Grade']))} — {x['Job Profile']}" if str(x['Global Grade']).replace('.0','').isdigit() else x['Job Profile'], 
     axis=1
@@ -183,14 +174,12 @@ selected_labels = st.multiselect(
 # RENDERIZAÇÃO DINÂMICA
 # ===========================================================
 if selected_labels:
-    # Recupera os dados completos das linhas selecionadas
     selected_rows = []
     for label in selected_labels:
         row = career_df_sorted[career_df_sorted["Option Label"] == label].iloc[0]
         selected_rows.append(row)
 
     num_cols = len(selected_rows)
-    # Define o grid dinâmico com base no número de seleções
     grid_style = f"grid-template-columns: repeat({num_cols}, 1fr);"
     
     grid_html = f'<div class="comparison-grid" style="{grid_style}">'
@@ -223,7 +212,6 @@ if selected_labels:
         </div>"""
 
     # --- 3. SEÇÕES DE CONTEÚDO (ALINHADAS) ---
-    # Lista de tuplas: (Emoji, Título, Nome da Coluna no DataFrame, Cor da Borda)
     sections = [
         ("🧭", "Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
         ("🧠", "Job Profile Description", "Job Profile Description", "#e91e63"),
@@ -236,7 +224,6 @@ if selected_labels:
     for emoji, title, col_name, color in sections:
         for row in selected_rows:
             raw_text = safe_get(row, col_name)
-            # Formata o texto com bullets se não for vazio
             formatted_text = format_paragraphs(raw_text) if raw_text != "-" else "-"
             
             grid_html += f"""
