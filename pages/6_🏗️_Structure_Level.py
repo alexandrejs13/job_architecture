@@ -1,17 +1,15 @@
 import streamlit as st
-import pandas as pd
-from utils.data_loader import load_level_structure_df
-# Importa a nossa função de visual global
+# Outros imports necessários
 from utils.ui import setup_sidebar
 
-# ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA (TEM QUE SER O PRIMEIRO COMANDO ST)
-# ===========================================================
-st.set_page_config(page_title="🏗️ Structure Level", layout="wide")
+# 1. Configuração da Página (SEMPRE EM PRIMEIRO se existir)
+st.set_page_config(
+    page_title="Job Architecture",
+    page_icon="🏛️",
+    layout="wide"
+)
 
-# ===========================================================
-# 2. APLICA O VISUAL GLOBAL
-# ===========================================================
+# 2. IMEDIATAMENTE INJETA O CSS
 setup_sidebar()
 
 # ===========================================================
