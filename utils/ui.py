@@ -55,14 +55,16 @@ def setup_sidebar():
             [data-testid="stSidebarNav"] li a span:first-child {{ display: none !important; }}
             [data-testid="stSidebarNav"] li a span:last-child {{ display: inline-block !important; }}
 
-            /* Hover (Apenas muda a cor do texto) */
-            [data-testid="stSidebarNav"] li a:hover,
+            /* Hover (Apenas muda a cor do texto para azul) */
+            [data-testid="stSidebarNav"] li a:hover {{
+                background-color: transparent !important;
+                color: {SIG_SKY} !important;
+            }}
             [data-testid="stSidebarNav"] li a:hover span {{
                 color: {SIG_SKY} !important;
-                background-color: transparent !important;
             }}
 
-            /* ITEM ATIVO (Pílula Azul) */
+            /* ITEM ATIVO (Pílula Azul e Texto Branco) */
             ul[data-testid="stSidebarNavItems"] li a[aria-current="page"],
             [data-testid="stSidebarNav"] a[data-active="true"] {{
                 background-color: {SIG_SKY} !important;
@@ -70,7 +72,11 @@ def setup_sidebar():
                 font-weight: 700 !important;
                 box-shadow: 0 2px 4px rgba(20, 94, 252, 0.2) !important;
             }}
-            /* Garante texto branco no item ativo mesmo com hover */
+            /* Garante que o texto continue branco mesmo se passar o mouse sobre o item ativo */
+            ul[data-testid="stSidebarNavItems"] li a[aria-current="page"]:hover,
+            [data-testid="stSidebarNav"] a[data-active="true"]:hover {{
+                 color: white !important;
+            }}
             ul[data-testid="stSidebarNavItems"] li a[aria-current="page"]:hover span,
             [data-testid="stSidebarNav"] a[data-active="true"]:hover span {{
                 color: white !important;
@@ -82,8 +88,7 @@ def setup_sidebar():
 
 def section(title):
     """
-    Cria um cabeçalho de secção padronizado para as páginas.
-    Uso: section("Título da Secção")
+    Renderiza um cabeçalho de secção padrão.
     """
-    st.markdown(f"<h1 style='color: {TEXT_BLACK}; font-size: 2.2rem; margin-bottom: 0;'>{title}</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h1 style='color: {TEXT_BLACK};'>{title}</h1>", unsafe_allow_html=True)
     st.markdown("---")
