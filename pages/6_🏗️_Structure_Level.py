@@ -5,12 +5,12 @@ from utils.data_loader import load_level_structure_df
 from utils.ui import setup_sidebar
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA
+# 1. CONFIGURAÇÃO DE PÁGINA (TEM QUE SER O PRIMEIRO COMANDO ST)
 # ===========================================================
 st.set_page_config(page_title="🏗️ Structure Level", layout="wide")
 
 # ===========================================================
-# 2. APLICA O VISUAL GLOBAL (Barra Branca + Logo Azul)
+# 2. APLICA O VISUAL GLOBAL
 # ===========================================================
 setup_sidebar()
 
@@ -19,7 +19,7 @@ setup_sidebar()
 # ===========================================================
 st.markdown("""
 <style>
-h1 { color: #145efc; font-weight: 800; } /* Atualizado para o Azul SIG Sky exato */
+    /* O estilo h1 agora é controlado globalmente pelo utils/ui.py */
 </style>
 """, unsafe_allow_html=True)
 
