@@ -55,8 +55,7 @@ def setup_sidebar():
             /* --- SIDEBAR TRAVADA --- */
             [data-testid="stSidebar"] {{
                 min-width: 300px !important; max-width: 300px !important; width: 300px !important;
-                background-color: white !important;
-                border-right: 1px solid #f0f0f0;
+                background-color: white !important; border-right: 1px solid #f0f0f0;
             }}
             div[data-testid="stSidebar"] > div:last-child {{ display: none; }}
 
@@ -67,43 +66,53 @@ def setup_sidebar():
                 height: 180px;
                 background-image: url('{LOGO_URL}'); background-repeat: no-repeat;
                 background-position: center 10px; background-size: 100px auto;
-                color: {TEXT_BLACK} !important; /* AJUSTE: Título PRETO */
-                font-size: 1.5rem; font-weight: 900;
-                padding-bottom: 40px; margin-bottom: 20px;
-                border-bottom: 2px solid #f0f2f6;
+                color: {TEXT_BLACK} !important; font-size: 1.5rem; font-weight: 900;
+                padding-bottom: 40px; margin-bottom: 20px; border-bottom: 2px solid #f0f2f6;
             }}
 
-            /* --- MENU DE NAVEGAÇÃO (PÍLULAS) --- */
+            /* --- MENU DE NAVEGAÇÃO --- */
             [data-testid="stSidebarNav"] > ul {{ padding: 0 15px; }}
             
-            /* Links Normais (Inativos) */
+            /* REMOVE EMOJIS DO MENU */
+            /* Oculta o primeiro span dentro do link, que geralmente contém o emoji */
+            [data-testid="stSidebarNav"] a span:first-child {{
+                display: none !important;
+            }}
+            /* Garante que o texto do link (segundo span) fique visível e alinhado */
+            [data-testid="stSidebarNav"] a span:last-child {{
+                display: inline-block !important;
+            }}
+
+            /* LINKS NORMAIS (Inativos) */
             [data-testid="stSidebarNav"] a {{
                 color: {TEXT_GRAY} !important;
                 font-weight: 500 !important;
-                border-radius: 50px !important; /* Pílula */
+                border-radius: 50px !important; /* Forma de Pílula */
                 padding: 8px 20px !important;
                 margin-bottom: 5px;
-                transition: none !important; /* AJUSTE: Remove transição para parar 'tilt' */
-                background-color: transparent !important; /* Garante fundo transparente */
-                border: 1px solid transparent; /* Reserva espaço da borda */
+                transition: none !important;
+                background-color: transparent !important;
             }}
             
-            /* Hover (Passar o mouse) - SÓ MUDA A COR DO TEXTO */
+            /* HOVER (Passar o mouse) - Apenas texto azul, SEM pílula de fundo */
             [data-testid="stSidebarNav"] a:hover {{
-                background-color: transparent !important; /* AJUSTE: Sem pílula no hover */
-                color: {SIG_SKY} !important; /* AJUSTE: Apenas texto fica azul */
+                background-color: transparent !important;
+                color: {SIG_SKY} !important;
+            }}
+            [data-testid="stSidebarNav"] a:hover span {{
+                color: {SIG_SKY} !important;
             }}
 
-            /* --- ITEM ATIVO (Página Atual) --- */
-            [data-testid="stSidebarNav"] a[aria-current="page"] {{
-                background-color: {SIG_SKY} !important; /* Azul SIG Sky (#145efc) */
-                color: white !important;                 /* Texto Branco */
+            /* --- ITEM ATIVO (Página Atual) - AQUI A PÍLULA AZUL APARECE --- */
+            [data-testid="stSidebarNav"] a[aria-current="page"],
+            [data-testid="stSidebarNav"] a[data-active="true"] {{
+                background-color: {SIG_SKY} !important; /* Fundo AZUL SIG SKY */
+                color: white !important;                 /* Texto BRANCO */
                 font-weight: 700 !important;
-                /* AJUSTE: Remove sombra para parar 'tilt' */
-                box-shadow: none !important;
             }}
-            /* Força o span interno (onde fica o texto real) a ser branco também */
-            [data-testid="stSidebarNav"] a[aria-current="page"] span {{
+            /* Garante que o texto dentro da pílula ativa seja branco */
+            [data-testid="stSidebarNav"] a[aria-current="page"] span,
+            [data-testid="stSidebarNav"] a[data-active="true"] span {{
                 color: white !important;
             }}
 
