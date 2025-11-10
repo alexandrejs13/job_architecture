@@ -12,65 +12,70 @@ def setup_sidebar():
             footer {{visibility: hidden;}}
             .st-emotion-cache-h5rgjs {{display: none;}}
             #MainMenu {{visibility: hidden;}}
-            /* Oculta o primeiro item do menu (geralmente 'app' ou página inicial duplicada) */
+            /* Oculta o primeiro item do menu (geralmente 'app') */
             [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{
                 display: none !important;
             }}
 
-            /* --- 2. CONTAINER DO CABEÇALHO (LOGO + TÍTULO) --- */
-            /* Usamos o ::before do container de navegação para criar toda a área do cabeçalho */
+            /* --- 2. TRAVAR BARRA LATERAL (IMPEDE REDIMENSIONAMENTO) --- */
+            [data-testid="stSidebar"] {{
+                min-width: 300px !important;
+                max-width: 300px !important;
+                width: 300px !important;
+            }}
+            /* Esconde a alça de redimensionamento */
+            div[data-testid="stSidebar"] > div:last-child {{
+                display: none;
+            }}
+
+            /* --- 3. CONTAINER DO CABEÇALHO (LOGO + TÍTULO) --- */
             [data-testid="stSidebarNav"]::before {{
-                content: "Job Architecture"; /* Texto do Título */
+                content: "Job Architecture";
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                justify-content: center;
-                /* Altura fixa para o cabeçalho. Ajuste se quiser maior/menor */
-                height: 180px;
-                /* Imagem de fundo (o Logo) */
+                /* 'flex-end' empurra o conteúdo para baixo, e o padding o traz de volta para cima */
+                justify-content: flex-end;
+                height: 180px; /* Altura total da área do cabeçalho */
                 background-image: url('{LOGO_URL}');
                 background-repeat: no-repeat;
-                background-position: center 30px; /* Posiciona o logo 30px do topo do container */
-                background-size: 120px auto; /* Tamanho do logo */
-                /* Estilo do Texto */
+                /* Centraliza o logo horizontalmente e posiciona a 20px do topo */
+                background-position: center 20px;
+                background-size: 120px auto;
                 color: #145efc; /* Azul SIG */
                 font-size: 1.5rem;
                 font-weight: 900;
-                padding-top: 100px; /* Empurra o texto para baixo do logo */
-                margin-bottom: 20px; /* Espaço entre o cabeçalho e o menu */
-                border-bottom: 2px solid #f0f2f6; /* Linha divisória */
+                /* Ajuste este padding para subir ou descer o texto em relação à linha divisória */
+                padding-bottom: 30px;
+                margin-bottom: 20px; /* Espaço entre a linha divisória e o menu */
+                border-bottom: 2px solid #f0f2f6;
             }}
 
-            /* --- 3. ESTILO DA BARRA E MENU --- */
+            /* --- 4. ESTILO DA BARRA E MENU --- */
             [data-testid="stSidebar"] {{
                 background-color: white !important;
                 border-right: 1px solid #e0e0e0;
             }}
-            /* Ajuste fino para o menu não colar na linha divisória */
             [data-testid="stSidebarNav"] > ul {{
                 padding-top: 10px;
             }}
-            /* Links do Menu - Estado Normal */
+            /* Links do Menu */
             [data-testid="stSidebarNav"] a {{
                 color: #333333 !important;
                 font-weight: 500 !important;
             }}
-            /* Links do Menu - Hover */
             [data-testid="stSidebarNav"] a:hover {{
                 background-color: #eef6fc !important;
                 color: #145efc !important;
             }}
-            /* Links do Menu - Ativo (Página Atual) */
             [data-testid="stSidebarNav"] a[aria-current="page"] {{
                 background-color: #145efc !important;
                 color: white !important;
                 font-weight: 700 !important;
             }}
-            /* Garante que o texto do item ativo fique branco */
             [data-testid="stSidebarNav"] a[aria-current="page"] span {{
                 color: white !important;
             }}
-
         </style>
         """,
         unsafe_allow_html=True
