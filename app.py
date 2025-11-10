@@ -1,4 +1,3 @@
-st.sidebar.image("assets/logo.png", use_column_width=True)import streamlit as st
 st.set_page_config(
     page_title="Job Architecture Explorer",
     page_icon="🧭",
