@@ -1,99 +1,86 @@
 import streamlit as st
 
 def setup_sidebar():
-    # URL direta da imagem (RAW) para carregar corretamente
+    # URL direta da imagem (RAW)
     LOGO_URL = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
 
     st.markdown(
         f"""
         <style>
-            /* Esconde elementos padrão indesejados */
+            /* --- 1. ESCONDER ELEMENTOS INDESEJADOS --- */
             header {{visibility: hidden;}}
             footer {{visibility: hidden;}}
-            .st-emotion-cache-h5rgjs {{visibility: hidden; height: 0;}} /* Esconde 'Made with Streamlit' */
-            [data-testid="stSidebarNav"] h3 {{display: none !important;}} /* Esconde o título 'app' do menu */
+            #MainMenu {{visibility: hidden;}}
+            .st-emotion-cache-h5rgjs {{visibility: hidden; height: 0;}} /* 'Made with Streamlit' */
 
-            /* --- ESTILO DA BARRA LATERAL --- */
+            /* Esconde especificamente o item 'app' do menu.
+               Geralmente é o primeiro <li> dentro da navegação. */
+            [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{
+                display: none !important;
+            }}
+
+            /* --- 2. ESTILO BASE DA BARRA LATERAL --- */
             [data-testid="stSidebar"] {{
                 background-color: white !important;
                 border-right: 1px solid #e0e0e0;
             }}
-
-            /* --- CABEÇALHO CUSTOMIZADO (LOGO + TÍTULO) --- */
-            .custom-sidebar-header {{
-                display: flex;
-                flex-direction: column;
-                align-items: flex-start;
-                padding: 20px 15px 10px 15px;
-                background-color: white;
-                position: sticky;
-                top: 0;
-                z-index: 100;
-                border-bottom: 2px solid #f0f2f6;
-                margin-bottom: 10px;
-            }}
-            .logo-container {{
-                display: flex;
-                align-items: center;
-                margin-bottom: 10px;
-            }}
-            .logo-container img {{
-                height: 80px !important; /* Altura dobrada conforme solicitado */
-                width: auto !important;  /* Mantém a proporção correta */
-                object-fit: contain;
-            }}
-            .app-title {{
-                color: #145efc; /* Azul SIG Sky */
-                font-size: 1.5rem;
-                font-weight: 900;
-                margin: 0 !important;
-                line-height: 1.2;
+            /* Remove padding padrão do topo para termos controle total */
+            [data-testid="stSidebar"] .block-container {{
+                padding-top: 0rem;
             }}
 
-            /* --- MENU DE NAVEGAÇÃO --- */
+            /* --- 3. INJEÇÃO DO LOGO NO TOPO (CSS TRICK) --- */
+            /* Isso cria um elemento virtual ANTES do menu de navegação */
+            [data-testid="stSidebarNav"]::before {{
+                content: "";
+                display: block;
+                margin: 20px auto 20px auto; /* Espaçamento acima e abaixo do logo */
+                width: 120px;  /* Largura similar ao site SIG.biz */
+                height: 60px;  /* Altura estimada para manter proporção */
+                background-image: url('{LOGO_URL}');
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+            }}
+
+            /* Adiciona o Título "Job Architecture" logo abaixo do logo virtual */
+            [data-testid="stSidebarNav"]::after {{
+                 content: "Job Architecture";
+                 display: block;
+                 text-align: center;
+                 font-weight: 900;
+                 font-size: 1.4rem;
+                 color: #145efc; /* Azul SIG */
+                 margin-bottom: 20px; /* Espaço entre o título e o início do menu */
+                 border-bottom: 2px solid #f0f2f6;
+                 padding-bottom: 15px;
+            }}
+
+            /* --- 4. ESTILIZAÇÃO DO MENU --- */
             [data-testid="stSidebarNav"] {{
-                padding-top: 0px;
+                padding-top: 20px; /* Garante espaço para o logo injetado acima */
             }}
-            [data-testid="stSidebarNav"] ul {{
-                padding-top: 10px;
-            }}
-            /* Links normais */
+             /* Links normais */
             [data-testid="stSidebarNav"] a, [data-testid="stSidebarNav"] span {{
                 color: #333333 !important;
                 font-weight: 500 !important;
             }}
-            /* Hover (passar o mouse) */
+            /* Hover */
             [data-testid="stSidebarNav"] a:hover {{
-                background-color: #eef6fc !important; /* Fundo azul bem clarinho */
-                color: #145efc !important; /* Texto azul SIG */
+                background-color: #eef6fc !important;
+                color: #145efc !important;
             }}
-            /* Item Ativo (página atual) - Tenta pegar várias classes possíveis do Streamlit */
-            [data-testid="stSidebarNav"] a[aria-current="page"],
-            [data-testid="stSidebarNav"] a[data-active="true"] {{
+            /* Item Ativo */
+            [data-testid="stSidebarNav"] a[aria-current="page"] {{
                 background-color: #145efc !important;
                 color: white !important;
                 font-weight: 700 !important;
             }}
-            /* Garante que o texto dentro do item ativo também fique branco */
-            [data-testid="stSidebarNav"] a[aria-current="page"] span,
-            [data-testid="stSidebarNav"] a[data-active="true"] span {{
+            [data-testid="stSidebarNav"] a[aria-current="page"] span {{
                 color: white !important;
             }}
 
         </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-    # Injeta o cabeçalho customizado no topo da sidebar
-    st.sidebar.markdown(
-        f"""
-        <div class="custom-sidebar-header">
-            <div class="logo-container">
-                <img src="{LOGO_URL}" alt="SIG Logo">
-            </div>
-            <div class="app-title">Job Architecture</div>
-        </div>
         """,
         unsafe_allow_html=True
     )
