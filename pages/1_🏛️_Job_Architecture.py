@@ -4,19 +4,21 @@ from utils.ui_components import section
 from utils.ui import setup_sidebar
 
 # ===========================================================
-# CONFIGURAÇÃO DA PÁGINA
+# 1. CONFIGURAÇÃO DA PÁGINA
 # ===========================================================
 st.set_page_config(layout="wide", page_title="🏛️ Job Architecture")
 
-# --- APLICA O VISUAL GLOBAL (BARRA LATERAL PRETA + LOGO) ---
-# Isso deve vir logo após o set_page_config
+# ===========================================================
+# 2. APLICA O VISUAL GLOBAL
+# ===========================================================
+# Isso aplica a barra lateral branca, o logo azul e os ajustes de menu.
+# O fundo "Sand 1" já está garantido pelo arquivo .streamlit/config.toml
 setup_sidebar()
 
 # ===========================================================
-# ESTILOS DA PÁGINA (Conteúdo Principal)
+# 3. ESTILOS ESPECÍFICOS DA PÁGINA
 # ===========================================================
-# Mantive seus estilos originais para o conteúdo principal,
-# pois eles não conflitam com a nossa sidebar.
+# Mantive seus estilos de texto originais. Eles devem contrastar bem com o fundo Sand.
 st.markdown("""
 <style>
 .block-container {
@@ -27,7 +29,7 @@ h1 { /* Título principal da 'section' */
   color: #1E56E0;
   font-weight: 800;
   font-size: 2.2rem !important;
-  border-bottom: 2px solid #f0f0f0;
+  border-bottom: 2px solid #d0d0d0; /* Ajustei levemente a cor da borda para o fundo Sand */
   padding-bottom: 10px;
 }
 h2 { /* Subtítulos principais (##) */
@@ -36,7 +38,7 @@ h2 { /* Subtítulos principais (##) */
   font-size: 1.8rem !important;
   margin-top: 2.5rem;
   margin-bottom: 1rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #d0d0d0;
   padding-bottom: 5px;
 }
 h3 { /* Subtítulos secundários (###) */
@@ -54,10 +56,10 @@ p, li { /* Texto principal e itens de lista */
 /* Estiliza o st.info como um callout */
 div[data-testid="stAlert"] {
     border: 1px solid #1E56E0;
-    background-color: #f0f5ff;
+    background-color: #e8f0fe; /* Ajustei levemente para combinar melhor com o fundo Sand */
     border-radius: 8px;
 }
-div[data-testid="stAlert"] p { /* Garante que o texto dentro do alerta também seja estilizado */
+div[data-testid="stAlert"] p {
     color: #001f5c;
     font-size: 1.05rem;
 }
@@ -65,7 +67,7 @@ div[data-testid="stAlert"] p { /* Garante que o texto dentro do alerta também s
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# TÍTULO E CONTEÚDO
+# 4. TÍTULO E CONTEÚDO
 # ===========================================================
 
 section("🏛️ Job Architecture")
