@@ -8,9 +8,12 @@ import os
 FONT_REGULAR = "assets/fonts/PPSIGFlow-Regular.ttf"
 FONT_SEMIBOLD = "assets/fonts/PPSIGFlow-SemiBold.ttf"
 LOGO_URL = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
-SIG_SKY = "#145efc"
-TEXT_BLACK = "#000000"
-TEXT_GRAY = "#333333"
+
+# --- CORES DA PALETA SIG ---
+SIG_SKY = "#145efc"    # Azul Principal (Pantone 2387 C)
+SIG_SAND = "#f2efeb"   # Bege Claro para Cards
+TEXT_BLACK = "#000000" # Preto Puro para Títulos
+TEXT_GRAY = "#333333"  # Cinza Escuro para Texto Corrido
 
 # ==============================================================================
 # 2. AUXILIARES
@@ -21,18 +24,12 @@ def get_font_base64(file_path):
     return base64.b64encode(data).decode("utf-8")
 
 # ==============================================================================
-# 3. SETUP UI (VERSÃO 100% ESTÁVEL - SEM FLASH)
+# 3. SETUP UI (CSS GLOBAL DEFINITIVO)
 # ==============================================================================
 def setup_sidebar():
-    
-    # --- 1. CABEÇALHO NATIVO (ZERO FLASH) ---
-    # Isso usa a função oficial do Streamlit. É estável.
-    # Ele coloca o logo no topo, antes do menu.
-    st.logo(LOGO_URL)
-
-    # --- 2. FONTES ---
     font_reg_b64 = get_font_base64(FONT_REGULAR)
     font_sb_b64 = get_font_base64(FONT_SEMIBOLD)
+
     font_css = ""
     if font_reg_b64 and font_sb_b64:
         font_css = f"""
@@ -41,55 +38,80 @@ def setup_sidebar():
         html, body, [class*="css"] {{ font-family: 'PP SIG Flow', sans-serif !important; }}
         """
 
-    # --- 3. CSS MÍNIMO E ESTÁVEL ---
-    # Apenas esconde elementos e ajusta fontes, sem mudar o layout (para não piscar)
     st.markdown(
         f"""
         <style>
             {font_css}
-
-            /* --- TIPOGRAFIA --- */
-            h1, h2, h3, h4, h5, h6 {{ color: {TEXT_BLACK} !important; font-weight: 700 !important; }}
-            
-            /* --- LIMPEZA --- */
-            header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ display: none !important; }}
-            
-            /* OCULTA O PRIMEIRO ITEM ('app') */
+            /* Oculta elementos nativos */
+            header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ visibility: hidden !important; }}
             [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{ display: none !important; }}
-            
-            /* OCULTA EMOJIS */
-            [data-testid="stSidebarNav"] a span:first-child {{ display: none !important; }}
-            [data-testid="stSidebarNav"] a span:last-child {{ display: inline-block !important; }}
 
-            /* --- TRAVA SIDEBAR --- */
+            /* Sidebar Travada */
             [data-testid="stSidebar"] {{
                 min-width: 300px !important; max-width: 300px !important; width: 300px !important;
-                background-color: white !important; border-right: 1px solid #f0f0f0;
+                background-color: white !important; border-right: 1px solid #f0f0f0 !important;
             }}
-            div[data-testid="stSidebar"] > div:last-child {{ display: none; }} /* Esconde alça */
+            div[data-testid="stSidebar"] > div:last-child {{ display: none !important; }}
 
-            /* --- AJUSTE FINO DO LOGO NATIVO --- */
-            [data-testid="stSidebarLogo"] {{
-                padding: 2.5rem 0; /* Centraliza verticalmente o logo */
-                width: 100%;
-                border-bottom: 2px solid #f0f2f6;
-            }}
-            [data-testid="stSidebarLogo"] img {{
-                width: 100px; /* Tamanho elegante */
-                margin: 0 auto;
+            /* Cabeçalho */
+            [data-testid="stSidebarNav"]::before {{
+                content: "Job Architecture"; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+                height: 180px; background-image: url('{LOGO_URL}'); background-repeat: no-repeat; background-position: center 10px; background-size: 100px auto;
+                color: {TEXT_BLACK} !important; font-size: 1.5rem; font-weight: 900; padding-bottom: 40px; margin-bottom: 20px; border-bottom: 2px solid #f0f2f6;
             }}
 
-            /* --- MENU NATIVO (Hover sutil) --- */
-            [data-testid="stSidebarNav"] a:hover span {{
-                color: {SIG_SKY} !important;
+            /* --- MENU DE NAVEGAÇÃO --- */
+            [data-testid="stSidebarNav"] > ul {{ padding: 0 15px !important; }}
+
+            /* Reset dos Links */
+            [data-testid="stSidebarNav"] li a {{
+                background-color: transparent !important;
+                color: {TEXT_BLACK} !important; /* Cor do texto padrão: Preto */
+                font-weight: 500 !important;
+                border-radius: 999px !important; /* Pílula */
+                padding: 10px 24px !important;
+                margin-bottom: 5px !important;
+                transition: color 0.2s, background-color 0.2s !important; /* Adicionado transição para hover */
+                border: none !important;
+                text-decoration: none !important;
             }}
-            
-            /* Remove o padding excessivo que o menu nativo tem */
-            [data-testid="stSidebarNav"] {{
-                padding-top: 1rem !important;
+
+            /* Remove emojis */
+            [data-testid="stSidebarNav"] li a span:first-child {{ display: none !important; }}
+            [data-testid="stSidebarNav"] li a span:last-child {{ display: inline-block !important; }}
+
+            /* Hover (SÓ TEXTO AZUL) */
+            [data-testid="stSidebarNav"] li a:hover {{
+                background-color: transparent !important;
+                color: {SIG_SKY} !important; /* Texto azul no hover */
+            }}
+            [data-testid="stSidebarNav"] li a:hover span {{ color: {SIG_SKY} !important; }}
+
+            /* --- ITEM ATIVO (PÍLULA AZUL FORÇADA) --- */
+            /* Usa seletor mais específico para garantir precedência */
+            ul[data-testid="stSidebarNavItems"] li a[aria-current="page"],
+            [data-testid="stSidebarNav"] a[data-active="true"] {{
+                background-color: {SIG_SKY} !important; /* Pílula azul */
+                color: #ffffff !important; /* Texto branco */
+                font-weight: 700 !important;
+                box-shadow: none !important;
+            }}
+            ul[data-testid="stSidebarNavItems"] li a[aria-current="page"] span,
+            [data-testid="stSidebarNav"] a[data-active="true"] span {{
+                color: #ffffff !important; /* Texto branco */
+            }}
+
+            /* Garante que o hover não afete o item ativo */
+            ul[data-testid="stSidebarNavItems"] li a[aria-current="page"]:hover,
+            [data-testid="stSidebarNav"] a[data-active="true"]:hover {{
+                background-color: {SIG_SKY} !important; /* Mantém a pílula azul */
+                color: #ffffff !important; /* Mantém o texto branco */
+            }}
+            ul[data-testid="stSidebarNavItems"] li a[aria-current="page"]:hover span,
+            [data-testid="stSidebarNav"] a[data-active="true"]:hover span {{
+                color: #ffffff !important; /* Mantém o texto branco */
             }}
 
         </style>
         """,
         unsafe_allow_html=True
-    )
