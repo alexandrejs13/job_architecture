@@ -21,10 +21,9 @@ def get_font_base64(file_path):
     return base64.b64encode(data).decode("utf-8")
 
 # ==============================================================================
-# 3. SETUP UI (VERSÃO COM CABEÇALHO FIXO ACIMA DO MENU)
+# 3. SETUP UI (VERSÃO ESTÁVEL & POSICIONADA)
 # ==============================================================================
 def setup_sidebar():
-    # --- 1. CARREGAMENTO DE FONTES ---
     font_reg_b64 = get_font_base64(FONT_REGULAR)
     font_sb_b64 = get_font_base64(FONT_SEMIBOLD)
     font_css = ""
@@ -35,130 +34,67 @@ def setup_sidebar():
         html, body, [class*="css"] {{ font-family: 'PP SIG Flow', sans-serif !important; }}
         """
 
-    # --- 2. CSS PARA ESTILO E POSICIONAMENTO ---
     st.markdown(
         f"""
         <style>
             {font_css}
-            /* Limpeza de elementos nativos do Streamlit */
+            /* --- LIMPEZA --- */
             header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ display: none !important; }}
+            [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{ display: none !important; }}
 
-            /* OCULTA O PRIMEIRO ITEM DO MENU ('APP') - ESTÁVEL */
-            [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{
-                display: none !important;
-            }}
-
-            /* --- BARRA LATERAL TRAVADA --- */
+            /* --- BARRA LATERAL --- */
             [data-testid="stSidebar"] {{
                 min-width: 300px !important; max-width: 300px !important; width: 300px !important;
-                background-color: white !important;
-                border-right: 1px solid #f0f0f0;
-                /* Adicione padding-top para o conteúdo do sidebar não ficar por baixo do cabeçalho */
-                padding-top: 190px; /* Ajuste este valor se o cabeçalho precisar de mais ou menos espaço */
+                background-color: white !important; border-right: 1px solid #f0f0f0;
             }}
-            /* Esconde alça de redimensionamento */
             div[data-testid="stSidebar"] > div:last-child {{ display: none; }}
 
-            /* --- CABEÇALHO PERSONALIZADO FIXO NO TOPO --- */
-            /* Usamos o próprio [data-testid="stSidebar"] como base para o before */
+            /* --- CABEÇALHO FIXO (ESTÁVEL) --- */
+            /* Usamos ::before no stSidebar para criar um cabeçalho que não depende do carregamento do menu */
             [data-testid="stSidebar"]::before {{
-                content: ""; /* Necessário para pseudo-elementos */
-                position: fixed; /* Fixa o cabeçalho no topo da viewport */
-                top: 0;
-                left: 0; /* Alinha com a borda esquerda da tela */
-                width: 300px; /* Mesma largura da sidebar */
-                height: 190px; /* Altura do nosso cabeçalho */
-                background-color: white; /* Fundo branco do cabeçalho */
-                border-bottom: 2px solid #f0f2f6; /* Divisor */
-                z-index: 9999; /* Garante que fique acima de tudo */
-                /* Conteúdo do cabeçalho (logo e texto) */
-                background-image: url('{LOGO_URL}');
-                background-repeat: no-repeat;
-                background-position: center 20px;
-                background-size: 100px auto;
-            }}
-            /* Texto do cabeçalho "Job Architecture" */
-            [data-testid="stSidebar"]::after {{
                 content: "Job Architecture";
-                position: fixed;
-                top: 140px; /* Posição do texto abaixo do logo */
-                left: 0;
-                width: 300px;
-                text-align: center;
-                color: {TEXT_BLACK} !important;
-                font-size: 1.5rem;
-                font-weight: 900;
-                font-family: 'PP SIG Flow', sans-serif !important;
-                z-index: 10000; /* Acima do 'before' se necessário */
+                position: absolute; top: 0; left: 0; width: 100%; height: 190px;
+                background-color: white; z-index: 999; /* Fica por cima de qualquer flash de menu */
+                border-bottom: 2px solid #f0f2f6;
+                display: flex; flex-direction: column; align-items: center;
+                /* LOGO: background-position controla a altura. Aumente 40px para descer mais. */
+                background-image: url('{LOGO_URL}'); background-repeat: no-repeat;
+                background-position: center 40px; background-size: 100px auto;
+                /* TEXTO: padding-top empurra o texto para baixo do logo. Ajuste para aproximar/afastar. */
+                padding-top: 125px;
+                color: {TEXT_BLACK}; font-size: 1.5rem; font-weight: 900;
             }}
 
-            /* --- ESTILO DOS LINKS DO MENU --- */
-            [data-testid="stSidebarNav"] > ul {{
-                padding: 0 15px !important; /* Espaçamento lateral do menu */
-                margin-top: 0px !important; /* Começa logo após o padding-top da sidebar */
+            /* --- MENU DE NAVEGAÇÃO --- */
+            /* Empurra o menu para baixo para não ficar escondido atrás do cabeçalho fixo */
+            [data-testid="stSidebarNav"] {{
+                padding-top: 200px !important;
             }}
+            [data-testid="stSidebarNav"] > ul {{ padding: 0 15px !important; }}
+
+            /* ESTILO DOS LINKS (SEM EMOJI) */
+            [data-testid="stSidebarNav"] a span:first-child {{ display: none !important; }}
+            [data-testid="stSidebarNav"] a span:last-child {{ display: inline-block !important; }}
             
-            /* Links Inativos (Base) */
             [data-testid="stSidebarNav"] a {{
-                color: {TEXT_GRAY} !important;
-                font-weight: 500 !important;
-                padding: 10px 24px !important; /* Espaçamento interno */
-                margin-bottom: 4px !important; /* Espaço entre itens */
-                background-color: transparent !important; /* Garante fundo transparente */
-                text-decoration: none !important;
-                border-radius: 0 !important; /* Remove qualquer arredondamento de pílula */
+                color: {TEXT_GRAY} !important; font-weight: 500 !important;
+                padding: 10px 24px !important; margin-bottom: 4px !important;
+                background-color: transparent !important; transition: none !important;
             }}
+            /* Hover Sutil */
+            [data-testid="stSidebarNav"] a:hover span {{ color: {SIG_SKY} !important; }}
 
-            /* Hover (Passar o mouse) */
-            [data-testid="stSidebarNav"] a:hover {{
-                background-color: #f0f0f0 !important; /* Fundo cinza suave no hover (nativo) */
-                color: {SIG_SKY} !important; /* Texto azul SIG no hover */
-            }}
-            [data-testid="stSidebarNav"] a:hover span {{
-                color: {SIG_SKY} !important;
-            }}
-
-            /* ITEM ATIVO (Realce padrão do Streamlit, mas com nosso texto) */
+            /* ATIVO (MANTENDO O PADRÃO STREAMLIT POR ENQUANTO PARA EVITAR FLASH) */
+             /* Se quiser tentar a pílula de novo, me avise, mas ela é a maior causadora de flash */
             [data-testid="stSidebarNav"] a[aria-current="page"] {{
-                background-color: #e0e0e0 !important; /* Fundo cinza padrão do ativo */
-                color: {TEXT_BLACK} !important; /* Texto preto no ativo */
-                font-weight: 700 !important;
+                background-color: #f5f5f5 !important; /* Cinza bem claro nativo */
             }}
-            [data-testid="stSidebarNav"] a[aria-current="page"] span {{
+             [data-testid="stSidebarNav"] a[aria-current="page"] span {{
                 color: {TEXT_BLACK} !important;
-                font-weight: 700 !important;
-            }}
-
-
-            /* --- REMOÇÃO DE EMOJIS --- */
-            [data-testid="stSidebarNav"] a span:first-child {{
-                display: none !important;
-            }}
-            [data-testid="stSidebarNav"] a span:last-child {{
-                display: inline-block !important; /* Garante que o texto apareça */
+                font-weight: 900 !important;
             }}
 
         </style>
         """,
         unsafe_allow_html=True
     )
-
-    # Nota: Este hack do JS é a última tentativa para combater o flash de emojis
-    # Ele tenta remover os spans de emoji o mais cedo possível
-    st.components.v1.html("""
-        <script>
-            function removeEmojis() {
-                var links = window.parent.document.querySelectorAll('[data-testid="stSidebarNav"] a');
-                links.forEach(function(link) {
-                    var spans = link.querySelectorAll('span');
-                    if (spans.length > 1 && spans[0].textContent.trim().length === 1 && spans[0].textContent.match(/\\p{Emoji_Presentation}/u)) {
-                        spans[0].style.display = 'none';
-                    }
-                });
-            }
-            // Tenta remover na carga inicial e novamente após um pequeno atraso
-            removeEmojis();
-            setTimeout(removeEmojis, 50);
-            setTimeout(removeEmojis, 200);
-        </script>
-    """, height=0, width=0)
