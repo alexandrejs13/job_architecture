@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (AGORA COM NOVAS FUNCIONALIDADES)
+# CSS COMPLETO
 # ===========================================================
 st.markdown("""
 <style>
@@ -33,16 +33,14 @@ st.markdown("""
   padding: 1rem 2rem !important;
 }
 
-/* --- CABEÇALHO FIXO (TOPBAR) --- */
 .topbar {
   position: sticky;
   top: 0;
   z-index: 200;
   background: white;
-  padding: 10px 0 10px 0;
-  border-bottom: 3px solid var(--blue);
-  margin-bottom: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  padding: 10px 0 5px 0;
+  border-bottom: 2px solid var(--blue);
+  margin-bottom: 15px;
 }
 h1 {
   color: var(--blue);
@@ -54,9 +52,8 @@ h1 {
   margin-bottom: 10px !important;
 }
 
-/* --- MAPA E GRID --- */
 .map-wrapper {
-  height: 75vh;
+  height: 78vh;
   overflow: auto;
   border-top: 3px solid var(--blue);
   border-bottom: 3px solid var(--blue);
@@ -71,8 +68,8 @@ h1 {
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
-  grid-template-rows: 50px 45px !important;
-  grid-auto-rows: minmax(100px, auto) !important;
+  grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
+  grid-auto-rows: 110px !important;
   align-content: start !important;
   row-gap: 0px !important;
   column-gap: 0px !important;
@@ -86,7 +83,6 @@ h1 {
   box-sizing: border-box;
 }
 
-/* --- CABEÇALHOS --- */
 .header-family {
   font-weight: 800;
   color: #fff;
@@ -165,6 +161,7 @@ h1 {
   border-top: 1px solid white !important;
   grid-column: 1;
   font-size: 0.9rem;
+  height: 110px !important;
 }
 
 .cell {
@@ -179,12 +176,12 @@ h1 {
   gap: 8px;
   align-items: center;
   align-content: center;
+  height: 100% !important;
+  overflow: hidden;
 }
 
-/* --- CARDS --- */
 .job-card {
   background: #f9f9f9;
-  /* A cor da borda esquerda agora é dinâmica via style inline no Python */
   border-left-width: 5px;
   border-left-style: solid;
   border-radius: 6px;
@@ -208,12 +205,6 @@ h1 {
 .job-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-.job-card.highlight {
-  background-color: #fff3cd !important; /* Amarelo destaque */
-  border: 2px solid #ffc107 !important;
-  box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
 }
 
 .job-card b {
@@ -249,10 +240,9 @@ h1 {
   pointer-events: none;
 }
 
-/* --- MODO DE IMPRESSÃO --- */
 @media print {
   @page { size: landscape; margin: 1cm; }
-  .stApp > header, .stApp > div:first-child { display: none !important; } /* Esconde barra lateral e header do Streamlit */
+  .stApp > header, .stApp > div:first-child { display: none !important; }
   .topbar { position: static !important; border-bottom: 1px solid #ccc !important; box-shadow: none !important; }
   .map-wrapper { height: auto !important; overflow: visible !important; border: none !important; box-shadow: none !important; }
   .jobmap-grid { display: grid !important; }
@@ -293,8 +283,7 @@ df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True)
 st.markdown("<div class='topbar'>", unsafe_allow_html=True)
 section("🗺️ Job Map")
 
-# --- CRIAÇÃO DAS COLUNAS DE FILTRO ---
-col_f1, col_f2, col_f3 = st.columns([1.5, 1.5, 2]) # Adicionada coluna para busca
+col1, col2 = st.columns([2, 2])
 
 preferred_order = [
     "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
@@ -306,7 +295,7 @@ existing_families = set(df["Job Family"].unique())
 families_order = [f for f in preferred_order if f in existing_families]
 families_order.extend(sorted(list(existing_families - set(families_order))))
 
-with col_f1:
+with col1:
     family_filter = st.selectbox("Família", ["Todas"] + families_order)
 
 if family_filter != "Todas":
@@ -315,12 +304,10 @@ else:
     available_paths = df["Career Path"].unique().tolist()
 paths_options = ["Todas"] + sorted([p for p in available_paths if pd.notna(p) and p != 'nan' and p != ''])
 
-with col_f2:
+with col2:
     path_filter = st.selectbox("Trilha de Carreira", paths_options)
 
-with col_f3:
-    # NOVA FUNCIONALIDADE: Busca Global
-    search_term = st.text_input("🔍 Busca Rápida (Destacar Cargo)", placeholder="Ex: Manager, Analyst...")
+st.markdown("</div>", unsafe_allow_html=True)
 
 # --- APLICAÇÃO DOS FILTROS ---
 df_filtered = df.copy()
@@ -332,24 +319,6 @@ if path_filter != "Todas":
 if df_filtered.empty:
     st.warning("Nenhum cargo encontrado com os filtros atuais.")
     st.stop()
-
-# --- NOVA FUNCIONALIDADE: PAINEL DE ESTATÍSTICAS ---
-st.markdown("---")
-m1, m2, m3, m4 = st.columns(4)
-with m1:
-    st.metric("Total de Cargos", len(df_filtered))
-with m2:
-    # Família com mais cargos na seleção atual
-    top_fam = df_filtered["Job Family"].mode()
-    st.metric("Maior Família", top_fam[0] if not top_fam.empty else "-")
-with m3:
-    # Grade com mais cargos
-    top_grade = df_filtered["Global Grade"].mode()
-    st.metric("Grade mais Comum", f"GG {top_grade[0]}" if not top_grade.empty else "-")
-with m4:
-    st.caption("💡 Dica: Use Ctrl+P para imprimir este mapa.")
-
-st.markdown("</div>", unsafe_allow_html=True)
 
 # ===========================================================
 # PREPARAÇÃO DO GRID
@@ -403,10 +372,10 @@ for (_, c_idx) in subfamilias_map.items():
 # --- CORES PARA TRILHAS DE CARREIRA ---
 def get_path_color(path_name):
     p_lower = str(path_name).lower()
-    if "manage" in p_lower or "executive" in p_lower: return "var(--blue)"   # Azul para gestão
-    if "professional" in p_lower: return "var(--green)" # Verde para especialistas
-    if "technical" in p_lower or "support" in p_lower: return "var(--orange)" # Laranja para técnico
-    return "var(--purple)" # Roxo padrão para outros
+    if "manage" in p_lower or "executive" in p_lower: return "var(--blue)"
+    if "professional" in p_lower or "specialist" in p_lower: return "var(--green)"
+    if "technical" in p_lower or "support" in p_lower: return "var(--orange)"
+    return "var(--purple)"
 
 cell_html_cache = {}
 for i, g in enumerate(grades):
@@ -428,18 +397,11 @@ for i, g in enumerate(grades):
         
         cards = []
         for _, row in cell_df.iterrows():
-            # Lógica de Highlight
-            is_highlight = search_term and search_term.lower() in row['Job Profile'].lower()
-            highlight_class = " highlight" if is_highlight else ""
-            
-            # Cor da trilha
             path_color = get_path_color(row['Career Path'])
-            
-            # Tooltip nativo (title attribute)
             tooltip_text = f"{row['Job Profile']} | {row['Career Path']} ({gg_label})"
 
             cards.append(
-                f"<div class='job-card{highlight_class}' style='border-left-color: {path_color};' title='{tooltip_text}'>"
+                f"<div class='job-card' style='border-left-color: {path_color};' title='{tooltip_text}'>"
                 f"<b>{row['Job Profile']}</b>"
                 f"<span>{row['Career Path']} - {gg_label}</span>"
                 f"</div>"
