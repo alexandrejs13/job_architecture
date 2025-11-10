@@ -3,7 +3,6 @@
 
 import streamlit as st
 import pandas as pd
-import io
 from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar
 
@@ -28,17 +27,10 @@ st.markdown("""
   --dark-gray: #333333;
 }
 
-/* === AJUSTE DE MARGENS E LARGURA MÁXIMA === */
 .block-container {
-  /* Define uma largura máxima para não esticar infinitamente em monitores gigantes */
-  max-width: 1800px !important; 
-  /* Garante que fique centralizado se a tela for maior que 1800px */
-  margin-left: auto !important;
-  margin-right: auto !important;
-  /* Aumenta as margens laterais para desgrudar da sidebar e da direita */
-  padding-left: 5rem !important;
-  padding-right: 5rem !important;
-  padding-top: 2rem !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 1rem 2rem !important;
 }
 
 .topbar {
@@ -46,9 +38,9 @@ st.markdown("""
   top: 0;
   z-index: 200;
   background: white;
-  padding: 10px 0 15px 0;
-  border-bottom: 3px solid var(--blue);
-  margin-bottom: 20px;
+  padding: 10px 0 5px 0;
+  border-bottom: 2px solid var(--blue);
+  margin-bottom: 15px;
 }
 h1 {
   color: var(--blue);
@@ -190,9 +182,8 @@ h1 {
 
 .job-card {
   background: #f9f9f9;
-  border-left-width: 5px !important;
-  border-left-style: solid !important;
-  border-left-color: var(--blue);
+  border-left-width: 5px;
+  border-left-style: solid;
   border-radius: 6px;
   padding: 6px 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -208,15 +199,14 @@ h1 {
   justify-content: center;
   overflow: hidden;
   transition: all 0.2s ease-in-out;
+  cursor: default;
 }
+
 .job-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 10px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
-.job-card.highlight {
-  background-color: #fff9e6 !important;
-  box-shadow: 0 0 0 2px #ffd700 inset !important;
-}
+
 .job-card b {
   display: block;
   font-weight: 700;
@@ -250,6 +240,18 @@ h1 {
   pointer-events: none;
 }
 
+@media print {
+  @page { size: landscape; margin: 1cm; }
+  .stApp > header, .stApp > div:first-child { display: none !important; }
+  .topbar { position: static !important; border-bottom: 1px solid #ccc !important; box-shadow: none !important; }
+  .map-wrapper { height: auto !important; overflow: visible !important; border: none !important; box-shadow: none !important; }
+  .jobmap-grid { display: grid !important; }
+  .header-family, .header-subfamily, .gg-header, .gg-cell { position: static !important; color: black !important; background: #eee !important; border: 1px solid #ccc !important;}
+  .header-family { background: #ddd !important; }
+  .gg-header, .gg-cell { background: #ccc !important; }
+  body { font-size: 10pt; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}
+
 @media (max-width: 1500px) { .block-container { zoom: 0.9; } }
 </style>
 """, unsafe_allow_html=True)
@@ -276,13 +278,12 @@ df = df[~df["Global Grade"].isin(['nan', 'None', ''])]
 df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True)
 
 # ===========================================================
-# FILTROS E FERRAMENTAS
+# FILTROS E BARRA SUPERIOR (TOPBAR)
 # ===========================================================
 st.markdown("<div class='topbar'>", unsafe_allow_html=True)
 section("🗺️ Job Map")
 
-# Layout com 4 colunas para incluir ferramentas
-col1, col2, col3, col4 = st.columns([1.5, 1.5, 2, 0.8])
+col1, col2 = st.columns([2, 2])
 
 preferred_order = [
     "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
@@ -306,8 +307,7 @@ paths_options = ["Todas"] + sorted([p for p in available_paths if pd.notna(p) an
 with col2:
     path_filter = st.selectbox("Trilha de Carreira", paths_options)
 
-with col3:
-    search_term = st.text_input("🔍 Busca Rápida", placeholder="Digite para destacar cargos...")
+st.markdown("</div>", unsafe_allow_html=True)
 
 # --- APLICAÇÃO DOS FILTROS ---
 df_filtered = df.copy()
@@ -316,30 +316,8 @@ if family_filter != "Todas":
 if path_filter != "Todas":
     df_filtered = df_filtered[df_filtered["Career Path"] == path_filter]
 
-# --- BOTÃO DE DOWNLOAD ---
-with col4:
-    st.write("") # Espaçador para alinhar verticalmente com as caixas de seleção
-    st.write("")
-    
-    def to_excel(df):
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            df.to_excel(writer, index=False, sheet_name='JobMap')
-        return output.getvalue()
-
-    if not df_filtered.empty:
-        st.download_button(
-            label="📥 Baixar Excel",
-            data=to_excel(df_filtered),
-            file_name='job_map_filtered.xlsx',
-            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            use_container_width=True
-        )
-
-st.markdown("</div>", unsafe_allow_html=True)
-
 if df_filtered.empty:
-    st.warning("Nenhum cargo encontrado.")
+    st.warning("Nenhum cargo encontrado com os filtros atuais.")
     st.stop()
 
 # ===========================================================
@@ -391,11 +369,12 @@ for (_, c_idx) in subfamilias_map.items():
                 break
         span_map[(g, c_idx)] = span
 
+# --- CORES PARA TRILHAS DE CARREIRA ---
 def get_path_color(path_name):
-    p_lower = str(path_name).lower().strip()
+    p_lower = str(path_name).lower()
     if "manage" in p_lower or "executive" in p_lower: return "var(--blue)"
     if "professional" in p_lower or "specialist" in p_lower: return "var(--green)"
-    if "techni" in p_lower or "support" in p_lower: return "var(--orange)"
+    if "technical" in p_lower or "support" in p_lower: return "var(--orange)"
     return "var(--purple)"
 
 cell_html_cache = {}
@@ -419,15 +398,10 @@ for i, g in enumerate(grades):
         cards = []
         for _, row in cell_df.iterrows():
             path_color = get_path_color(row['Career Path'])
-            tooltip = f"{row['Job Profile']} | {row['Career Path']} ({gg_label})"
-            
-            # Lógica de Highlight na busca
-            hl_class = ""
-            if search_term and search_term.lower() in row['Job Profile'].lower():
-                hl_class = " highlight"
+            tooltip_text = f"{row['Job Profile']} | {row['Career Path']} ({gg_label})"
 
             cards.append(
-                f"<div class='job-card{hl_class}' style='border-left-color: {path_color} !important;' title='{tooltip}'>"
+                f"<div class='job-card' style='border-left-color: {path_color};' title='{tooltip_text}'>"
                 f"<b>{row['Job Profile']}</b>"
                 f"<span>{row['Career Path']} - {gg_label}</span>"
                 f"</div>"
