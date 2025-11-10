@@ -10,7 +10,7 @@ FONT_SEMIBOLD = "assets/fonts/PPSIGFlow-SemiBold.ttf"
 LOGO_URL = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
 
 # --- CORES DA PALETA SIG ---
-SIG_SKY = "#145efc"    # Azul Principal
+SIG_SKY = "#145efc"    # Azul Principal (Pantone 2387 C)
 SIG_SAND = "#f2efeb"   # Bege Claro para Cards
 TEXT_BLACK = "#000000" # Preto Puro para Títulos
 TEXT_GRAY = "#333333"  # Cinza Escuro para Texto Corrido
@@ -66,12 +66,12 @@ def setup_sidebar():
             /* Reset dos Links */
             [data-testid="stSidebarNav"] li a {{
                 background-color: transparent !important;
-                color: {TEXT_GRAY} !important;
+                color: {TEXT_BLACK} !important; /* Cor do texto padrão: Preto */
                 font-weight: 500 !important;
                 border-radius: 999px !important; /* Pílula */
                 padding: 10px 24px !important;
                 margin-bottom: 5px !important;
-                transition: none !important;
+                transition: color 0.2s, background-color 0.2s !important; /* Adicionado transição para hover */
                 border: none !important;
                 text-decoration: none !important;
             }}
@@ -83,7 +83,7 @@ def setup_sidebar():
             /* Hover (SÓ TEXTO AZUL) */
             [data-testid="stSidebarNav"] li a:hover {{
                 background-color: transparent !important;
-                color: {SIG_SKY} !important;
+                color: {SIG_SKY} !important; /* Texto azul no hover */
             }}
             [data-testid="stSidebarNav"] li a:hover span {{ color: {SIG_SKY} !important; }}
 
@@ -91,17 +91,31 @@ def setup_sidebar():
             /* Usa seletor mais específico para garantir precedência */
             ul[data-testid="stSidebarNavItems"] li a[aria-current="page"],
             [data-testid="stSidebarNav"] a[data-active="true"] {{
-                background-color: {SIG_SKY} !important;
-                color: #ffffff !important;
+                background-color: {SIG_SKY} !important; /* Pílula azul */
+                color: #ffffff !important; /* Texto branco */
                 font-weight: 700 !important;
                 box-shadow: none !important;
             }}
             ul[data-testid="stSidebarNavItems"] li a[aria-current="page"] span,
             [data-testid="stSidebarNav"] a[data-active="true"] span {{
-                color: #ffffff !important;
+                color: #ffffff !important; /* Texto branco */
+            }}
+
+            /* Garante que o hover não afete o item ativo */
+            ul[data-testid="stSidebarNavItems"] li a[aria-current="page"]:hover,
+            [data-testid="stSidebarNav"] a[data-active="true"]:hover {{
+                background-color: {SIG_SKY} !important; /* Mantém a pílula azul */
+                color: #ffffff !important; /* Mantém o texto branco */
+            }}
+            ul[data-testid="stSidebarNavItems"] li a[aria-current="page"]:hover span,
+            [data-testid="stSidebarNav"] a[data-active="true"]:hover span {{
+                color: #ffffff !important; /* Mantém o texto branco */
             }}
 
         </style>
         """,
         unsafe_allow_html=True
     )
+
+
+ao vivo
