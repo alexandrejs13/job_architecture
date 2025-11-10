@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (AJUSTE FINO DE ALTURA E LINHA)
+# CSS COMPLETO (CORREÇÕES DEFINITIVAS)
 # ===========================================================
 st.markdown("""
 <style>
@@ -65,10 +65,11 @@ h1 {
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
-  grid-auto-rows: minmax(90px, auto);
+  /* FORÇA LINHAS UNIFORMES */
+  grid-auto-rows: 110px; 
   row-gap: 0px !important;
   column-gap: 0px !important;
-  background-color: white !important;
+  background-color: var(--gray-line); 
 }
 
 .jobmap-grid > div {
@@ -78,21 +79,22 @@ h1 {
   box-sizing: border-box;
 }
 
+/* --- CABEÇALHO FAMÍLIA (LINHA 1) --- */
 .header-family {
   font-weight: 800;
   color: #fff;
   padding: 10px 5px;
   text-align: center;
   border-right: 1px solid rgba(255,255,255,0.3) !important;
-  /* GARANTE QUE NÃO HÁ BORDA INFERIOR */
   border-bottom: none !important;
-  outline: none !important;
-  margin-bottom: 0px !important; 
+  /* SOBREPOSIÇÃO FORÇADA PARA MATAR A LINHA */
+  margin-bottom: -2px !important; 
+  padding-bottom: 12px !important; /* Compensa a margem negativa */
   position: sticky;
   top: 0;
-  z-index: 57;
+  z-index: 60; /* Maior Z-index para ficar por cima da linha 2 */
   white-space: normal;
-  height: 50px;
+  height: 52px; /* Altura fixa */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -100,22 +102,20 @@ h1 {
   font-size: 0.9rem;
 }
 
+/* --- CABEÇALHO SUBFAMÍLIA (LINHA 2) --- */
 .header-subfamily {
   font-weight: 600;
-  background: var(--gray-bg) !important;
-  /* ALTURA REDUZIDA */
+  /* background definido dinamicamente no HTML */
+  color: #222; /* Texto escuro para contraste no fundo claro */
   padding: 4px 5px;
-  min-height: 30px;
   text-align: center;
   position: sticky;
-  top: 50px;
-  z-index: 56;
+  top: 50px; /* Começa exatamente onde a linha 1 deveria terminar visualmente */
+  z-index: 55; /* Z-index menor que a família */
   white-space: normal;
-  /* MARGEM NEGATIVA PARA REFORÇAR A UNIÃO E AFINAR A LINHA VISUALMENTE */
-  margin-top: -1px !important;
   border-top: none !important;
-  outline: none !important;
   border-bottom: 2px solid var(--gray-line) !important;
+  height: 45px; /* Altura fixa reduzida */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -136,7 +136,7 @@ h1 {
   position: sticky;
   left: 0;
   top: 0;
-  z-index: 60;
+  z-index: 65; /* O mais alto de todos */
   border-right: 2px solid white !important;
   border-bottom: 2px solid var(--gray-line) !important;
 }
@@ -159,31 +159,33 @@ h1 {
 
 .cell {
   background: white !important;
-  padding: 8px;
+  padding: 6px;
   text-align: left;
   vertical-align: middle;
   z-index: 1;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   align-content: center;
+  /* Garante que o conteúdo não force a célula a crescer demais se não precisarmos */
+  overflow: hidden; 
 }
 
 .job-card {
   background: #f9f9f9;
   border-left: 4px solid var(--blue);
   border-radius: 6px;
-  padding: 6px 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  padding: 5px 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
   font-size: 0.75rem;
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;
-  width: 135px;
+  width: 130px;
   height: 75px;
-  flex: 0 0 135px;
+  flex: 0 0 130px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -193,7 +195,7 @@ h1 {
   display: block;
   font-weight: 700;
   margin-bottom: 3px;
-  line-height: 1.15;
+  line-height: 1.1;
   color: #222;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -204,7 +206,7 @@ h1 {
   display: block;
   font-size: 0.7rem;
   color: #666;
-  line-height: 1.1;
+  line-height: 1;
   margin-top: 2px;
   white-space: nowrap;
   overflow: hidden;
@@ -380,26 +382,33 @@ for (f, sf), c_idx in subfamilias_map.items():
         if (g, c_idx) not in skip_set:
              max_cards = max(max_cards, cards_count_map.get((g, c_idx), 0))
     
+    # 130px por card + gaps
     if max_cards <= 1:
-        width_cards = 135 + 25
+        width_cards = 130 + 20
     elif max_cards == 2:
-        width_cards = (2 * 135) + 8 + 25
+        width_cards = (2 * 130) + 6 + 20
     else:
         cap = min(max(1, max_cards), 6)
-        width_cards = (cap * 135) + ((cap - 1) * 8) + 25
+        width_cards = (cap * 130) + ((cap - 1) * 6) + 20
         
     col_widths.append(f"{max(width_title, width_cards)}px")
 
 grid_template = f"grid-template-columns: {' '.join(col_widths)};"
 
 # ===========================================================
-# PALETA DE CORES
+# PALETA DE CORES (RESTAURADA E AJUSTADA)
 # ===========================================================
 palette_pairs = [
-    ("#4F6D7A", "#E6EFF2"), ("#5C7A67", "#E8F2EB"), ("#7A5C5C", "#F2E6E6"),
-    ("#6B5C7A", "#EBE6F2"), ("#7A725C", "#F2EFE6"), ("#5C6B7A", "#E6EBF2"),
-    ("#7A5C74", "#F2E6EF"), ("#5C7A78", "#E6F2F1"), ("#736A62", "#F0EDEB"),
-    ("#626A73", "#EBEDF0"),
+    ("#5D737E", "#EBF0F2"), # Azul acinzentado + claro
+    ("#6A7F6B", "#EDF2EE"), # Verde militar suave + claro
+    ("#8C6E6E", "#F5EBEB"), # Terracota suave + claro
+    ("#756A85", "#F0EDF5"), # Roxo acinzentado + claro
+    ("#857E6A", "#F5F3EB"), # Oliva suave + claro
+    ("#6B7A8F", "#EDF0F5"), # Azul ardósia + claro
+    ("#8F6B85", "#F5EDF3"), # Mauve + claro
+    ("#6B8F8C", "#EDF5F4"), # Verde azulado + claro
+    ("#7F756B", "#F2F0ED"), # Marrom acinzentado + claro
+    ("#6E7582", "#EDEFF5"), # Cinza chumbo + claro
 ]
 map_cor_fam = {f: palette_pairs[i % len(palette_pairs)][0] for i, f in enumerate(families_order)}
 map_cor_sub = {f: palette_pairs[i % len(palette_pairs)][1] for i, f in enumerate(families_order)}
@@ -413,10 +422,12 @@ html.append("<div class='gg-header'>GG</div>")
 current_col = 2
 for f in active_families:
     span = header_spans[f]
+    # Família com cor forte (suave)
     html.append(f"<div class='header-family' style='grid-column: {current_col} / span {span}; background:{map_cor_fam[f]};'>{f}</div>")
     current_col += span
 
 for (f, sf), c_idx in subfamilias_map.items():
+    # Subfamília com tom bem claro da mesma cor
     html.append(f"<div class='header-subfamily' style='grid-column: {c_idx}; background:{map_cor_sub[f]};'>{sf}</div>")
 
 for i, g in enumerate(grades):
