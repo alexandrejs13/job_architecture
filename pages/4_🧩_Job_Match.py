@@ -5,6 +5,9 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import html
+import json
+import os
+import re
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 from utils.data_loader import load_excel_data
@@ -17,7 +20,7 @@ st.set_page_config(layout="wide", page_title="🧩 Job Match")
 lock_sidebar()
 
 # ===========================================================
-# ESTILO (CSS GRID PARA ALINHAMENTO PERFEITO)
+# ESTILO (MANTIDO O LAYOUT APROVADO)
 # ===========================================================
 st.markdown("""
 <style>
@@ -31,7 +34,7 @@ st.markdown("""
 /* Grid Container Principal */
 .comparison-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 colunas iguais */
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
     margin-top: 20px;
 }
@@ -62,21 +65,21 @@ st.markdown("""
     border-bottom: 1px solid #eee;
     font-size: 0.85rem;
     color: #555;
-    min-height: 120px; /* Garante altura mínima igual */
+    min-height: 120px;
 }
 .meta-row { margin-bottom: 5px; }
 
-/* Seções de Conteúdo (com cores na borda esquerda) */
+/* Seções de Conteúdo */
 .section-cell {
     border-left-width: 5px;
     border-left-style: solid;
-    border-top: none; /* Remove borda superior para conectar visualmente */
+    border-top: none;
     background: #fdfdfd;
 }
 .section-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; color: #333; display: flex; align-items: center; gap: 5px;}
 .section-content { color: #444; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; }
 
-/* Rodapé para fechar a borda */
+/* Rodapé */
 .footer-cell {
     height: 10px;
     border-top: none;
@@ -84,15 +87,42 @@ st.markdown("""
     background: #fff;
 }
 
+/* Caixa de Sugestão de IA */
+.ai-insight-box {
+    background-color: #eef6fc;
+    border-left: 5px solid #145efc;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    color: #2c3e50;
+}
+.ai-insight-title {
+    font-weight: 800;
+    color: #145efc;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
 </style>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# CARREGAMENTO DE DADOS
+# CARREGAMENTO DE DADOS E MODELO
 # ===========================================================
 @st.cache_resource
 def load_model():
     return SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+
+@st.cache_data(show_spinner=False)
+def load_wtw_data():
+    try:
+        # Ajuste o caminho se necessário, baseado na sua estrutura de pastas real
+        with open("data/wtw_job_match.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        # Retorna vazio se não encontrar, para não quebrar o app
+        return None
 
 @st.cache_data(show_spinner=False)
 def load_data_and_embeddings():
@@ -118,6 +148,7 @@ def load_data_and_embeddings():
     if "Global Grade" in df_levels.columns:
         df_levels["Global Grade"] = df_levels["Global Grade"].astype(str).str.replace(r"\.0$", "", regex=True).str.strip()
     
+    # Texto rico para matching
     df_jobs["Rich_Text"] = (
         df_jobs["Job Profile"] + ". " +
         df_jobs["Role Description"] + ". " +
@@ -132,10 +163,50 @@ def load_data_and_embeddings():
 
 try:
     df, df_levels, job_embeddings = load_data_and_embeddings()
+    wtw_data = load_wtw_data() # Carrega o JSON novo
     model = load_model()
 except Exception as e:
     st.error(f"Erro ao carregar dados: {e}")
     st.stop()
+
+# ===========================================================
+# NOVA FUNÇÃO: DETECÇÃO SEMÂNTICA DE NÍVEL (WTW)
+# ===========================================================
+def detect_level_from_text(text, wtw_db):
+    if not wtw_db or not text: return None, None, []
+
+    text_lower = text.lower()
+    best_score = 0
+    best_band = None
+    best_level = None
+    matched_keywords = []
+
+    # Varre todas as bands e levels do JSON
+    for band_key, band_info in wtw_db.get("career_bands", {}).items():
+        for lvl_key, lvl_info in band_info.get("levels", {}).items():
+            current_score = 0
+            current_matches = []
+
+            # Peso 3 para palavras-chave principais (ex: "gerente", "diretor")
+            for kw in lvl_info.get("core_keywords", []):
+                # Usa regex para buscar a palavra exata, evitando falsos positivos parciais
+                if re.search(r'\b' + re.escape(kw.lower()) + r'\b', text_lower):
+                    current_score += 3
+                    current_matches.append(kw)
+
+            # Peso 1 para expressões de usuário (ex: "lidera equipe")
+            for ukw in lvl_info.get("user_keywords", []):
+                if ukw.lower() in text_lower:
+                    current_score += 1
+                    current_matches.append(ukw)
+            
+            if current_score > best_score:
+                best_score = current_score
+                best_band = band_info
+                best_level = lvl_info
+                matched_keywords = list(set(current_matches)) # Remove duplicatas
+
+    return best_band, best_level, matched_keywords
 
 # ===========================================================
 # INTERFACE
@@ -155,16 +226,37 @@ with c2:
 
 desc_input = st.text_area(
     "📋 Cole aqui a descrição detalhada da posição (Mínimo 50 palavras):",
-    height=150
+    height=200,
+    placeholder="Ex: Responsável por liderar a equipe de vendas, definir estratégias comerciais e acompanhar KPIs de performance..."
 )
 word_count = len(desc_input.strip().split())
 st.caption(f"Contagem de palavras: {word_count} / 50")
 
 if st.button("🔍 Analisar Aderência", type="primary", use_container_width=True):
+    # --- VALIDAÇÃO ---
     if selected_family == "Selecione..." or selected_subfamily == "Selecione..." or word_count < 50:
-        st.warning("⚠️ Selecione Família, Subfamília e insira uma descrição com pelo menos 50 palavras.")
+        st.warning("⚠️ Para uma análise precisa, selecione Família, Subfamília e insira uma descrição com pelo menos 50 palavras.")
         st.stop()
 
+    # --- 1. DETECÇÃO DE NÍVEL (NOVA INTELIGÊNCIA) ---
+    detected_band, detected_level, keywords_found = detect_level_from_text(desc_input, wtw_data)
+    
+    if detected_band and detected_level:
+        # Mostra o insight da IA para o usuário
+        kws_formatted = ", ".join([f"'{k}'" for k in keywords_found[:3]])
+        st.markdown(f"""
+        <div class="ai-insight-box">
+            <div class="ai-insight-title">🤖 Análise Semântica de Nível</div>
+            Com base na sua descrição, identificamos características de um nível 
+            <strong>{detected_level['label']}</strong> na carreira de <strong>{detected_band['label']}</strong>.<br>
+            <small style="color: #555;">Termos chave detectados: {kws_formatted}...</small>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Opcional: Você pode usar detected_band['label'] para filtrar ou impulsionar resultados
+        # Por enquanto, vamos apenas usar como informação visual para o usuário.
+
+    # --- 2. MATCHING VETORIAL (SENTENCE TRANSFORMERS) ---
     mask = (df["Job Family"] == selected_family) & (df["Sub Job Family"] == selected_subfamily)
     if not mask.any():
         st.error("Não foram encontrados cargos para esta combinação.")
@@ -172,14 +264,20 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
 
     filtered_indices = df[mask].index
     filtered_embeddings = job_embeddings[filtered_indices]
-    query_emb = model.encode([desc_input])
+    
+    # Enriquece a query com o nível detectado para guiar melhor o modelo vetorial
+    query_enriched = desc_input
+    if detected_band and detected_level:
+        query_enriched = f"{detected_band['label']} {detected_level['label']}. {desc_input}"
+
+    query_emb = model.encode([query_enriched])
     sims = cosine_similarity(query_emb, filtered_embeddings)[0]
     results = df.loc[filtered_indices].copy()
     results["similarity"] = sims
     top3 = results.sort_values("similarity", ascending=False).head(3)
 
     # ===========================================================
-    # RENDERIZAÇÃO EM GRID ÚNICO (PARA ALINHAMENTO PERFEITO)
+    # RENDERIZAÇÃO DOS RESULTADOS
     # ===========================================================
     st.markdown("---")
     st.subheader("🏆 Cargos Mais Compatíveis")
@@ -188,7 +286,6 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         st.warning("Nenhum resultado encontrado.")
         st.stop()
 
-    # Prepara os dados
     cards_data = []
     for _, row in top3.iterrows():
         score_val = row["similarity"] * 100
@@ -208,14 +305,12 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
             "lvl": lvl_name
         })
 
-    # Garante 3 slots mesmo que tenha menos resultados (para manter o grid)
-    while len(cards_data) < 3:
-        cards_data.append(None)
+    while len(cards_data) < 3: cards_data.append(None)
 
-    # INÍCIO DO GRID HTML
+    # --- INÍCIO DO GRID HTML ---
     grid_html = '<div class="comparison-grid">'
 
-    # --- 1. LINHA DE CABEÇALHO ---
+    # 1. CABEÇALHO
     for card in cards_data:
         if card:
             grid_html += f"""
@@ -228,7 +323,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
             </div>"""
         else: grid_html += "<div></div>"
 
-    # --- 2. LINHA DE METADADOS ---
+    # 2. METADADOS
     for card in cards_data:
         if card:
             d = card['row']
@@ -241,7 +336,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
             </div>"""
         else: grid_html += "<div></div>"
 
-    # --- 3. SEÇÕES DE CONTEÚDO (ALINHADAS) ---
+    # 3. SEÇÕES DE CONTEÚDO
     sections = [
         ("🧭 Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
         ("🧠 Job Profile Description", "Job Profile Description", "#e91e63"),
@@ -255,7 +350,6 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         for card in cards_data:
             if card:
                 content = str(card['row'].get(field, '-'))
-                # Só mostra Qualifications se não for vazio/nan
                 if field == "Qualifications" and (len(content) < 2 or content.lower() == 'nan'):
                      grid_html += f'<div class="grid-cell section-cell" style="border-left-color: transparent; background: transparent; border: none;"></div>'
                 else:
@@ -266,13 +360,12 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
                     </div>"""
             else: grid_html += "<div></div>"
 
-    # --- 4. RODAPÉ (FECHAMENTO) ---
+    # 4. RODAPÉ
     for card in cards_data:
         if card: grid_html += '<div class="grid-cell footer-cell"></div>'
         else: grid_html += "<div></div>"
 
-    grid_html += '</div>' # Fim do Grid
-
+    grid_html += '</div>'
     st.markdown(grid_html, unsafe_allow_html=True)
 
     if top3.iloc[0]["similarity"] < 0.6:
