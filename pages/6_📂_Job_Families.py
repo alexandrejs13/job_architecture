@@ -1,240 +1,106 @@
+import streamlit as st
+
+# --- CONFIGURAÇÃO DA PÁGINA ---
+st.set_page_config(page_title="Job Families", page_icon="📂")
+
+# --- CSS OPCIONAL PARA O CABEÇALHO DO CARTÃO ---
+st.markdown("""
 <style>
-    /* Estilos específicos para esta página para não quebrar o resto do seu app */
-    #job-families-view {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        color: #334155; /* Slate-700 */
-        max-width: 1000px;
-        margin: 0 auto;
+    .jf-header {
+        background-color: #f0f7ff;
         padding: 20px;
+        border-radius: 10px;
+        border-left: 6px solid #2563eb;
+        margin-bottom: 20px;
     }
-
-    #job-families-view h1.page-title {
-        font-size: 1.8rem;
-        color: #0f172a; /* Slate-900 */
-        margin-bottom: 0.5rem;
-    }
-
-    #job-families-view .page-subtitle {
-        color: #64748b; /* Slate-500 */
-        margin-bottom: 2rem;
-    }
-
-    /* Container do Seletor */
-    .jf-selector-box {
-        background: #f8fafc;
-        border: 2px dashed #cbd5e1;
-        border-radius: 8px;
-        padding: 2rem;
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-
-    .jf-selector-box select {
-        padding: 10px 15px;
-        font-size: 1rem;
-        border: 1px solid #cbd5e1;
-        border-radius: 6px;
-        width: 100%;
-        max-width: 400px;
-        cursor: pointer;
-    }
-
-    /* Cartão de Conteúdo */
-    .jf-card {
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        overflow: hidden;
-        display: none; /* Inicialmente oculto */
-        animation: slideUp 0.4s ease-out;
-    }
-
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .jf-card-header {
-        background: #2563eb; /* Ajuste para a cor primária do seu app se desejar */
-        color: white;
-        padding: 1.5rem 2rem;
-    }
-
-    .jf-card-header h2 {
-        margin: 0;
-        font-size: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
     .jf-motto {
-        opacity: 0.9;
         font-style: italic;
-        margin-top: 8px;
-        font-weight: 300;
+        color: #555;
+        margin-top: 5px;
     }
-
-    .jf-card-body {
-        padding: 2rem;
-    }
-
-    .jf-section {
-        margin-bottom: 2rem;
-    }
-
-    .jf-section h3 {
-        font-size: 1.1rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #2563eb;
-        border-bottom: 1px solid #e2e8f0;
-        padding-bottom: 10px;
-        margin-bottom: 15px;
-    }
-
-    .jf-section ul {
-        padding-left: 1.5rem;
-    }
-    .jf-section li {
-        margin-bottom: 0.5rem;
-    }
-
-    .jf-empty-state {
-        text-align: center;
-        padding: 3rem;
-        color: #94a3b8;
-    }
-
 </style>
+""", unsafe_allow_html=True)
 
-<div id="job-families-view">
-    <div>
-        <h1 class="page-title">Conheça Nossas Job Families</h1>
-        <p class="page-subtitle">
-            Explore as áreas de especialização da empresa. Selecione uma família abaixo para ver seus detalhes, missão e escopo de atuação.
-        </p>
+# --- DADOS (Baseados no seu exemplo anterior) ---
+JOB_FAMILIES = {
+    "tech": {
+        "title": "Tecnologia & Engenharia",
+        "icon": "💻",
+        "motto": "Construindo o motor digital da nossa inovação.",
+        "mission": "Responsável por desenhar, desenvolver e manter nossos produtos digitais, garantindo escalabilidade, segurança e alta performance.",
+        "activities": ["Desenvolvimento Frontend/Backend", "DevOps & Infraestrutura Cloud", "QA e Testes Automatizados", "Arquitetura de Software"],
+        "profile": "Profissionais com forte raciocínio lógico, apaixonados por código e resolução de problemas complexos."
+    },
+    "growth": {
+        "title": "Vendas & Marketing (Growth)",
+        "icon": "🚀",
+        "motto": "A voz da empresa no mercado e o acelerador do crescimento.",
+        "mission": "Focada em entender as necessidades do mercado, comunicar nosso valor e garantir que nossa solução chegue aos clientes certos.",
+        "activities": ["Prospecção e qualificação de leads (SDR/BDR)", "Gestão do ciclo de vendas (Closers)", "Marketing Digital e Branding", "Customer Success e Expansão"],
+        "profile": "Pessoas comunicativas, orientadas a metas, com alta resiliência e visão estratégica de negócios."
+    },
+    "ops": {
+        "title": "Operações & Suporte",
+        "icon": "⚙️",
+        "motto": "A excelência invisível que faz tudo funcionar.",
+        "mission": "Garantem que nossos processos internos e entregas ao cliente ocorram sem atrito, com máxima eficiência e qualidade.",
+        "activities": ["Suporte Técnico ao Cliente (N1/N2)", "Gestão e otimização de processos", "Onboarding de novos clientes", "Logística e Facilities"],
+        "profile": "Profissionais organizados, ágeis na resolução de crises imediatas e obcecados por eficiência."
+    },
+    "ga": {
+        "title": "Pessoas & Finanças (G&A)",
+        "icon": "🏛️",
+        "motto": "A fundação sólida que sustenta nossa cultura e negócios.",
+        "mission": "Garantem a saúde financeira, a segurança jurídica e o desenvolvimento e bem-estar dos nossos talentos.",
+        "activities": ["Recrutamento e Seleção (Talent Acquisition)", "Planejamento Financeiro e Controladoria", "Jurídico e Compliance", "Administração de Pessoal"],
+        "profile": "Pessoas analíticas, éticas, discretas e com alto senso de responsabilidade organizacional."
+    }
+}
+
+# --- INTERFACE DO USUÁRIO ---
+st.title("📂 Conheça Nossas Job Families")
+st.markdown("Explore as áreas de especialização da empresa. Selecione uma família abaixo para entender seu propósito e escopo.")
+
+# Criar opções legíveis para o seletor
+opcoes_display = {f"{info['icon']} {info['title']}": key for key, info in JOB_FAMILIES.items()}
+lista_opcoes = ["-- Selecione uma área --"] + list(opcoes_display.keys())
+
+# Seletor
+selecao = st.selectbox("Qual área você deseja explorar?", lista_opcoes)
+
+st.divider()
+
+# Lógica de Exibição
+if selecao != "-- Selecione uma área --":
+    # Recuperar os dados da chave selecionada
+    chave = opcoes_display[selecao]
+    dados = JOB_FAMILIES[chave]
+
+    # Exibir Cabeçalho Estilizado
+    st.markdown(f"""
+    <div class="jf-header">
+        <h2 style="margin:0; color: #1e3a8a;">{dados['icon']} {dados['title']}</h2>
+        <p class="jf-motto">"{dados['motto']}"</p>
     </div>
+    """, unsafe_allow_html=True)
 
-    <div class="jf-selector-box">
-        <label for="jf-selector" style="display: block; margin-bottom: 15px; font-weight: 600; color: #475569;">
-            Qual área você quer explorar hoje?
-        </label>
-        <select id="jf-selector">
-            <option value="">-- Selecione uma família --</option>
-            </select>
-    </div>
+    # Colunas para dividir o conteúdo
+    col_esq, col_dir = st.columns([7, 3])
 
-    <div id="jf-empty" class="jf-empty-state">
-        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem; opacity: 0.5;">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <p>Aguardando seleção...</p>
-    </div>
+    with col_esq:
+        st.subheader("🎯 Nossa Missão")
+        st.write(dados['mission'])
+        
+        st.subheader("🛠️ O que fazemos")
+        for atividade in dados['activities']:
+            st.markdown(f"- {atividade}")
 
-    <div id="jf-content-card" class="jf-card">
-        <div class="jf-card-header">
-            <h2 id="jf-title"></h2>
-            <div id="jf-motto" class="jf-motto"></div>
-        </div>
-        <div class="jf-card-body">
-            <div class="jf-section">
-                <h3>🎯 Nossa Missão</h3>
-                <p id="jf-mission"></p>
-            </div>
+    with col_dir:
+        # Caixa lateral para o perfil
+        with st.container(border=True):
+            st.subheader("👥 Quem somos")
+            st.write(dados['profile'])
 
-            <div class="jf-section" style="display: flex; gap: 2rem; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 250px;">
-                    <h3>🛠️ O que fazemos</h3>
-                    <ul id="jf-activities">
-                        </ul>
-                </div>
-                <div style="flex: 1; min-width: 250px; background: #f8fafc; padding: 1.5rem; border-radius: 8px;">
-                    <h3 style="border: none; margin-bottom: 10px;">👥 Quem somos</h3>
-                    <p id="jf-profile" style="font-size: 0.95rem;"></p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    // =================================================================
-    // DADOS (Substitua pelos dados reais do seu Excel)
-    // =================================================================
-    const jfData = {
-        "tech": {
-            title: "Tecnologia & Engenharia",
-            icon: "💻",
-            motto: "Construindo o motor digital da nossa inovação.",
-            mission: "Responsável por desenhar, desenvolver e manter nossos produtos digitais, garantindo escalabilidade, segurança e alta performance.",
-            activities: ["Desenvolvimento Frontend/Backend", "DevOps & Infraestrutura Cloud", "QA e Testes Automatizados", "Arquitetura de Software"],
-            profile: "Profissionais com forte raciocínio lógico, apaixonados por código e resolução de problemas complexos."
-        },
-        "sales": {
-            title: "Vendas (Sales)",
-            icon: "🚀",
-            motto: "Conectando nossas soluções a quem precisa delas.",
-            mission: "Expandir nossa base de clientes e gerar receita sustentável através de relacionamentos consultivos e estratégicos.",
-            activities: ["Prospecção de novos clientes (Hunters)", "Gestão de carteira (Farmers)", "Negociação de contratos", "Demonstrações de produto"],
-            profile: "Comunicadores natos, resilientes, orientados a metas e com alta capacidade de persuasão."
-        },
-        "ops": {
-            title: "Operações",
-            icon: "⚙️",
-            motto: "A excelência invisível que faz tudo funcionar.",
-            mission: "Garantir que nossos processos internos e entregas ao cliente ocorram sem atrito, com máxima eficiência e qualidade.",
-            activities: ["Suporte ao Cliente N1/N2", "Gestão de Processos", "Onboarding de Clientes", "Logística Interna"],
-            profile: "Organizados, ágeis na resolução de crises e obcecados por eficiência."
-        }
-        // Adicione as outras famílias aqui...
-    };
-
-    // =================================================================
-    // LÓGICA DE INICIALIZAÇÃO
-    // =================================================================
-    (function initJobFamilies() {
-        const selector = document.getElementById('jf-selector');
-        const emptyState = document.getElementById('jf-empty');
-        const card = document.getElementById('jf-content-card');
-
-        // Povoar o seletor
-        Object.keys(jfData).forEach(key => {
-            const opt = document.createElement('option');
-            opt.value = key;
-            opt.textContent = `${jfData[key].icon} ${jfData[key].title}`;
-            selector.appendChild(opt);
-        });
-
-        // Evento de mudança
-        selector.addEventListener('change', (e) => {
-            const key = e.target.value;
-            if (!key) {
-                card.style.display = 'none';
-                emptyState.style.display = 'block';
-                return;
-            }
-
-            const data = jfData[key];
-            
-            // Preencher dados
-            document.getElementById('jf-title').innerHTML = `${data.icon} ${data.title}`;
-            document.getElementById('jf-motto').textContent = `"${data.motto}"`;
-            document.getElementById('jf-mission').textContent = data.mission;
-            document.getElementById('jf-profile').textContent = data.profile;
-            
-            const actList = document.getElementById('jf-activities');
-            actList.innerHTML = '';
-            data.activities.forEach(act => {
-                const li = document.createElement('li');
-                li.textContent = act;
-                actList.appendChild(li);
-            });
-
-            // Alternar visualização
-            emptyState.style.display = 'none';
-            card.style.display = 'block';
-        });
-    })();
-</script>
+else:
+    # Estado vazio inicial
+    st.info("👆 Aguardando seleção no menu acima...")
