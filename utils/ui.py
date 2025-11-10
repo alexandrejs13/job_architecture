@@ -1,56 +1,98 @@
+# utils/ui.py
+
 import streamlit as st
 
 def setup_sidebar():
-    """
-    Configura a barra lateral: Fundo Branco, Logo Azul SIG.
-    Ajusta o estilo do menu para ser limpo e profissional.
-    """
-    # Caminho do novo logo azul
-    LOGO_PATH = "assets/SIG_Logo_RGB_Blue.png"
-
-    # 1. Aplica o Logo (tenta método moderno, fallback para antigo)
-    try:
-        st.logo(LOGO_PATH, icon_image=LOGO_PATH)
-    except AttributeError:
-        st.sidebar.image(LOGO_PATH, use_column_width=False, width=180)
-
-    # 2. CSS para Refinamento do Visual
     st.markdown(
         """
         <style>
-            /* --- BARRA LATERAL --- */
-            /* Garante fundo branco (redundância ao config.toml para segurança) */
+            /* Esconde o cabeçalho e o footer padrão do Streamlit */
+            header { visibility: hidden; }
+            footer { visibility: hidden; }
+
+            /* Estilo para a barra lateral customizada */
             [data-testid="stSidebar"] {
-                background-color: #ffffff !important;
-                border-right: 1px solid #e0e0e0; /* Linha sutil separando o menu */
+                background-color: white !important; /* Fundo branco */
             }
 
-            /* --- MENU DE NAVEGAÇÃO --- */
-            /* Texto dos links do menu: Preto suave, sem sublinhado */
-            [data-testid="stSidebarNav"] a,
-            [data-testid="stSidebarNav"] span {
-                color: #333333 !important;
-                text-decoration: none !important;
-                font-weight: 500;
-            }
-            /* Efeito Hover (quando passa o mouse): Fica azulzinho claro */
-            [data-testid="stSidebarNav"] a:hover {
-                background-color: #f0f5ff !important; /* Azul muito suave */
-                color: #145efc !important; /* Azul SIG Sky no texto */
+            /* Container para o logo e título no topo da sidebar */
+            .sidebar-header {
+                display: flex;
+                align-items: center;
+                padding: 15px 20px 10px 20px; /* Mais espaço abaixo do header */
+                background-color: white;
+                border-bottom: 1px solid #f0f2f6; /* Linha sutil para separar */
+                margin-bottom: 20px;
+                position: sticky; /* Fixa o cabeçalho ao rolar */
+                top: 0;
+                z-index: 100;
             }
 
-            /* --- AJUSTES GERAIS --- */
-            /* Título e textos na sidebar também escuros */
-            [data-testid="stSidebar"] .stMarkdown,
-            [data-testid="stSidebar"] p {
-                 color: #333333 !important;
+            .sidebar-header img {
+                max-height: 80px; /* DOBRO: Aumentado de 40px para 80px */
+                max-width: 80px;  /* DOBRO: Aumentado de 40px para 80px */
+                margin-right: 15px;
+                object-fit: contain;
             }
-            /* Oculta o item 'app' ou 'Home' do menu se ele for o primeiro e redundante */
-            /* Remova as 3 linhas abaixo se quiser que o primeiro item apareça */
-            ul[data-testid="stSidebarNavItems"] > li:first-child {
-                display: none !important;
+
+            .sidebar-header h1 {
+                color: #145efc; /* Azul SIG */
+                font-size: 1.8rem; /* Tamanho da fonte do título */
+                font-weight: 900;
+                margin: 0; /* Remove margem padrão do h1 */
+                padding: 0;
+            }
+
+            /* Ajustes gerais para os links do menu (páginas) */
+            [data-testid="stSidebarNav"] li a {
+                color: #333333; /* Cor do texto dos links */
+                font-size: 1rem;
+                padding: 10px 20px;
+                margin-bottom: 5px;
+                border-radius: 8px; /* Bordas arredondadas para os itens */
+                transition: all 0.2s ease-in-out;
+            }
+
+            [data-testid="stSidebarNav"] li a:hover {
+                background-color: #f0f2f6; /* Fundo mais claro ao passar o mouse */
+                color: #145efc; /* Cor do texto azul SIG ao passar o mouse */
+                transform: translateX(5px); /* Efeito de deslizar leve */
+            }
+
+            /* Estilo para o link da página ativa */
+            [data-testid="stSidebarNav"] li a.st-emotion-cache-1hdj7o2:focus, /* Para quando está ativo */
+            [data-testid="stSidebarNav"] li a.st-emotion-cache-1hdj7o2[aria-current="page"] { /* Para quando está na página */
+                background-color: #145efc !important; /* Fundo azul SIG */
+                color: white !important; /* Texto branco */
+                font-weight: 600;
+                box-shadow: 0 4px 8px rgba(20, 94, 252, 0.2); /* Sombra sutil */
+            }
+
+            /* Esconde o "Made with Streamlit" */
+            .st-emotion-cache-h5rgjs {
+                visibility: hidden;
+            }
+
+            /* Ajusta margens para o conteúdo principal */
+            .block-container {
+                padding-top: 2rem;
+                padding-bottom: 2rem;
             }
         </style>
         """,
         unsafe_allow_html=True
     )
+
+    # Adiciona o logo e o título no topo da barra lateral
+    st.sidebar.markdown(
+        """
+        <div class="sidebar-header">
+            <img src="https://i.imgur.com/kF24v7b.png" alt="Logo SIG">
+            <h1>JP Navigator</h1>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Adiciona um espaço para empurrar os itens do menu para baixo do header customizado
+    st.sidebar.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
