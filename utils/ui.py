@@ -1,29 +1,49 @@
-# utils/ui.py
 import streamlit as st
 
 def setup_sidebar():
-    # Caminho exato do seu arquivo de logo
-    logo_path = "assets/SIG_Logo_RGB_White.png"
+    """
+    Configura o visual padrão da barra lateral:
+    - Fundo Preto (#000000)
+    - Logo SIG no topo
+    - Textos do menu em Branco (#ffffff)
+    """
 
-    # 1. Configura o Logo no topo da barra lateral
-    # icon_image é usado quando a barra lateral está colapsada (opcional, mas recomendado)
-    st.logo(logo_path, icon_image=logo_path)
+    # 1. Definição do caminho do logo
+    LOGO_PATH = "assets/SIG_Logo_RGB_White.png"
 
-    # 2. CSS para forçar o visual desejado: Fundo Preto (#000000) e Texto Branco (#ffffff)
+    # 2. Tenta usar o método nativo moderno (Streamlit 1.35+)
+    # Isso coloca o logo fixo no topo, acima do menu de navegação.
+    try:
+        st.logo(LOGO_PATH, icon_image=LOGO_PATH)
+    except AttributeError:
+        # Fallback simples caso a versão do Streamlit seja antiga
+        st.sidebar.image(LOGO_PATH, use_column_width=True)
+
+    # 3. CSS Hack para forçar as cores exatas (Fundo Preto / Texto Branco)
+    # O !important garante que este estilo vença qualquer padrão do Streamlit.
     st.markdown(
         """
         <style>
-            /* Define a cor de fundo da barra lateral para Preto SIG (#000000) */
+            /* Força o fundo da barra lateral para Preto Absoluto */
             [data-testid="stSidebar"] {
-                background-color: #000000;
+                background-color: #000000 !important;
             }
-            /* Força TODOS os textos dentro da barra lateral para Branco (#ffffff) */
-            [data-testid="stSidebar"] *, [data-testid="stSidebarNav"] span {
+            /* Força TODOS os textos, ícones e links da barra lateral para Branco */
+            [data-testid="stSidebar"] *,
+            [data-testid="stSidebarNav"] span,
+            [data-testid="stSidebarNav"] a,
+            [data-testid="stSidebar"] p,
+            [data-testid="stSidebar"] div {
                 color: #ffffff !important;
             }
-            /* (Opcional) Ajuste de espaçamento para o menu não ficar colado no logo */
-            [data-testid="stSidebarNav"] {
-                padding-top: 1rem;
+            /* Remove o sublinhado padrão dos links se houver */
+            [data-testid="stSidebarNav"] a {
+                text-decoration: none !important;
+            }
+             /* (Opcional) Aumenta um pouco o logo se ele estiver muito pequeno */
+            [data-testid="stLogo"] {
+                height: auto !important;
+                max-width: 90% !important;
             }
         </style>
         """,
