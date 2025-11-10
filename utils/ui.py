@@ -21,7 +21,7 @@ def get_font_base64(file_path):
     return base64.b64encode(data).decode("utf-8")
 
 # ==============================================================================
-# 3. SETUP UI (CSS GLOBAL DEFINITIVO)
+# 3. SETUP UI (CSS NUCLEAR)
 # ==============================================================================
 def setup_sidebar():
     font_reg_b64 = get_font_base64(FONT_REGULAR)
@@ -37,57 +37,62 @@ def setup_sidebar():
     st.markdown(
         f"""
         <style>
-            /* FONTES E LIMPEZA */
             {font_css}
-            header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ visibility: hidden; }}
+            /* Oculta elementos nativos que causam 'flash' */
+            header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ visibility: hidden !important; }}
             [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{ display: none !important; }}
 
-            /* SIDEBAR E CABEÇALHO */
-            [data-testid="stSidebar"] {{ min-width: 300px !important; max-width: 300px !important; width: 300px !important; background-color: white !important; border-right: 1px solid #f0f0f0; }}
-            div[data-testid="stSidebar"] > div:last-child {{ display: none; }}
+            /* Trava Sidebar */
+            [data-testid="stSidebar"] {{
+                min-width: 300px !important; max-width: 300px !important; width: 300px !important;
+                background-color: white !important; border-right: 1px solid #f0f0f0 !important;
+            }}
+            div[data-testid="stSidebar"] > div:last-child {{ display: none !important; }}
+
+            /* Cabeçalho Customizado */
             [data-testid="stSidebarNav"]::before {{
                 content: "Job Architecture"; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
                 height: 180px; background-image: url('{LOGO_URL}'); background-repeat: no-repeat; background-position: center 10px; background-size: 100px auto;
                 color: {TEXT_BLACK} !important; font-size: 1.5rem; font-weight: 900; padding-bottom: 40px; margin-bottom: 20px; border-bottom: 2px solid #f0f2f6;
             }}
 
-            /* MENU DE NAVEGAÇÃO - O FIX FINAL */
-            [data-testid="stSidebarNav"] > ul {{ padding: 0 15px; }}
-            [data-testid="stSidebarNav"] a span:first-child {{ display: none !important; }}
-            [data-testid="stSidebarNav"] a span:last-child {{ display: inline-block !important; }}
-
-            /* LINKS NORMAIS (INATIVOS) */
-            [data-testid="stSidebarNav"] a {{
+            /* --- MENU DE NAVEGAÇÃO (A CORREÇÃO REAL) --- */
+            [data-testid="stSidebarNav"] > ul {{ padding: 0 15px !important; }}
+            
+            /* 1. Reseta TODOS os links primeiro para o estado inativo */
+            div[data-testid="stSidebarNav"] li a {{
+                background-color: transparent !important;
                 color: {TEXT_GRAY} !important;
                 font-weight: 500 !important;
-                border-radius: 999px !important;
+                border-radius: 50px !important;
                 padding: 10px 24px !important;
-                margin-bottom: 5px;
-                transition: none !important;
-                background-color: transparent !important; /* Garante fundo transparente */
-                text-decoration: none !important;
+                transition: none !important; /* Tenta reduzir o pisca */
+                border: none !important;
+                box-shadow: none !important;
             }}
+            div[data-testid="stSidebarNav"] li a span {{ color: {TEXT_GRAY} !important; }}
+            
+            /* Remove emojis */
+            div[data-testid="stSidebarNav"] li a span:first-child {{ display: none !important; }}
+            div[data-testid="stSidebarNav"] li a span:last-child {{ display: inline-block !important; }}
 
-            /* HOVER (SÓ TEXTO AZUL) */
-            [data-testid="stSidebarNav"] a:hover {{
-                background-color: transparent !important;
+            /* 2. Hover (passar o mouse) */
+            div[data-testid="stSidebarNav"] li a:hover {{
                 color: {SIG_SKY} !important;
             }}
-            [data-testid="stSidebarNav"] a:hover span {{ color: {SIG_SKY} !important; }}
+            div[data-testid="stSidebarNav"] li a:hover span {{
+                color: {SIG_SKY} !important;
+            }}
 
-            /* ITEM ATIVO - AQUI A PÍLULA AZUL DEVE APARECER A QUALQUER CUSTO */
-            /* Usa múltiplos seletores para garantir que pegue o certo */
-            li[aria-selected="true"] > a,
-            a[aria-current="page"],
-            [data-testid="stSidebarNav"] a[data-active="true"] {{
+            /* 3. ESTADO ATIVO (NUCLEAR) - Usa hierarquia máxima para forçar a pílula */
+            div[data-testid="stSidebarNav"] li a[aria-current="page"],
+            div[data-testid="stSidebarNav"] li a[data-active="true"] {{
                 background-color: {SIG_SKY} !important;
                 color: white !important;
                 font-weight: 700 !important;
-                box-shadow: none !important;
             }}
-            li[aria-selected="true"] > a span,
-            a[aria-current="page"] span,
-            [data-testid="stSidebarNav"] a[data-active="true"] span {{
+            div[data-testid="stSidebarNav"] li a[aria-current="page"] span,
+            div[data-testid="stSidebarNav"] li a[data-active="true"] span {{
                 color: white !important;
             }}
 
