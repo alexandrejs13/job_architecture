@@ -21,12 +21,27 @@ def get_font_base64(file_path):
     return base64.b64encode(data).decode("utf-8")
 
 # ==============================================================================
-# 3. SETUP UI (VERSÃO ESTÁVEL)
+# 3. SETUP UI (VERSÃO ANTI-FLASH)
 # ==============================================================================
 def setup_sidebar():
+    # --- 1. INJEÇÃO NATIVA (Mais estável que CSS puro para layout) ---
+    # Isso cria o cabeçalho fisicamente no DOM antes do menu
+    with st.sidebar.container():
+        st.markdown(
+            f"""
+            <div style="text-align: center; padding: 20px 0; margin-bottom: 20px; border-bottom: 2px solid #f0f2f6;">
+                <img src="{LOGO_URL}" style="width: 100px; margin-bottom: 15px;">
+                <div style="color: {TEXT_BLACK}; font-size: 1.5rem; font-weight: 900; font-family: 'PP SIG Flow', sans-serif;">
+                    Job Architecture
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    # --- 2. CARREGAMENTO DE FONTES ---
     font_reg_b64 = get_font_base64(FONT_REGULAR)
     font_sb_b64 = get_font_base64(FONT_SEMIBOLD)
-
     font_css = ""
     if font_reg_b64 and font_sb_b64:
         font_css = f"""
@@ -35,71 +50,45 @@ def setup_sidebar():
         html, body, [class*="css"] {{ font-family: 'PP SIG Flow', sans-serif !important; }}
         """
 
+    # --- 3. CSS APENAS PARA ESTILO (Menos invasivo = menos flash) ---
     st.markdown(
         f"""
         <style>
-            /* --- FONTES E TIPOGRAFIA --- */
             {font_css}
-            h1, h2, h3, h4, h5, h6 {{ color: {TEXT_BLACK} !important; font-weight: 700 !important; }}
-
-            /* --- LIMPEZA DE ELEMENTOS NATIVOS --- */
+            /* Limpeza de elementos nativos */
             header {{ visibility: hidden; }}
             footer {{ visibility: hidden; }}
             #MainMenu {{ visibility: hidden; }}
-            .st-emotion-cache-h5rgjs {{ display: none; }} /* 'Made with Streamlit' */
+            .st-emotion-cache-h5rgjs {{ display: none; }}
 
-            /* OCULTA O PRIMEIRO ITEM DO MENU ('APP') - ESTÁVEL */
-            [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{
-                display: none !important;
-            }}
+            /* Oculta o primeiro item 'app' */
+            [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{ display: none !important; }}
 
-            /* --- BARRA LATERAL TRAVADA --- */
+            /* Trava a Sidebar */
             [data-testid="stSidebar"] {{
-                min-width: 300px !important;
-                max-width: 300px !important;
-                width: 300px !important;
-                background-color: white !important;
-                border-right: 1px solid #f0f0f0;
+                min-width: 300px !important; max-width: 300px !important; width: 300px !important;
+                background-color: white !important; border-right: 1px solid #f0f0f0;
             }}
-            /* Esconde alça de redimensionamento */
             div[data-testid="stSidebar"] > div:last-child {{ display: none; }}
 
-            /* --- CABEÇALHO PERSONALIZADO (LOGO + TÍTULO) --- */
+            /* Ajuste fino do menu para não colar no nosso cabeçalho nativo */
             [data-testid="stSidebarNav"] {{
-                background-image: url('{LOGO_URL}');
-                background-repeat: no-repeat;
-                background-position: center 20px;
-                background-size: 100px auto;
-                padding-top: 180px !important; /* Espaço reservado para o cabeçalho */
-            }}
-            [data-testid="stSidebarNav"]::before {{
-                content: "Job Architecture";
-                display: block;
-                text-align: center;
-                color: {TEXT_BLACK} !important;
-                font-size: 1.5rem;
-                font-weight: 900;
-                margin-top: -50px;
-                margin-bottom: 20px;
-                padding-bottom: 20px;
-                border-bottom: 2px solid #f0f2f6;
+                padding-top: 0px !important; /* Removemos o padding gigante que causava o flash */
             }}
 
-            /* --- AJUSTES FINAIS NO MENU (SEM PÍLULAS) --- */
-            /* Apenas esconde os emojis para ficar limpo */
-            [data-testid="stSidebarNav"] a span:first-child {{
-                display: none !important;
+            /* Estilo simples dos links (sem pílulas para estabilidade) */
+            [data-testid="stSidebarNav"] a {{
+                color: {TEXT_GRAY} !important;
+                font-weight: 500 !important;
             }}
-            [data-testid="stSidebarNav"] a span:last-child {{
-                display: inline-block !important;
-                color: {TEXT_GRAY};
-                font-weight: 500;
-            }}
-
-            /* Pequeno ajuste de hover apenas na cor do texto (sutil e estável) */
-            [data-testid="stSidebarNav"] a:hover span:last-child {{
+            /* Hover sutil apenas na cor do texto */
+            [data-testid="stSidebarNav"] a:hover span {{
                 color: {SIG_SKY} !important;
             }}
+
+            /* Remove emojis */
+            [data-testid="stSidebarNav"] a span:first-child {{ display: none !important; }}
+            [data-testid="stSidebarNav"] a span:last-child {{ display: inline-block !important; }}
 
         </style>
         """,
