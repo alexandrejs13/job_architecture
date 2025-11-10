@@ -8,12 +8,9 @@ import os
 FONT_REGULAR = "assets/fonts/PPSIGFlow-Regular.ttf"
 FONT_SEMIBOLD = "assets/fonts/PPSIGFlow-SemiBold.ttf"
 LOGO_URL = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
-
-# --- CORES DA PALETA SIG ---
-SIG_SKY = "#145efc"    # Azul Principal
-SIG_SAND = "#f2efeb"   # Bege Claro para Cards
-TEXT_BLACK = "#000000" # Preto Puro para Títulos
-TEXT_GRAY = "#333333"  # Cinza Escuro para Texto Corrido
+SIG_SKY = "#145efc"
+TEXT_BLACK = "#000000"
+TEXT_GRAY = "#333333"
 
 # ==============================================================================
 # 2. AUXILIARES
@@ -24,12 +21,18 @@ def get_font_base64(file_path):
     return base64.b64encode(data).decode("utf-8")
 
 # ==============================================================================
-# 3. SETUP UI (CSS GLOBAL)
+# 3. SETUP UI (VERSÃO 100% ESTÁVEL - SEM FLASH)
 # ==============================================================================
 def setup_sidebar():
+    
+    # --- 1. CABEÇALHO NATIVO (ZERO FLASH) ---
+    # Isso usa a função oficial do Streamlit. É estável.
+    # Ele coloca o logo no topo, antes do menu.
+    st.logo(LOGO_URL)
+
+    # --- 2. FONTES ---
     font_reg_b64 = get_font_base64(FONT_REGULAR)
     font_sb_b64 = get_font_base64(FONT_SEMIBOLD)
-
     font_css = ""
     if font_reg_b64 and font_sb_b64:
         font_css = f"""
@@ -38,84 +41,54 @@ def setup_sidebar():
         html, body, [class*="css"] {{ font-family: 'PP SIG Flow', sans-serif !important; }}
         """
 
+    # --- 3. CSS MÍNIMO E ESTÁVEL ---
+    # Apenas esconde elementos e ajusta fontes, sem mudar o layout (para não piscar)
     st.markdown(
         f"""
         <style>
-            /* --- FONTES --- */
             {font_css}
 
-            /* --- TIPOGRAFIA GLOBAL --- */
-            h1, h2, h3, h4, h5, h6 {{
-                color: {TEXT_BLACK} !important;
-                font-weight: 700 !important;
-            }}
-            h1 {{ font-size: 2.4rem !important; }}
-            h2 {{ font-size: 1.8rem !important; }}
-            h3 {{ font-size: 1.4rem !important; }}
-            p, li, span, div {{ color: {TEXT_GRAY}; }}
-
-            /* --- LIMPEZA --- */
-            header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ visibility: hidden !important; }}
-            [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{ display: none !important; }}
-
-            /* --- SIDEBAR --- */
-            [data-testid="stSidebar"] {{
-                min-width: 300px !important; max-width: 300px !important; width: 300px !important;
-                background-color: white !important;
-                border-right: 1px solid #f0f0f0;
-            }}
-            div[data-testid="stSidebar"] > div:last-child {{ display: none !important; }}
-
-            /* --- CABEÇALHO SIDEBAR --- */
-            [data-testid="stSidebarNav"]::before {{
-                content: "Job Architecture";
-                display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
-                height: 180px;
-                background-image: url('{LOGO_URL}'); background-repeat: no-repeat;
-                background-position: center 10px; background-size: 100px auto;
-                color: {TEXT_BLACK} !important; /* Título Preto */
-                font-size: 1.5rem; font-weight: 900;
-                padding-bottom: 40px; margin-bottom: 20px;
-                border-bottom: 2px solid #f0f2f6;
-            }}
-
-            /* --- MENU DE NAVEGAÇÃO (PÍLULA) --- */
-            [data-testid="stSidebarNav"] > ul {{ padding: 0 15px !important; }}
+            /* --- TIPOGRAFIA --- */
+            h1, h2, h3, h4, h5, h6 {{ color: {TEXT_BLACK} !important; font-weight: 700 !important; }}
             
-            /* Remove Emojis */
+            /* --- LIMPEZA --- */
+            header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ display: none !important; }}
+            
+            /* OCULTA O PRIMEIRO ITEM ('app') */
+            [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{ display: none !important; }}
+            
+            /* OCULTA EMOJIS */
             [data-testid="stSidebarNav"] a span:first-child {{ display: none !important; }}
             [data-testid="stSidebarNav"] a span:last-child {{ display: inline-block !important; }}
-            
-            [data-testid="stSidebarNav"] a {{
-                color: {TEXT_GRAY} !important;
-                font-weight: 500 !important;
-                border-radius: 50px !important;
-                padding: 8px 20px !important;
-                margin-bottom: 5px;
-                transition: none !important; /* <--- MATA O "TILT" (PISCA) */
-                background-color: transparent !important; /* Garante inativo transparente */
+
+            /* --- TRAVA SIDEBAR --- */
+            [data-testid="stSidebar"] {{
+                min-width: 300px !important; max-width: 300px !important; width: 300px !important;
+                background-color: white !important; border-right: 1px solid #f0f0f0;
             }}
-            
-            /* Hover (Apenas texto azul) */
-            [data-testid="stSidebarNav"] a:hover {{
-                background-color: transparent !important; /* <--- GARANTE SEM PÍLULA NO HOVER */
-                color: {SIG_SKY} !important;
+            div[data-testid="stSidebar"] > div:last-child {{ display: none; }} /* Esconde alça */
+
+            /* --- AJUSTE FINO DO LOGO NATIVO --- */
+            [data-testid="stSidebarLogo"] {{
+                padding: 2.5rem 0; /* Centraliza verticalmente o logo */
+                width: 100%;
+                border-bottom: 2px solid #f0f2f6;
             }}
+            [data-testid="stSidebarLogo"] img {{
+                width: 100px; /* Tamanho elegante */
+                margin: 0 auto;
+            }}
+
+            /* --- MENU NATIVO (Hover sutil) --- */
             [data-testid="stSidebarNav"] a:hover span {{
                 color: {SIG_SKY} !important;
             }}
+            
+            /* Remove o padding excessivo que o menu nativo tem */
+            [data-testid="stSidebarNav"] {{
+                padding-top: 1rem !important;
+            }}
 
-            /* --- ITEM ATIVO (PÍLULA AZUL FORÇADA) --- */
-            /* Este é o seletor que você disse que funcionava, agora com !important em tudo */
-            [data-testid="stSidebarNav"] a[aria-current="page"] {{
-                background-color: {SIG_SKY} !important; /* FORÇA O AZUL SIG SKY */
-                color: white !important;                 /* FORÇA O TEXTO BRANCO */
-                font-weight: 700 !important;
-                box-shadow: none !important; /* <--- MATA O "TILT" (PISCA) */
-            }}
-            [data-testid="stSidebarNav"] a[aria-current="page"] span {{
-                color: white !important; /* FORÇA O SPAN INTERNO A SER BRANCO */
-            }}
         </style>
         """,
         unsafe_allow_html=True
