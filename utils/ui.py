@@ -9,11 +9,10 @@ FONT_REGULAR = "assets/fonts/PPSIGFlow-Regular.ttf"
 FONT_SEMIBOLD = "assets/fonts/PPSIGFlow-SemiBold.ttf"
 LOGO_URL = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
 
-# --- CORES DA PALETA SIG ---
-SIG_SKY = "#145efc"    # Azul Principal
-SIG_SAND = "#f2efeb"   # Bege Claro para Cards
-TEXT_BLACK = "#000000" # Preto Puro para Títulos
-TEXT_GRAY = "#333333"  # Cinza Escuro para Texto Corrido
+# CORES SIG
+SIG_SKY = "#145efc"
+TEXT_GRAY = "#333333"
+TEXT_BLACK = "#000000"
 
 # ==============================================================================
 # 2. AUXILIARES
@@ -55,8 +54,7 @@ def setup_sidebar():
             /* --- SIDEBAR TRAVADA --- */
             [data-testid="stSidebar"] {{
                 min-width: 300px !important; max-width: 300px !important; width: 300px !important;
-                background-color: white !important;
-                border-right: 1px solid #f0f0f0;
+                background-color: white !important; border-right: 1px solid #f0f0f0;
             }}
             div[data-testid="stSidebar"] > div:last-child {{ display: none; }}
 
@@ -68,37 +66,37 @@ def setup_sidebar():
                 background-image: url('{LOGO_URL}'); background-repeat: no-repeat;
                 background-position: center 10px; background-size: 100px auto;
                 color: {SIG_SKY}; font-size: 1.5rem; font-weight: 900;
-                padding-bottom: 40px; margin-bottom: 20px;
-                border-bottom: 2px solid #f0f2f6;
+                padding-bottom: 40px; margin-bottom: 20px; border-bottom: 2px solid #f0f2f6;
             }}
 
-            /* --- MENU DE NAVEGAÇÃO (PÍLULAS) --- */
+            /* --- MENU DE NAVEGAÇÃO --- */
             [data-testid="stSidebarNav"] > ul {{ padding: 0 15px; }}
             
             /* Links Normais (Inativos) */
             [data-testid="stSidebarNav"] a {{
                 color: {TEXT_GRAY} !important;
                 font-weight: 500 !important;
-                border-radius: 50px !important; /* Pílula */
+                border-radius: 50px !important; /* Pílula sempre pronta */
                 padding: 8px 20px !important;
                 margin-bottom: 5px;
                 transition: all 0.2s;
+                background-color: transparent !important; /* Garante fundo transparente se não ativo */
             }}
-            /* Hover (Passar o mouse) */
+            
+            /* Hover (Passar o mouse) - APENAS MUDA COR DO TEXTO, SEM FUNDO */
             [data-testid="stSidebarNav"] a:hover {{
-                background-color: #eef6fc !important; /* Azul muito claro */
-                color: {SIG_SKY} !important;
+                color: {SIG_SKY} !important; /* Azul SIG Sky no texto ao passar o mouse */
+                background-color: transparent !important; /* Sem pílula no hover */
             }}
 
-            /* --- ITEM ATIVO (Página Atual) --- */
-            /* Garante que pega o item certo usando aria-current="page" */
+            /* --- ITEM ATIVO (Página Atual) - AQUI A PÍLULA APARECE --- */
             [data-testid="stSidebarNav"] a[aria-current="page"] {{
-                background-color: {SIG_SKY} !important; /* Azul SIG Sky (#145efc) */
-                color: white !important;                 /* Texto Branco */
+                background-color: {SIG_SKY} !important; /* Fundo AZUL SIG SKY (#145efc) */
+                color: white !important;                 /* Texto BRANCO (#ffffff) */
                 font-weight: 700 !important;
                 box-shadow: 0 4px 12px rgba(20, 94, 252, 0.25);
             }}
-            /* Força o span interno (onde fica o texto real) a ser branco também */
+            /* Garante que o texto interno (span) fique branco também */
             [data-testid="stSidebarNav"] a[aria-current="page"] span {{
                 color: white !important;
             }}
