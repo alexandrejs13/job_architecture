@@ -21,7 +21,7 @@ def get_font_base64(file_path):
     return base64.b64encode(data).decode("utf-8")
 
 # ==============================================================================
-# 3. SETUP UI (CSS DEFINITIVO)
+# 3. SETUP UI (VERSÃO ESTÁVEL)
 # ==============================================================================
 def setup_sidebar():
     font_reg_b64 = get_font_base64(FONT_REGULAR)
@@ -38,85 +38,67 @@ def setup_sidebar():
     st.markdown(
         f"""
         <style>
-            /* --- FONTES E LIMPEZA GERAL --- */
+            /* --- FONTES E TIPOGRAFIA --- */
             {font_css}
-            header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ visibility: hidden !important; height: 0px !important; }}
-            
-            /* Tenta esconder o menu nativo antes dele piscar */
-            [data-testid="stSidebarNav"] > ul {{ opacity: 0; animation: fadeIn 0.2s ease-in-out forwards; }}
-            @keyframes fadeIn {{ to {{ opacity: 1; }} }}
+            h1, h2, h3, h4, h5, h6 {{ color: {TEXT_BLACK} !important; font-weight: 700 !important; }}
 
-            /* --- REMOÇÃO DE EMOJIS (ICONES DO MENU) --- */
-            /* O Streamlit coloca o emoji num span e o texto noutro. Escondemos o primeiro. */
-            [data-testid="stSidebarNav"] a span:nth-child(1) {{
+            /* --- LIMPEZA DE ELEMENTOS NATIVOS --- */
+            header {{ visibility: hidden; }}
+            footer {{ visibility: hidden; }}
+            #MainMenu {{ visibility: hidden; }}
+            .st-emotion-cache-h5rgjs {{ display: none; }} /* 'Made with Streamlit' */
+
+            /* OCULTA O PRIMEIRO ITEM DO MENU ('APP') - ESTÁVEL */
+            [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{
                 display: none !important;
             }}
-            /* Garante que o texto (segundo span) fique visível */
-            [data-testid="stSidebarNav"] a span:nth-child(2) {{
-                display: inline-block !important;
-            }}
 
-            /* --- TRAVAMENTO DA SIDEBAR --- */
+            /* --- BARRA LATERAL TRAVADA --- */
             [data-testid="stSidebar"] {{
-                min-width: 300px !important; max-width: 300px !important; width: 300px !important;
-                background-color: white !important; border-right: 1px solid #f0f0f0 !important;
+                min-width: 300px !important;
+                max-width: 300px !important;
+                width: 300px !important;
+                background-color: white !important;
+                border-right: 1px solid #f0f0f0;
             }}
-            [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {{
-                padding-top: 0rem !important;
-            }}
-            div[data-testid="stSidebar"] > div:last-child {{ display: none !important; }}
+            /* Esconde alça de redimensionamento */
+            div[data-testid="stSidebar"] > div:last-child {{ display: none; }}
 
-            /* --- CABEÇALHO CUSTOMIZADO --- */
+            /* --- CABEÇALHO PERSONALIZADO (LOGO + TÍTULO) --- */
             [data-testid="stSidebarNav"] {{
-                background-image: url('{LOGO_URL}'); background-repeat: no-repeat;
-                background-position: center 20px; background-size: 100px auto;
-                padding-top: 180px !important;
+                background-image: url('{LOGO_URL}');
+                background-repeat: no-repeat;
+                background-position: center 20px;
+                background-size: 100px auto;
+                padding-top: 180px !important; /* Espaço reservado para o cabeçalho */
             }}
             [data-testid="stSidebarNav"]::before {{
-                content: "Job Architecture"; display: block; text-align: center;
-                color: {TEXT_BLACK} !important; font-size: 1.5rem; font-weight: 900;
-                margin-top: -50px; margin-bottom: 20px; padding-bottom: 20px;
+                content: "Job Architecture";
+                display: block;
+                text-align: center;
+                color: {TEXT_BLACK} !important;
+                font-size: 1.5rem;
+                font-weight: 900;
+                margin-top: -50px;
+                margin-bottom: 20px;
+                padding-bottom: 20px;
                 border-bottom: 2px solid #f0f2f6;
             }}
 
-            /* --- ESTILIZAÇÃO DO MENU (PÍLULAS) --- */
-            [data-testid="stSidebarNav"] > ul {{ padding: 0 15px !important; }}
-            
-            /* Esconde o primeiro item 'app' se existir */
-            [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{ display: none !important; }}
-
-            /* Links Inativos (Base) */
-            [data-testid="stSidebarNav"] a {{
-                color: {TEXT_GRAY} !important;
-                font-weight: 500 !important;
-                border-radius: 999px !important; /* Pílula */
-                padding: 10px 24px !important;
-                margin-bottom: 4px !important;
-                background-color: transparent !important;
-                transition: none !important; /* Sem animação para reduzir pisca */
-                border: none !important;
-                text-decoration: none !important;
+            /* --- AJUSTES FINAIS NO MENU (SEM PÍLULAS) --- */
+            /* Apenas esconde os emojis para ficar limpo */
+            [data-testid="stSidebarNav"] a span:first-child {{
+                display: none !important;
+            }}
+            [data-testid="stSidebarNav"] a span:last-child {{
+                display: inline-block !important;
+                color: {TEXT_GRAY};
+                font-weight: 500;
             }}
 
-            /* Hover (Passar o mouse) */
-            [data-testid="stSidebarNav"] a:hover {{
+            /* Pequeno ajuste de hover apenas na cor do texto (sutil e estável) */
+            [data-testid="stSidebarNav"] a:hover span:last-child {{
                 color: {SIG_SKY} !important;
-            }}
-            [data-testid="stSidebarNav"] a:hover span {{
-                color: {SIG_SKY} !important;
-            }}
-
-            /* --- ITEM ATIVO (PÍLULA AZUL) --- */
-            /* Seletores reforçados para garantir aplicação */
-            [data-testid="stSidebarNav"] a[aria-current="page"],
-            [data-testid="stSidebarNav"] a[data-active="true"] {{
-                background-color: {SIG_SKY} !important;
-                box-shadow: none !important;
-            }}
-            [data-testid="stSidebarNav"] a[aria-current="page"] span,
-            [data-testid="stSidebarNav"] a[data-active="true"] span {{
-                color: #ffffff !important;
-                font-weight: 700 !important;
             }}
 
         </style>
