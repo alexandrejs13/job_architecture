@@ -253,14 +253,24 @@ h1 {
 }
 
 /* Estilo para o botão "Tela Cheia" no modo normal (VERMELHO) */
-/* Alvo mais específico para evitar conflitos */
-div[data-testid="stVerticalBlock"] > div > div > button > div > span:has-text("Tela Cheia") {
-    background-color: var(--red) !important;
+/* Seletor simplificado para maior robustez */
+button[data-testid*="stButton"] > div > p { /* Streamlit 1.30+ usa <p> dentro do botão para o texto */
     color: white !important;
+    background-color: var(--red) !important;
+    border-color: var(--red) !important;
+    font-weight: 600 !important;
+}
+button[data-testid*="stButton"] > div > p:hover {
+    background-color: #c82333 !important; /* Um tom mais escuro ao passar o mouse */
+    border-color: #bd2130 !important;
+}
+/* Estiliza o próprio botão para ter borda e cor de fundo consistentes */
+button[data-testid*="stButton"] {
+    background-color: var(--red) !important;
     border-color: var(--red) !important;
 }
-div[data-testid="stVerticalBlock"] > div > div > button > div > span:has-text("Tela Cheia"):hover {
-    background-color: #c82333 !important; /* Um tom mais escuro ao passar o mouse */
+button[data-testid*="stButton"]:hover {
+    background-color: #c82333 !important; 
     border-color: #bd2130 !important;
 }
 
@@ -301,14 +311,14 @@ css_fullscreen = """
         margin: 0 !important;
     }
 
-    /* Estilo para o container do botão de sair - com margens flutuantes */
+    /* Estilo para o container do botão de sair - com margens flutuantes (CORRIGIDO) */
     div[data-testid="stVerticalBlock"] > div:has(button[kind="primary"]) {
-        position: fixed;
-        bottom: 10px; /* Margem de 1cm = 10px inferior */
-        right: 10px;  /* Margem de 1cm = 10px direita */
-        left: auto;   /* Garante que não está preso à esquerda */
-        z-index: 100000 !important;
-        background: transparent;
+        position: fixed !important; /* Reforça fixed */
+        bottom: 1cm !important;     /* Margem de 1cm inferior */
+        right: 1cm !important;      /* Margem de 1cm direita */
+        left: unset !important;     /* Garante que não está preso à esquerda */
+        z-index: 100000 !important; /* Garante que está no topo */
+        background: transparent !important;
     }
     
     /* Estilo específico para o botão de sair */
@@ -460,7 +470,7 @@ col_index = 2
 header_spans = {}
 
 for f in active_families:
-    subs = sorted(df_filtered[df_filtered["Job Family"] == f]["Sub Job Family"].unique().tolist())
+    subs = sorted(df_filtered[df["Job Family"] == f]["Sub Job Family"].unique().tolist()) # Use df aqui para pegar todas as subfamílias da família, não apenas as filtradas
     header_spans[f] = len(subs)
     for sf in subs:
         subfamilias_map[(f, sf)] = col_index
