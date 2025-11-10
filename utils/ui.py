@@ -1,98 +1,99 @@
-# utils/ui.py
-
 import streamlit as st
 
 def setup_sidebar():
+    # URL direta da imagem (RAW) para carregar corretamente
+    LOGO_URL = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
+
     st.markdown(
-        """
+        f"""
         <style>
-            /* Esconde o cabeçalho e o footer padrão do Streamlit */
-            header { visibility: hidden; }
-            footer { visibility: hidden; }
+            /* Esconde elementos padrão indesejados */
+            header {{visibility: hidden;}}
+            footer {{visibility: hidden;}}
+            .st-emotion-cache-h5rgjs {{visibility: hidden; height: 0;}} /* Esconde 'Made with Streamlit' */
+            [data-testid="stSidebarNav"] h3 {{display: none !important;}} /* Esconde o título 'app' do menu */
 
-            /* Estilo para a barra lateral customizada */
-            [data-testid="stSidebar"] {
-                background-color: white !important; /* Fundo branco */
-            }
+            /* --- ESTILO DA BARRA LATERAL --- */
+            [data-testid="stSidebar"] {{
+                background-color: white !important;
+                border-right: 1px solid #e0e0e0;
+            }}
 
-            /* Container para o logo e título no topo da sidebar */
-            .sidebar-header {
+            /* --- CABEÇALHO CUSTOMIZADO (LOGO + TÍTULO) --- */
+            .custom-sidebar-header {{
                 display: flex;
-                align-items: center;
-                padding: 15px 20px 10px 20px; /* Mais espaço abaixo do header */
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 20px 15px 10px 15px;
                 background-color: white;
-                border-bottom: 1px solid #f0f2f6; /* Linha sutil para separar */
-                margin-bottom: 20px;
-                position: sticky; /* Fixa o cabeçalho ao rolar */
+                position: sticky;
                 top: 0;
                 z-index: 100;
-            }
-
-            .sidebar-header img {
-                max-height: 80px; /* DOBRO: Aumentado de 40px para 80px */
-                max-width: 80px;  /* DOBRO: Aumentado de 40px para 80px */
-                margin-right: 15px;
+                border-bottom: 2px solid #f0f2f6;
+                margin-bottom: 10px;
+            }}
+            .logo-container {{
+                display: flex;
+                align-items: center;
+                margin-bottom: 10px;
+            }}
+            .logo-container img {{
+                height: 80px !important; /* Altura dobrada conforme solicitado */
+                width: auto !important;  /* Mantém a proporção correta */
                 object-fit: contain;
-            }
-
-            .sidebar-header h1 {
-                color: #145efc; /* Azul SIG */
-                font-size: 1.8rem; /* Tamanho da fonte do título */
+            }}
+            .app-title {{
+                color: #145efc; /* Azul SIG Sky */
+                font-size: 1.5rem;
                 font-weight: 900;
-                margin: 0; /* Remove margem padrão do h1 */
-                padding: 0;
-            }
+                margin: 0 !important;
+                line-height: 1.2;
+            }}
 
-            /* Ajustes gerais para os links do menu (páginas) */
-            [data-testid="stSidebarNav"] li a {
-                color: #333333; /* Cor do texto dos links */
-                font-size: 1rem;
-                padding: 10px 20px;
-                margin-bottom: 5px;
-                border-radius: 8px; /* Bordas arredondadas para os itens */
-                transition: all 0.2s ease-in-out;
-            }
+            /* --- MENU DE NAVEGAÇÃO --- */
+            [data-testid="stSidebarNav"] {{
+                padding-top: 0px;
+            }}
+            [data-testid="stSidebarNav"] ul {{
+                padding-top: 10px;
+            }}
+            /* Links normais */
+            [data-testid="stSidebarNav"] a, [data-testid="stSidebarNav"] span {{
+                color: #333333 !important;
+                font-weight: 500 !important;
+            }}
+            /* Hover (passar o mouse) */
+            [data-testid="stSidebarNav"] a:hover {{
+                background-color: #eef6fc !important; /* Fundo azul bem clarinho */
+                color: #145efc !important; /* Texto azul SIG */
+            }}
+            /* Item Ativo (página atual) - Tenta pegar várias classes possíveis do Streamlit */
+            [data-testid="stSidebarNav"] a[aria-current="page"],
+            [data-testid="stSidebarNav"] a[data-active="true"] {{
+                background-color: #145efc !important;
+                color: white !important;
+                font-weight: 700 !important;
+            }}
+            /* Garante que o texto dentro do item ativo também fique branco */
+            [data-testid="stSidebarNav"] a[aria-current="page"] span,
+            [data-testid="stSidebarNav"] a[data-active="true"] span {{
+                color: white !important;
+            }}
 
-            [data-testid="stSidebarNav"] li a:hover {
-                background-color: #f0f2f6; /* Fundo mais claro ao passar o mouse */
-                color: #145efc; /* Cor do texto azul SIG ao passar o mouse */
-                transform: translateX(5px); /* Efeito de deslizar leve */
-            }
-
-            /* Estilo para o link da página ativa */
-            [data-testid="stSidebarNav"] li a.st-emotion-cache-1hdj7o2:focus, /* Para quando está ativo */
-            [data-testid="stSidebarNav"] li a.st-emotion-cache-1hdj7o2[aria-current="page"] { /* Para quando está na página */
-                background-color: #145efc !important; /* Fundo azul SIG */
-                color: white !important; /* Texto branco */
-                font-weight: 600;
-                box-shadow: 0 4px 8px rgba(20, 94, 252, 0.2); /* Sombra sutil */
-            }
-
-            /* Esconde o "Made with Streamlit" */
-            .st-emotion-cache-h5rgjs {
-                visibility: hidden;
-            }
-
-            /* Ajusta margens para o conteúdo principal */
-            .block-container {
-                padding-top: 2rem;
-                padding-bottom: 2rem;
-            }
         </style>
         """,
         unsafe_allow_html=True
     )
 
-    # Adiciona o logo e o título no topo da barra lateral
+    # Injeta o cabeçalho customizado no topo da sidebar
     st.sidebar.markdown(
-        """
-        <div class="sidebar-header">
-            <img src="https://i.imgur.com/kF24v7b.png" alt="Logo SIG">
-            <h1>JP Navigator</h1>
+        f"""
+        <div class="custom-sidebar-header">
+            <div class="logo-container">
+                <img src="{LOGO_URL}" alt="SIG Logo">
+            </div>
+            <div class="app-title">Job Architecture</div>
         </div>
         """,
         unsafe_allow_html=True
     )
-
-    # Adiciona um espaço para empurrar os itens do menu para baixo do header customizado
-    st.sidebar.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
