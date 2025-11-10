@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# pages/4_🧩_Job_Match.py
+# pages/5_🧩_Job_Match.py
 
 import streamlit as st
 import pandas as pd
@@ -11,15 +11,22 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar
+# Importa a nossa função de visual global
+from utils.ui import setup_sidebar
 
 # ===========================================================
-# CONFIGURAÇÃO DE PÁGINA
+# 1. CONFIGURAÇÃO DE PÁGINA
 # ===========================================================
 st.set_page_config(layout="wide", page_title="🧩 Job Match")
+
+# ===========================================================
+# 2. APLICA O VISUAL GLOBAL (Barra Branca + Logo Azul)
+# ===========================================================
+setup_sidebar()
 lock_sidebar()
 
 # ===========================================================
-# ESTILO
+# 3. ESTILO DA PÁGINA
 # ===========================================================
 st.markdown("""
 <style>
@@ -54,7 +61,7 @@ st.markdown("""
 }
 .fjc-title { font-size: 18px; font-weight: 800; color: #2c3e50; margin-bottom: 10px; min-height: 50px; }
 .fjc-gg-row { display: flex; justify-content: space-between; align-items: center; }
-.fjc-gg { color: #1E56E0; font-weight: 700; }
+.fjc-gg { color: #145efc; /* Azul SIG */ font-weight: 700; }
 .fjc-score { color: white; font-weight: 700; padding: 4px 10px; border-radius: 12px; font-size: 0.9rem; }
 
 /* Metadados */
@@ -87,8 +94,8 @@ st.markdown("""
 
 /* Caixa de Sugestão de IA */
 .ai-insight-box {
-    background-color: #eef6fc;
-    border-left: 5px solid #145efc;
+    background-color: #eef6fc; /* Fundo azul bem claro */
+    border-left: 5px solid #145efc; /* Azul SIG */
     padding: 15px 20px;
     border-radius: 8px;
     margin: 20px 0;
@@ -96,7 +103,7 @@ st.markdown("""
 }
 .ai-insight-title {
     font-weight: 800;
-    color: #145efc;
+    color: #145efc; /* Azul SIG */
     display: flex;
     align-items: center;
     gap: 8px;
@@ -106,7 +113,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# CARREGAMENTO DE DADOS E MODELO
+# 4. CARREGAMENTO DE DADOS E MODELO
 # ===========================================================
 @st.cache_resource
 def load_model():
@@ -129,7 +136,7 @@ def load_data_and_embeddings():
     if not df_jobs.empty:
         df_jobs.columns = df_jobs.columns.str.strip()
         cols_needed = [
-            "Job Family", "Sub Job Family", "Job Profile", "Role Description", 
+            "Job Family", "Sub Job Family", "Job Profile", "Role Description",
             "Grade Differentiator", "Qualifications", "Global Grade", "Career Path",
             "Sub Job Family Description", "Job Profile Description", "Career Band Description",
             "Function", "Discipline", "Full Job Code", "KPIs / Specific Parameters"
@@ -145,7 +152,7 @@ def load_data_and_embeddings():
 
     if "Global Grade" in df_levels.columns:
         df_levels["Global Grade"] = df_levels["Global Grade"].astype(str).str.replace(r"\.0$", "", regex=True).str.strip()
-    
+
     df_jobs["Rich_Text"] = (
         "Job Profile: " + df_jobs["Job Profile"] + ". " +
         "Role Description: " + df_jobs["Role Description"] + ". " +
@@ -167,7 +174,7 @@ except Exception as e:
     st.stop()
 
 # ===========================================================
-# MAPEAMENTO DE COERÊNCIA
+# 5. LÓGICA DE MATCHING
 # ===========================================================
 LEVEL_GG_MAPPING = {
     "W1": [1, 2, 3, 4, 5], "W2": [5, 6, 7, 8], "W3": [7, 8, 9, 10],
@@ -177,9 +184,6 @@ LEVEL_GG_MAPPING = {
     "E1": [18, 19, 20, 21], "E2": [21, 22, 23, 24, 25]
 }
 
-# ===========================================================
-# DETECÇÃO SEMÂNTICA
-# ===========================================================
 def detect_level_from_text(text, wtw_db):
     if not wtw_db or not text: return None, None, None, []
     text_lower = text.lower()
@@ -202,7 +206,7 @@ def detect_level_from_text(text, wtw_db):
     return best_band, best_level, best_level_key, matched_keywords
 
 # ===========================================================
-# INTERFACE
+# 6. INTERFACE DO USUÁRIO
 # ===========================================================
 section("🧩 Job Match")
 st.markdown("Encontre o cargo ideal com base na descrição completa das responsabilidades.")
@@ -231,7 +235,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         st.stop()
 
     mask = (df["Job Family"] == selected_family) & (df["Sub Job Family"] == selected_subfamily)
-    
+
     detected_band, detected_level, detected_key, keywords_found = detect_level_from_text(desc_input, wtw_data)
     allowed_grades = []
     if detected_key and detected_key in LEVEL_GG_MAPPING:
@@ -241,7 +245,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         st.markdown(f"""
         <div class="ai-insight-box">
             <div class="ai-insight-title">🤖 Análise Semântica de Nível</div>
-            Com base na sua descrição, identificamos características de um nível 
+            Com base na sua descrição, identificamos características de um nível
             <strong>{detected_level['label']}</strong> (Carreira: {detected_band['label']}).<br>
             <small>Filtrando resultados para Grades coerentes: {min(allowed_grades)} a {max(allowed_grades)}. Termos detectados: {kws_formatted}...</small>
         </div>
@@ -260,7 +264,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     top3 = results.sort_values("similarity", ascending=False).head(3)
 
     # ===========================================================
-    # RENDERIZAÇÃO DINÂMICA (1, 2 OU 3 COLUNAS)
+    # 7. RENDERIZAÇÃO DINÂMICA DOS RESULTADOS
     # ===========================================================
     st.markdown("---")
     st.subheader("🏆 Cargos Mais Compatíveis")
@@ -280,9 +284,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
              if not match.empty: lvl_name = f"• {match['Level Name'].iloc[0]}"
         cards_data.append({"row": row, "score_fmt": f"{score_val:.1f}%", "score_bg": score_bg, "lvl": lvl_name})
 
-    # --- GRID DINÂMICO ---
     num_results = len(cards_data)
-    # Define o estilo inline para dividir o grid exatamente pelo número de resultados
     grid_style = f"grid-template-columns: repeat({num_results}, 1fr);"
     grid_html = f'<div class="comparison-grid" style="{grid_style}">'
 
@@ -309,16 +311,16 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         </div>"""
 
     # 3. Seções de Conteúdo
-    sections = [
+    sections_config = [
         ("🧭 Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
         ("🧠 Job Profile Description", "Job Profile Description", "#e91e63"),
         ("🏛️ Career Band Description", "Career Band Description", "#673ab7"),
-        ("🎯 Role Description", "Role Description", "#1E56E0"),
+        ("🎯 Role Description", "Role Description", "#145efc"), # Azul SIG para Role Description
         ("🏅 Grade Differentiator", "Grade Differentiator", "#ff9800"),
         ("🎓 Qualifications", "Qualifications", "#009688")
     ]
 
-    for title, field, color in sections:
+    for title, field, color in sections_config:
         for card in cards_data:
             content = str(card['row'].get(field, '-'))
             if field == "Qualifications" and (len(content) < 2 or content.lower() == 'nan'):
