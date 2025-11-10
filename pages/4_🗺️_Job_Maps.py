@@ -1,16 +1,23 @@
 # -*- coding: utf-8 -*-
-# pages/3_🗺️_Job_Maps.py
+# pages/4_🗺️_Job_Maps.py
 
 import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
 from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar
+# Importa a nossa função de visual global
+from utils.ui import setup_sidebar
 
 # ===========================================================
-# CONFIGURAÇÃO DE PÁGINA E ESTADO
+# 1. CONFIGURAÇÃO DE PÁGINA E ESTADO
 # ===========================================================
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
+
+# ===========================================================
+# 2. APLICA O VISUAL GLOBAL (Barra Branca + Logo Azul)
+# ===========================================================
+setup_sidebar()
 lock_sidebar()
 
 if 'fullscreen' not in st.session_state:
@@ -20,17 +27,18 @@ def toggle_fullscreen():
     st.session_state.fullscreen = not st.session_state.fullscreen
 
 # ===========================================================
-# CSS BASE (MODO NORMAL)
+# 3. CSS BASE (ADAPTADO PARA O NOVO TEMA)
 # ===========================================================
+# As cores principais agora seguem a paleta SIG Sky (#145efc) para destaque
 css_base = """
 <style>
 :root {
-  --blue: #145efc;    /* Management */
-  --green: #28a745;   /* Professional */
-  --orange: #fd7e14;  /* Technical */
+  --blue: #145efc;    /* SIG Sky - Destaque principal */
+  --green: #28a745;   /* Professional (mantido para distinção funcional) */
+  --orange: #fd7e14;  /* Technical (mantido para distinção funcional) */
   --purple: #6f42c1;  /* Outros */
-  --red: #dc3545;     /* Botões de Ação */
-  --gray-line: #dadada;
+  --red: #dc3545;     /* Ações destrutivas/sair */
+  --gray-line: #e0e0e0;
   --gray-bg: #f8f9fa;
   --dark-gray: #333333;
 }
@@ -41,14 +49,16 @@ css_base = """
   padding: 2rem 5rem !important;
 }
 
+/* Topbar ajustada para não conflitar com o novo cabeçalho global se houver */
 .topbar {
   position: sticky;
   top: 0;
   z-index: 200;
-  background: white;
-  padding: 15px 0 15px 0;
+  background: var(--gray-bg); /* Fundo levemente cinza para destacar do branco da página */
+  padding: 15px 20px;
   border-bottom: 2px solid var(--blue);
   margin-bottom: 20px;
+  border-radius: 8px; /* Um toque mais moderno */
 }
 
 h1 {
@@ -71,7 +81,8 @@ h1 {
   background: white;
   position: relative;
   will-change: transform;
-  box-shadow: 0 0 15px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* Sombra mais suave */
+  border-radius: 8px; /* Bordas arredondadas no mapa */
 }
 
 .jobmap-grid {
@@ -94,6 +105,7 @@ h1 {
   box-sizing: border-box;
 }
 
+/* Cabeçalhos das Famílias - Cores ajustadas mais tarde via Python, mas base aqui */
 .header-family {
   font-weight: 800;
   color: #fff;
@@ -102,7 +114,7 @@ h1 {
   border-right: 1px solid rgba(255,255,255,0.3) !important;
   border-bottom: 0px none !important;
   outline: none !important;
-  margin-bottom: 0px !important; 
+  margin-bottom: 0px !important;
   position: sticky;
   top: 0;
   z-index: 57;
@@ -137,10 +149,12 @@ h1 {
   grid-row: 2;
   font-size: 0.85rem;
   overflow: hidden;
+  color: var(--dark-gray); /* Texto escuro para contraste em fundos claros */
 }
 
+/* Cabeçalho Lateral dos Global Grades (GG) */
 .gg-header {
-  background: #000 !important;
+  background: var(--dark-gray) !important; /* Usando cinza escuro em vez de preto puro */
   color: white;
   font-weight: 800;
   text-align: center;
@@ -159,7 +173,7 @@ h1 {
 }
 
 .gg-cell {
-  background: #000 !important;
+  background: var(--dark-gray) !important;
   color: white;
   font-weight: 700;
   display: flex;
@@ -169,7 +183,7 @@ h1 {
   left: 0;
   z-index: 55;
   border-right: 2px solid white !important;
-  border-top: 1px solid white !important;
+  border-top: 1px solid #555 !important; /* Linha divisória mais sutil */
   grid-column: 1;
   font-size: 0.9rem;
   height: 110px !important;
@@ -191,16 +205,16 @@ h1 {
   overflow: hidden;
 }
 
-/* === JOB CARD (CORRIGIDO PARA CORES DINÂMICAS) === */
+/* === JOB CARD === */
 .job-card {
-  background: #f9f9f9;
-  /* Borda padrão removida para não conflitar com o inline style */
+  background: #ffffff; /* Cartão branco */
+  border: 1px solid var(--gray-line); /* Borda sutil em volta */
+  /* A borda colorida esquerda é injetada via Python com !important */
   border-left-width: 5px !important;
   border-left-style: solid !important;
-  /* A COR VEM APENAS DO PYTHON AGORA */
   border-radius: 6px;
   padding: 6px 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   font-size: 0.75rem;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -215,14 +229,15 @@ h1 {
   transition: all 0.2s ease-in-out;
 }
 .job-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 10px rgba(0,0,0,0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 12px rgba(0,0,0,0.1);
+  border-color: var(--blue); /* Realça a borda ao passar o mouse */
 }
 .job-card b {
   display: block;
   font-weight: 700;
   margin-bottom: 3px;
-  line-height: 1.15;
+  line-height: 1.2;
   color: #222;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -247,21 +262,20 @@ h1 {
   top: 0;
   bottom: 0;
   width: 5px;
-  background: linear-gradient(to right, rgba(0,0,0,0.15), transparent);
+  background: linear-gradient(to right, rgba(0,0,0,0.1), transparent);
   pointer-events: none;
 }
 
-/* === BOTÃO TELA CHEIA (VERMELHO) === */
-/* Força a cor vermelha no botão específico de entrada em tela cheia */
+/* === BOTÕES === */
+/* Botão de Tela Cheia (estilo padrão do Streamlit, mas ajustado) */
 [data-testid="stButton"] button {
-    border-color: var(--red) !important;
-    color: var(--red) !important;
-    font-weight: 700 !important;
+    border-color: var(--blue) !important;
+    color: var(--blue) !important;
+    font-weight: 600 !important;
 }
 [data-testid="stButton"] button:hover {
-    border-color: #c82333 !important;
-    color: #c82333 !important;
-    background-color: #fff5f5 !important;
+    background-color: var(--blue) !important;
+    color: white !important;
 }
 
 @media (max-width: 1500px) { .block-container { zoom: 0.9; } }
@@ -269,7 +283,7 @@ h1 {
 """
 
 # ===========================================================
-# CSS MODO TELA CHEIA (COM CONTAINER FIXO PARA O BOTÃO SAIR)
+# CSS MODO TELA CHEIA (MANTIDO)
 # ===========================================================
 css_fullscreen = """
 <style>
@@ -290,27 +304,27 @@ css_fullscreen = """
         border: none !important;
         border-top: 5px solid var(--blue) !important;
         margin: 0 !important;
+        border-radius: 0 !important; /* Remove bordas arredondadas em tela cheia */
     }
 
-    /* CONTAINER FIXO PARA O BOTÃO SAIR (SOLUÇÃO DEFINITIVA) */
     #fixed-exit-container {
         position: fixed !important;
         bottom: 30px !important;
         right: 30px !important;
         z-index: 100000 !important;
     }
-    /* Estilo do botão DENTRO do container fixo */
     #fixed-exit-container button {
         background-color: var(--red) !important;
         color: white !important;
         border: none !important;
         box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
-        padding: 10px 25px !important;
+        padding: 12px 25px !important;
         font-weight: 800 !important;
-        border-radius: 8px !important;
+        border-radius: 30px !important; /* Botão mais arredondado */
     }
     #fixed-exit-container button:hover {
         background-color: #c82333 !important;
+        transform: scale(1.05);
     }
 </style>
 """
@@ -320,8 +334,10 @@ if st.session_state.fullscreen:
     st.markdown(css_fullscreen, unsafe_allow_html=True)
 
 # ===========================================================
-# DADOS
+# DADOS E LÓGICA DA PÁGINA (MANTIDA DO ORIGINAL)
 # ===========================================================
+# ... (O restante do seu código de lógica de dados permanece idêntico,
+# pois ele apenas gera o HTML que será estilizado pelo CSS acima)
 data = load_excel_data()
 df = data.get("job_profile", pd.DataFrame())
 
@@ -340,9 +356,6 @@ df = df[~df["Job Profile"].isin(['nan', 'None', ''])]
 df = df[~df["Global Grade"].isin(['nan', 'None', ''])]
 df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True)
 
-# ===========================================================
-# FILTROS E CONTROLES
-# ===========================================================
 section("🗺️ Job Map")
 
 if not st.session_state.fullscreen:
@@ -373,7 +386,7 @@ if not st.session_state.fullscreen:
 
     with col3:
         st.write("")
-        st.markdown('<div style="margin-top: 15px;">', unsafe_allow_html=True) 
+        st.markdown('<div style="margin-top: 15px;">', unsafe_allow_html=True)
         if st.button("⛶ Tela Cheia", use_container_width=True):
             toggle_fullscreen()
             st.rerun()
@@ -396,15 +409,12 @@ else:
     families_order = [f for f in preferred_order if f in existing_families]
     families_order.extend(sorted(list(existing_families - set(families_order))))
 
-    # BOTÃO DE SAIR EM CONTAINER FIXO
-    # Envolvemos o botão em uma div com ID específico para o CSS posicionar
     st.markdown('<div id="fixed-exit-container">', unsafe_allow_html=True)
     if st.button("❌ Sair da Tela Cheia"):
         toggle_fullscreen()
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # JS para ESC
     components.html(
         """
         <script>
@@ -422,7 +432,6 @@ else:
         height=0, width=0
     )
 
-# --- APLICAÇÃO DOS FILTROS ---
 df_filtered = df.copy()
 if family_filter != "Todas":
     df_filtered = df_filtered[df_filtered["Job Family"] == family_filter]
@@ -437,9 +446,6 @@ if df_filtered.empty:
              st.rerun()
     st.stop()
 
-# ===========================================================
-# PREPARAÇÃO DO GRID
-# ===========================================================
 active_families = [f for f in families_order if f in df_filtered["Job Family"].unique()]
 grades = sorted(df["Global Grade"].unique(), key=lambda x: int(x) if x.isdigit() else 999, reverse=True)
 
@@ -486,7 +492,6 @@ for (_, c_idx) in subfamilias_map.items():
                 break
         span_map[(g, c_idx)] = span
 
-# --- FUNÇÃO DE CORES (GARANTIDA) ---
 def get_path_color(path_name):
     p_lower = str(path_name).lower().strip()
     if "manage" in p_lower or "executive" in p_lower: return "var(--blue)"
@@ -498,7 +503,7 @@ cell_html_cache = {}
 for i, g in enumerate(grades):
     for (f, sf), c_idx in subfamilias_map.items():
         if (g, c_idx) in skip_set or content_map.get((g, c_idx)) is None: continue
-        
+
         span = span_map.get((g, c_idx), 1)
         if span > 1:
             covered = grades[i : i + span]
@@ -511,10 +516,9 @@ for i, g in enumerate(grades):
             gg_label = f"GG {g}"
 
         cell_df = df_filtered[(df_filtered["Job Family"] == f) & (df_filtered["Sub Job Family"] == sf) & (df_filtered["Global Grade"] == g)]
-        
+
         cards = []
         for _, row in cell_df.iterrows():
-            # Obtém a cor e injeta DIRETAMENTE no style com !important
             path_color = get_path_color(row['Career Path'])
             tooltip = f"{row['Job Profile']} | {row['Career Path']} ({gg_label})"
             cards.append(
@@ -525,9 +529,6 @@ for i, g in enumerate(grades):
             )
         cell_html_cache[(g, c_idx)] = "".join(cards)
 
-# ===========================================================
-# CÁLCULO DE LARGURAS
-# ===========================================================
 def largura_texto_minima(text): return len(str(text)) * 5 + 30
 col_widths = ["100px"]
 for (f, sf), c_idx in subfamilias_map.items():
@@ -544,9 +545,6 @@ for (f, sf), c_idx in subfamilias_map.items():
     col_widths.append(f"{max(width_title, width_cards)}px")
 grid_template = f"grid-template-columns: {' '.join(col_widths)};"
 
-# ===========================================================
-# PALETA DE CORES
-# ===========================================================
 palette_pairs = [
     ("#4F6D7A", "#E6EFF2"), ("#5C7A67", "#E8F2EB"), ("#7A5C5C", "#F2E6E6"),
     ("#6B5C7A", "#EBE6F2"), ("#7A725C", "#F2EFE6"), ("#5C6B7A", "#E6EBF2"),
@@ -556,9 +554,6 @@ palette_pairs = [
 map_cor_fam = {f: palette_pairs[i % len(palette_pairs)][0] for i, f in enumerate(families_order)}
 map_cor_sub = {f: palette_pairs[i % len(palette_pairs)][1] for i, f in enumerate(families_order)}
 
-# ===========================================================
-# RENDERIZAÇÃO FINAL
-# ===========================================================
 html = ["<div class='map-wrapper'><div class='jobmap-grid' style='{grid_template}'>".format(grid_template=grid_template)]
 html.append("<div class='gg-header'>GG</div>")
 
