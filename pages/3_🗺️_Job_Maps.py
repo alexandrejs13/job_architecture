@@ -13,12 +13,15 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (ALTURA FIXA PARA SIMETRIA PERFEITA)
+# CSS COMPLETO
 # ===========================================================
 st.markdown("""
 <style>
 :root {
   --blue: #145efc;
+  --green: #28a745;
+  --orange: #fd7e14;
+  --purple: #6f42c1;
   --gray-line: #dadada;
   --gray-bg: #f8f9fa;
   --dark-gray: #333333;
@@ -65,7 +68,6 @@ h1 {
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
-  /* ALTURA FIXA E EXATA PARA TODAS AS LINHAS DE CONTEÚDO */
   grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
   grid-auto-rows: 110px !important;
   align-content: start !important;
@@ -159,7 +161,7 @@ h1 {
   border-top: 1px solid white !important;
   grid-column: 1;
   font-size: 0.9rem;
-  height: 110px !important; /* Força altura também na célula GG */
+  height: 110px !important;
 }
 
 .cell {
@@ -174,13 +176,17 @@ h1 {
   gap: 8px;
   align-items: center;
   align-content: center;
-  height: 100% !important; /* Ocupa toda a altura fixa da linha */
-  overflow: hidden; /* Evita que conteúdo excedente quebre o layout */
+  height: 100% !important;
+  overflow: hidden;
 }
 
 .job-card {
   background: #f9f9f9;
-  border-left: 4px solid var(--blue);
+  /* Borda esquerda mais grossa para destacar a cor da trilha */
+  border-left-width: 5px !important; 
+  border-left-style: solid !important;
+  /* Cor padrão azul caso a dinâmica falhe */
+  border-left-color: var(--blue);
   border-radius: 6px;
   padding: 6px 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -347,6 +353,14 @@ for (_, c_idx) in subfamilias_map.items():
                 break
         span_map[(g, c_idx)] = span
 
+# --- FUNÇÃO DE CORES POR TRILHA (REINTEGRADA) ---
+def get_path_color(path_name):
+    p_lower = str(path_name).lower()
+    if "manage" in p_lower or "executive" in p_lower: return "var(--blue)"
+    if "professional" in p_lower: return "var(--green)"
+    if "technical" in p_lower or "support" in p_lower: return "var(--orange)"
+    return "var(--purple)" # Default para outras trilhas
+
 cell_html_cache = {}
 for i, g in enumerate(grades):
     for (f, sf), c_idx in subfamilias_map.items():
@@ -354,7 +368,6 @@ for i, g in enumerate(grades):
             continue
 
         span = span_map.get((g, c_idx), 1)
-        
         if span > 1:
             covered = grades[i : i + span]
             try:
@@ -366,11 +379,18 @@ for i, g in enumerate(grades):
             gg_label = f"GG {g}"
 
         cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
-        cards_html = "".join([
-            f"<div class='job-card'><b>{row['Job Profile']}</b><span>{row['Career Path']} - {gg_label}</span></div>"
-            for _, row in cell_df.iterrows()
-        ])
-        cell_html_cache[(g, c_idx)] = cards_html
+        
+        cards = []
+        for _, row in cell_df.iterrows():
+            # Aplica a cor da trilha dinamicamente na borda esquerda
+            path_color = get_path_color(row['Career Path'])
+            cards.append(
+                f"<div class='job-card' style='border-left-color: {path_color} !important;'>"
+                f"<b>{row['Job Profile']}</b>"
+                f"<span>{row['Career Path']} - {gg_label}</span>"
+                f"</div>"
+            )
+        cell_html_cache[(g, c_idx)] = "".join(cards)
 
 # ===========================================================
 # CÁLCULO DE LARGURAS
