@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
-import streamlit.components.v1 as components # Importação necessária para o components.html
+import streamlit.components.v1 as components 
+import re
+import html
 from utils.ui import setup_sidebar, section 
 
 # ==============================================================================
@@ -12,8 +14,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- INICIALIZAÇÃO OBRIGATÓRIA DO SESSION STATE ---
-# Garante que as variáveis existam, corrigindo o AttributeError.
+# --- INICIALIZAÇÃO DE SESSION STATE (CRÍTICO) ---
 if 'fullscreen' not in st.session_state:
     st.session_state.fullscreen = False
 if 'fam_filter' not in st.session_state:
@@ -24,30 +25,28 @@ if 'path_filter' not in st.session_state:
 setup_sidebar()
 
 # ===========================================================
-# 2. DEFINIÇÃO DE FUNÇÕES ESSENCIAIS
+# 2. FUNÇÕES ESSENCIAIS E DADOS
 # ===========================================================
 
-# CORREÇÃO: Função toggle_fullscreen definida
 def toggle_fullscreen():
     """Alterna o estado de fullscreen e força o rerun."""
     st.session_state.fullscreen = not st.session_state.fullscreen
     st.rerun()
 
-# CORREÇÃO: Função load_excel_data definida e usando o caminho correto
 @st.cache_data(ttl=3600)
 def load_excel_data():
-    """Tenta carregar os dados reais do seu Excel."""
+    """Carrega os dados reais do seu Excel no caminho correto."""
     file_path = "data/Job Profile.xlsx"
     try:
         df = pd.read_excel(file_path)
-        # Retorna no formato de dicionário que get_prepared_data espera
-        return {"job_profile": df}
+        # O retorno precisa ser um dict para a função get_prepared_data()
+        return {"job_profile": df} 
     except Exception as e:
-        # Apenas retorna um DataFrame vazio se houver falha, o erro será exibido em get_prepared_data
+        st.error(f"Erro Crítico: Não foi possível carregar o arquivo {file_path}. Detalhe: {e}")
         return {"job_profile": pd.DataFrame()}
 
 # ===========================================================
-# 3. CSS BASE (ADAPTADO PARA O NOVO TEMA)
+# 3. CSS BASE (ADAPTADO)
 # ===========================================================
 css_base = """
 <style>
@@ -306,7 +305,6 @@ def get_prepared_data():
     df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True) 
     return df
 
-# CORREÇÃO: Função get_path_color limpa e corrigida
 def get_path_color(path_name):
     p_lower = str(path_name).lower().strip()
     if "manage" in p_lower or "executive" in p_lower: return "var(--blue)"
@@ -316,7 +314,6 @@ def get_path_color(path_name):
 
 @st.cache_data(ttl=600, show_spinner="Gerando mapa...")
 def generate_map_html(df_filtered, families_order):
-    # Lógica de geração de HTML para o mapa (sem alteração)
     if df_filtered.empty: return "<div style='padding: 20px;'>Nenhum dado encontrado.</div>"
     
     active_families = [f for f in families_order if f in df_filtered["Job Family"].unique()]
@@ -439,7 +436,7 @@ preferred_order = ["Top Executive/General Management", "Corporate Affairs/Commun
 existing_families = set(df["Job Family"].unique())
 families_order = [f for f in preferred_order if f in existing_families] + sorted(list(existing_families - set(preferred_order)))
 
-# Recarrega o estado do filtro salvo ao entrar ou sair do fullscreen
+# Recarrega o estado do filtro salvo
 fam_filter = st.session_state.get('fam_filter', 'Todas')
 path_filter = st.session_state.get('path_filter', 'Todas')
 
@@ -466,7 +463,7 @@ else:
     st.markdown('<div id="fixed-exit-container">', unsafe_allow_html=True)
     if st.button("❌ Sair"): toggle_fullscreen() 
     st.markdown('</div>', unsafe_allow_html=True)
-    # Ativa o ESC para sair do fullscreen
+    # Ativa o ESC
     components.html("<script>document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.parent.document.querySelector('#fixed-exit-container button').click(); });</script>", height=0, width=0)
 
 # Salva os filtros no session state
@@ -474,7 +471,7 @@ st.session_state.fam_filter, st.session_state.path_filter = fam_filter, path_fil
 
 # Aplica a filtragem
 df_filtered = df.copy()
-if fam_filter != "Todas": df_filtered = df_filtered[df_filtered["Job Family"] == fam_filter]
+if fam_filter != "Todas": df_filtered = df_filtered[df["Job Family"] == fam_filter] # Corrigido para df
 if path_filter != "Todas": df_filtered = df_filtered[df_filtered["Career Path"] == path_filter]
 
 # Renderiza o mapa otimizado
