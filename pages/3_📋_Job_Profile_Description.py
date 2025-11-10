@@ -1,25 +1,17 @@
-# -*- coding: utf-8 -*-
-# pages/3_📋_Job_Profile_Description.py
-
 import streamlit as st
-import pandas as pd
-import re
-import html
-from utils.data_loader import load_job_profile_df
-from utils.ui_components import section, lock_sidebar
-# Importa nossa função de visual global
+# Outros imports necessários
 from utils.ui import setup_sidebar
 
-# ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA (TEM QUE SER O PRIMEIRO COMANDO ST)
-# ===========================================================
-st.set_page_config(layout="wide", page_title="📋 Job Profile Description")
+# 1. Configuração da Página (SEMPRE EM PRIMEIRO se existir)
+st.set_page_config(
+    page_title="Job Architecture",
+    page_icon="🏛️",
+    layout="wide"
+)
 
-# ===========================================================
-# 2. APLICA O VISUAL GLOBAL
-# ===========================================================
+# 2. IMEDIATAMENTE INJETA O CSS
 setup_sidebar()
-lock_sidebar() # Mantém sua função de travar a sidebar
+
 
 # ===========================================================
 # 3. CSS COMPLETO DA PÁGINA
