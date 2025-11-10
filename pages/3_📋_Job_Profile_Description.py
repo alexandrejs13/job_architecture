@@ -11,20 +11,20 @@ from utils.ui_components import section, lock_sidebar
 from utils.ui import setup_sidebar
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA
+# 1. CONFIGURAÇÃO DE PÁGINA (TEM QUE SER O PRIMEIRO COMANDO ST)
 # ===========================================================
 st.set_page_config(layout="wide", page_title="📋 Job Profile Description")
 
 # ===========================================================
-# 2. APLICA O VISUAL GLOBAL (Barra Branca + Logo Azul)
+# 2. APLICA O VISUAL GLOBAL
 # ===========================================================
 setup_sidebar()
-lock_sidebar() # Mantém sua função de travar a sidebar se desejar
+lock_sidebar() # Mantém sua função de travar a sidebar
 
 # ===========================================================
 # 3. CSS COMPLETO DA PÁGINA
 # ===========================================================
-# Mantive seu CSS original, ele é específico para esta página e não deve conflitar
+# Este CSS é específico da página e vai sobrescrever o h1 global (o que é normal)
 st.markdown("""
 <style>
 :root {
@@ -40,9 +40,9 @@ st.markdown("""
     padding-right: 2rem !important;
 }
 
-/* Título principal ajustado */
+/* Título principal da página (sobrescreve o global h1 preto) */
 h1 {
-    color: var(--blue);
+    color: var(--blue) !important;
     font-weight: 900 !important;
     font-size: 1.9rem !important;
     display: flex;
