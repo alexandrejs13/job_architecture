@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO
+# CSS COMPLETO (AJUSTE FINO DE ALTURA E LINHA)
 # ===========================================================
 st.markdown("""
 <style>
@@ -68,7 +68,7 @@ h1 {
   grid-auto-rows: minmax(90px, auto);
   row-gap: 0px !important;
   column-gap: 0px !important;
-  background-color: var(--gray-line);
+  background-color: white !important;
 }
 
 .jobmap-grid > div {
@@ -83,13 +83,14 @@ h1 {
   color: #fff;
   padding: 10px 5px;
   text-align: center;
-  border-right: 1px solid rgba(255,255,255,0.5) !important;
-  border-bottom: 0px none !important;
-  margin-bottom: 0px !important;
-  padding-bottom: 10px !important;
+  border-right: 1px solid rgba(255,255,255,0.3) !important;
+  /* GARANTE QUE NÃO HÁ BORDA INFERIOR */
+  border-bottom: none !important;
+  outline: none !important;
+  margin-bottom: 0px !important; 
   position: sticky;
   top: 0;
-  z-index: 56;
+  z-index: 57;
   white-space: normal;
   height: 50px;
   display: flex;
@@ -101,17 +102,20 @@ h1 {
 
 .header-subfamily {
   font-weight: 600;
-  color: #333;
-  padding: 8px 5px;
+  background: var(--gray-bg) !important;
+  /* ALTURA REDUZIDA */
+  padding: 4px 5px;
+  min-height: 30px;
   text-align: center;
   position: sticky;
   top: 50px;
-  z-index: 55;
+  z-index: 56;
   white-space: normal;
-  border-top: 0px none !important;
-  margin-top: 0px !important;
+  /* MARGEM NEGATIVA PARA REFORÇAR A UNIÃO E AFINAR A LINHA VISUALMENTE */
+  margin-top: -1px !important;
+  border-top: none !important;
+  outline: none !important;
   border-bottom: 2px solid var(--gray-line) !important;
-  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -251,21 +255,10 @@ section("🗺️ Job Map")
 col1, col2 = st.columns([2, 2])
 
 preferred_order = [
-    "Top Executive/General Management",
-    "Corporate Affairs/Communications",
-    "Legal & Internal Audit",
-    "Finance",
-    "IT",
-    "People & Culture",
-    "Sales",
-    "Marketing",
-    "Technical Services",
-    "Research & Development",
-    "Technical Engineering",
-    "Operations",
-    "Supply Chain & Logistics",
-    "Quality Management",
-    "Facility & Administrative Services"
+    "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
+    "Finance", "IT", "People & Culture", "Sales", "Marketing", "Technical Services",
+    "Research & Development", "Technical Engineering", "Operations", "Supply Chain & Logistics",
+    "Quality Management", "Facility & Administrative Services"
 ]
 
 existing_families = set(df["Job Family"].unique())
@@ -403,18 +396,11 @@ grid_template = f"grid-template-columns: {' '.join(col_widths)};"
 # PALETA DE CORES
 # ===========================================================
 palette_pairs = [
-    ("#4F6D7A", "#E6EFF2"),
-    ("#5C7A67", "#E8F2EB"),
-    ("#7A5C5C", "#F2E6E6"),
-    ("#6B5C7A", "#EBE6F2"),
-    ("#7A725C", "#F2EFE6"),
-    ("#5C6B7A", "#E6EBF2"),
-    ("#7A5C74", "#F2E6EF"),
-    ("#5C7A78", "#E6F2F1"),
-    ("#736A62", "#F0EDEB"),
+    ("#4F6D7A", "#E6EFF2"), ("#5C7A67", "#E8F2EB"), ("#7A5C5C", "#F2E6E6"),
+    ("#6B5C7A", "#EBE6F2"), ("#7A725C", "#F2EFE6"), ("#5C6B7A", "#E6EBF2"),
+    ("#7A5C74", "#F2E6EF"), ("#5C7A78", "#E6F2F1"), ("#736A62", "#F0EDEB"),
     ("#626A73", "#EBEDF0"),
 ]
-
 map_cor_fam = {f: palette_pairs[i % len(palette_pairs)][0] for i, f in enumerate(families_order)}
 map_cor_sub = {f: palette_pairs[i % len(palette_pairs)][1] for i, f in enumerate(families_order)}
 
