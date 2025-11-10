@@ -39,14 +39,15 @@ def setup_sidebar():
                 height: 180px; /* Altura total da área do cabeçalho */
                 background-image: url('{LOGO_URL}');
                 background-repeat: no-repeat;
-                /* Centraliza o logo horizontalmente e posiciona a 20px do topo */
-                background-position: center 20px;
-                background-size: 120px auto;
+                /* AJUSTE 1: Logo posicionado mais para cima (10px do topo) */
+                background-position: center 10px;
+                /* AJUSTE 2: Tamanho do logo um pouco menor (100px de largura) */
+                background-size: 100px auto;
                 color: #145efc; /* Azul SIG */
                 font-size: 1.5rem;
                 font-weight: 900;
-                /* Ajuste este padding para subir ou descer o texto em relação à linha divisória */
-                padding-bottom: 30px;
+                /* AJUSTE 3: Aumentei o padding-bottom para subir mais o bloco de texto/logo */
+                padding-bottom: 40px;
                 margin-bottom: 20px; /* Espaço entre a linha divisória e o menu */
                 border-bottom: 2px solid #f0f2f6;
             }}
