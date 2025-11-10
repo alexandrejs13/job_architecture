@@ -13,6 +13,7 @@ LOGO_URL = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/mai
 SIG_SKY = "#145efc"    # Azul Principal
 TEXT_BLACK = "#000000" # Preto Puro para Títulos
 TEXT_GRAY = "#333333"  # Cinza Escuro para Texto Corrido
+SIG_SAND = "#f2efeb"   # Bege para Cards (caso precise)
 
 # ==============================================================================
 # 2. AUXILIARES
@@ -49,6 +50,7 @@ def setup_sidebar():
 
             /* --- LIMPEZA --- */
             header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ visibility: hidden; }}
+            /* Oculta o primeiro item do menu ('app') */
             [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{ display: none !important; }}
 
             /* --- SIDEBAR TRAVADA --- */
@@ -58,7 +60,7 @@ def setup_sidebar():
             }}
             div[data-testid="stSidebar"] > div:last-child {{ display: none; }}
 
-            /* --- CABEÇALHO --- */
+            /* --- CABEÇALHO (LOGO + TÍTULO) --- */
             [data-testid="stSidebarNav"]::before {{
                 content: "Job Architecture";
                 display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
@@ -72,23 +74,23 @@ def setup_sidebar():
             /* --- MENU DE NAVEGAÇÃO --- */
             [data-testid="stSidebarNav"] > ul {{ padding: 0 15px; }}
             
-            /* Remove Emojis (primeiro span dentro do link) */
+            /* Remove emojis */
             [data-testid="stSidebarNav"] a span:first-child {{ display: none !important; }}
             [data-testid="stSidebarNav"] a span:last-child {{ display: inline-block !important; }}
 
-            /* ESTILO BASE DOS LINKS (Inativos) */
+            /* Links Normais (Inativos) */
             [data-testid="stSidebarNav"] a {{
                 color: {TEXT_GRAY} !important;
                 font-weight: 500 !important;
-                border-radius: 999px !important; /* Pílula perfeita */
+                border-radius: 999px !important; /* Pílula */
                 padding: 10px 24px !important;
                 margin-bottom: 5px;
-                transition: none !important;
-                text-decoration: none !important;
-                background-color: transparent; /* Fundo transparente por padrão */
+                transition: none !important; /* Sem animação para não tremer */
+                background-color: transparent !important; /* Fundo transparente se não ativo */
+                border: none !important;
             }}
             
-            /* HOVER (Passar o mouse) - Apenas texto azul */
+            /* Hover (Passar o mouse) - SÓ TEXTO AZUL */
             [data-testid="stSidebarNav"] a:hover {{
                 background-color: transparent !important;
                 color: {SIG_SKY} !important;
@@ -97,20 +99,20 @@ def setup_sidebar():
                 color: {SIG_SKY} !important;
             }}
 
-            /* --- ITEM ATIVO (SELECIONADO) - AQUI A PÍLULA AZUL DEVE APARECER --- */
-            /* Reforçando seletores para garantir que pegue o item ativo */
-            [data-testid="stSidebarNav"] a[aria-current="page"],
-            [data-testid="stSidebarNav"] a[data-active="true"],
-            [data-testid="stSidebarNav"] li[aria-selected="true"] a {{
-                background-color: {SIG_SKY} !important; /* Fundo AZUL SIG SKY */
-                color: white !important;                 /* Texto BRANCO */
+            /* --- ITEM ATIVO (AQUI ESTA A MÁGICA) --- */
+            /* Lista de seletores agressivos para pegar o item ativo em qualquer versão do Streamlit */
+            ul[data-testid="stSidebarNavItems"] li a[aria-current="page"],
+            ul[data-testid="stSidebarNavItems"] li a[data-active="true"],
+            [data-testid="stSidebarNav"] a[aria-current="page"] {{
+                background-color: {SIG_SKY} !important; /* Pílula AZUL SIG SKY */
+                color: #ffffff !important;               /* Texto BRANCO */
                 font-weight: 700 !important;
+                box-shadow: none !important; /* Remove sombras que causam tilt */
             }}
-            /* Garante que o texto interno fique branco */
-            [data-testid="stSidebarNav"] a[aria-current="page"] span,
-            [data-testid="stSidebarNav"] a[data-active="true"] span,
-            [data-testid="stSidebarNav"] li[aria-selected="true"] a span {{
-                color: white !important;
+            /* Garante texto branco dentro da pílula ativa */
+            ul[data-testid="stSidebarNavItems"] li a[aria-current="page"] span,
+            [data-testid="stSidebarNav"] a[aria-current="page"] span {{
+                color: #ffffff !important;
             }}
 
         </style>
