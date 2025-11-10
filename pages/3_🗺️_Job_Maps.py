@@ -13,14 +13,14 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO
+# CSS COMPLETO (CORREÇÃO DEFINITIVA DAS CORES)
 # ===========================================================
 st.markdown("""
 <style>
 :root {
-  --blue: #145efc;    /* Management */
-  --green: #28a745;   /* Professional */
-  --orange: #fd7e14;  /* Technical */
+  --blue: #145efc;    /* Management/Executive */
+  --green: #28a745;   /* Professional/Specialist */
+  --orange: #fd7e14;  /* Technical/Support */
   --purple: #6f42c1;  /* Outros */
   --gray-line: #dadada;
   --gray-bg: #f8f9fa;
@@ -180,10 +180,15 @@ h1 {
   overflow: hidden;
 }
 
-/* CARD BASE (Cor padrão azul, será sobrescrita pelo Python) */
+/* === CORREÇÃO CRÍTICA AQUI === */
 .job-card {
   background: #f9f9f9;
-  border-left: 5px solid var(--blue); 
+  /* Define APENAS a largura e estilo no CSS base. A COR vem do Python. */
+  border-left-width: 5px !important;
+  border-left-style: solid !important;
+  /* Cor padrão caso o inline falhe (fallback) */
+  border-left-color: var(--gray-line); 
+  
   border-radius: 6px;
   padding: 6px 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -350,22 +355,16 @@ for (_, c_idx) in subfamilias_map.items():
                 break
         span_map[(g, c_idx)] = span
 
-# ===========================================================
-# FUNÇÃO DE CORES E GERAÇÃO DE CARDS
-# ===========================================================
+# --- FUNÇÃO DE CORES (REINTEGRADA E ROBUSTA) ---
 def get_path_color(path_name):
-    # Normaliza para minúsculas para comparação segura
+    if pd.isna(path_name): return "var(--gray-line)"
     p_lower = str(path_name).lower().strip()
     
-    # Lógica de cores baseada em palavras-chave
-    if "manage" in p_lower or "executive" in p_lower: 
-        return "var(--blue)"
-    if "professional" in p_lower or "specialist" in p_lower: 
-        return "var(--green)"
-    if "techni" in p_lower or "support" in p_lower: 
-        return "var(--orange)"
-        
-    return "var(--purple)" # Cor padrão para outros
+    if "manage" in p_lower or "executive" in p_lower: return "var(--blue)"   # Azul
+    if "professional" in p_lower or "specialist" in p_lower: return "var(--green)" # Verde
+    if "techni" in p_lower or "support" in p_lower: return "var(--orange)" # Laranja
+    
+    return "var(--purple)" # Roxo (Outros)
 
 cell_html_cache = {}
 for i, g in enumerate(grades):
@@ -388,10 +387,8 @@ for i, g in enumerate(grades):
         
         cards = []
         for _, row in cell_df.iterrows():
-            # Determina a cor baseada na trilha desta linha específica
+            # Aplicação garantida da cor inline
             path_color = get_path_color(row['Career Path'])
-            
-            # Injeta a cor diretamente no estilo do elemento
             cards.append(
                 f"<div class='job-card' style='border-left-color: {path_color} !important;'>"
                 f"<b>{row['Job Profile']}</b>"
@@ -428,7 +425,7 @@ for (f, sf), c_idx in subfamilias_map.items():
 grid_template = f"grid-template-columns: {' '.join(col_widths)};"
 
 # ===========================================================
-# PALETA DE CORES
+# PALETA DE CORES (CABEÇALHOS)
 # ===========================================================
 palette_pairs = [
     ("#4F6D7A", "#E6EFF2"), ("#5C7A67", "#E8F2EB"), ("#7A5C5C", "#F2E6E6"),
