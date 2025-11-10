@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# pages/2_📋_Job_Profile_Description.py
+# pages/3_📋_Job_Profile_Description.py
 
 import streamlit as st
 import pandas as pd
@@ -7,16 +7,24 @@ import re
 import html
 from utils.data_loader import load_job_profile_df
 from utils.ui_components import section, lock_sidebar
+# Importa nossa função de visual global
+from utils.ui import setup_sidebar
 
 # ===========================================================
-# CONFIGURAÇÃO DE PÁGINA
+# 1. CONFIGURAÇÃO DE PÁGINA
 # ===========================================================
 st.set_page_config(layout="wide", page_title="📋 Job Profile Description")
-lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (ALINHADO COM O JOB MATCH)
+# 2. APLICA O VISUAL GLOBAL (Barra Branca + Logo Azul)
 # ===========================================================
+setup_sidebar()
+lock_sidebar() # Mantém sua função de travar a sidebar se desejar
+
+# ===========================================================
+# 3. CSS COMPLETO DA PÁGINA
+# ===========================================================
+# Mantive seu CSS original, ele é específico para esta página e não deve conflitar
 st.markdown("""
 <style>
 :root {
@@ -32,8 +40,7 @@ st.markdown("""
     padding-right: 2rem !important;
 }
 
-/* REMOVIDO: .topbar que criava a linha e o padding extra */
-
+/* Título principal ajustado */
 h1 {
     color: var(--blue);
     font-weight: 900 !important;
@@ -42,8 +49,8 @@ h1 {
     align-items: center;
     gap: 10px;
     margin: 0 !important;
-    padding-top: 15px; /* Adicionado um padding top para compensar a remoção do topbar */
-    margin-bottom: 25px !important; /* Mantém o espaçamento inferior */
+    padding-top: 15px;
+    margin-bottom: 25px !important;
 }
 
 /* GRID DE COMPARAÇÃO DINÂMICO */
@@ -121,7 +128,7 @@ h1 {
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# FUNÇÕES AUXILIARES
+# 4. FUNÇÕES AUXILIARES
 # ===========================================================
 def safe_get(row, key, default="-"):
     val = row.get(key, "")
@@ -133,11 +140,10 @@ def format_paragraphs(text):
     return "".join(f"<p class='jp-p'>• {html.escape(p.strip())}</p>" for p in parts if len(p.strip()) > 1)
 
 # ===========================================================
-# DADOS E FILTROS
+# 5. DADOS E LÓGICA DA PÁGINA
 # ===========================================================
 df = load_job_profile_df()
 
-# REMOVIDO O DIV TOPBAR QUE ENVOLVIA A SECTION
 section("📋 Job Profile Description")
 
 # --- FILTROS EM 3 COLUNAS ---
@@ -160,7 +166,7 @@ with c3:
 # --- MULTISELECT DE CARGOS ---
 career_df_sorted = career_df.sort_values(by="Global Grade", ascending=False)
 career_df_sorted["Option Label"] = career_df_sorted.apply(
-    lambda x: f"GG{int(float(x['Global Grade']))} — {x['Job Profile']}" if str(x['Global Grade']).replace('.0','').isdigit() else x['Job Profile'], 
+    lambda x: f"GG{int(float(x['Global Grade']))} — {x['Job Profile']}" if str(x['Global Grade']).replace('.0','').isdigit() else x['Job Profile'],
     axis=1
 )
 
@@ -171,7 +177,7 @@ selected_labels = st.multiselect(
 )
 
 # ===========================================================
-# RENDERIZAÇÃO DINÂMICA
+# 6. RENDERIZAÇÃO DINÂMICA (GRID)
 # ===========================================================
 if selected_labels:
     selected_rows = []
@@ -181,7 +187,7 @@ if selected_labels:
 
     num_cols = len(selected_rows)
     grid_style = f"grid-template-columns: repeat({num_cols}, 1fr);"
-    
+
     grid_html = f'<div class="comparison-grid" style="{grid_style}">'
 
     # --- 1. LINHA DE CABEÇALHO ---
@@ -212,7 +218,7 @@ if selected_labels:
         </div>"""
 
     # --- 3. SEÇÕES DE CONTEÚDO (ALINHADAS) ---
-    sections = [
+    sections_config = [
         ("🧭", "Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
         ("🧠", "Job Profile Description", "Job Profile Description", "#e91e63"),
         ("🏛️", "Career Band Description", "Career Band Description", "#673ab7"),
@@ -221,11 +227,11 @@ if selected_labels:
         ("🎓", "Qualifications", "Qualifications", "#009688")
     ]
 
-    for emoji, title, col_name, color in sections:
+    for emoji, title, col_name, color in sections_config:
         for row in selected_rows:
             raw_text = safe_get(row, col_name)
             formatted_text = format_paragraphs(raw_text) if raw_text != "-" else "-"
-            
+
             grid_html += f"""
             <div class="grid-cell section-cell" style="border-left-color: {color};">
                 <div class="section-title" style="color: {color};">
