@@ -25,10 +25,10 @@ def toggle_fullscreen():
 css_base = """
 <style>
 :root {
-  --blue: #145efc;
-  --green: #28a745;
-  --orange: #fd7e14;
-  --purple: #6f42c1;
+  --blue: #145efc;    /* Management/Executive */
+  --green: #28a745;   /* Professional/Specialist */
+  --orange: #fd7e14;  /* Technical/Support */
+  --purple: #6f42c1;  /* Outros */
   --gray-line: #dadada;
   --gray-bg: #f8f9fa;
   --dark-gray: #333333;
@@ -76,6 +76,7 @@ h1 {
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
+  /* ALTURA FIXA E EXATA PARA TODAS AS LINHAS DE CONTEÚDO */
   grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
   grid-auto-rows: 110px !important;
   align-content: start !important;
@@ -190,8 +191,10 @@ h1 {
 
 .job-card {
   background: #f9f9f9;
+  /* Define a largura da borda, mas a cor vem do Python */
   border-left-width: 5px !important;
   border-left-style: solid !important;
+  /* Cor fallback caso o Python falhe */
   border-left-color: var(--gray-line);
   border-radius: 6px;
   padding: 6px 8px;
@@ -316,11 +319,10 @@ df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True)
 # ===========================================================
 # FILTROS E BOTÃO FULLSCREEN
 # ===========================================================
-# Se NÃO estiver em fullscreen, mostra os filtros normalmente
 if not st.session_state.fullscreen:
     st.markdown("<div class='topbar'>", unsafe_allow_html=True)
     section("🗺️ Job Map")
-    col1, col2, col3 = st.columns([2, 2, 0.8]) # Coluna 3 para o botão
+    col1, col2, col3 = st.columns([2, 2, 0.8])
 
     preferred_order = [
         "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
@@ -345,23 +347,16 @@ if not st.session_state.fullscreen:
         path_filter = st.selectbox("Trilha de Carreira", paths_options)
 
     with col3:
-        st.write("") # Espaçador
         st.write("")
-        # Botão para ATIVAR tela cheia
+        st.write("")
         st.button("⛶ Tela Cheia", on_click=toggle_fullscreen, use_container_width=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
-
-    # Salva filtros no session state para persistir no modo fullscreen se necessário
     st.session_state.fam_filter = family_filter
     st.session_state.path_filter = path_filter
-
 else:
-    # MODO TELA CHEIA ATIVO: Usa os filtros salvos
     family_filter = st.session_state.get('fam_filter', 'Todas')
     path_filter = st.session_state.get('path_filter', 'Todas')
-    
-    # Recria a lista de famílias apenas para manter a consistência do código abaixo
     preferred_order = [
         "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
         "Finance", "IT", "People & Culture", "Sales", "Marketing", "Technical Services",
@@ -371,8 +366,7 @@ else:
     existing_families = set(df["Job Family"].unique())
     families_order = [f for f in preferred_order if f in existing_families]
     families_order.extend(sorted(list(existing_families - set(families_order))))
-
-    # Botão FLUTUANTE para SAIR da tela cheia
+    
     with st.container():
         st.markdown('<div class="exit-fullscreen">', unsafe_allow_html=True)
         st.button("❌ Sair da Tela Cheia", on_click=toggle_fullscreen)
@@ -440,7 +434,7 @@ for (_, c_idx) in subfamilias_map.items():
                 break
         span_map[(g, c_idx)] = span
 
-# --- FUNÇÃO DE CORES POR TRILHA ---
+# --- FUNÇÃO DE CORES POR TRILHA (REINTEGRADA) ---
 def get_path_color(path_name):
     p_lower = str(path_name).lower().strip()
     if "manage" in p_lower or "executive" in p_lower: return "var(--blue)"
