@@ -7,38 +7,27 @@ from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar
 
 # ===========================================================
-# CONFIGURAÇÃO DE PÁGINA E ESTADO
+# CONFIGURAÇÃO DE PÁGINA
 # ===========================================================
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
-# Controle de estado para tela cheia
-if 'fullscreen' not in st.session_state:
-    st.session_state.fullscreen = False
-
-def toggle_fullscreen():
-    st.session_state.fullscreen = not st.session_state.fullscreen
-
 # ===========================================================
-# CSS BASE (MODO NORMAL)
+# CSS COMPLETO (ALTURA FIXA PARA SIMETRIA PERFEITA)
 # ===========================================================
-css_base = """
+st.markdown("""
 <style>
 :root {
-  --blue: #145efc;    /* Management/Executive */
-  --green: #28a745;   /* Professional/Specialist */
-  --orange: #fd7e14;  /* Technical/Support */
-  --purple: #6f42c1;  /* Outros */
+  --blue: #145efc;
   --gray-line: #dadada;
   --gray-bg: #f8f9fa;
   --dark-gray: #333333;
 }
 
-/* MODO NORMAL: Margens maiores para não parecer tela cheia */
 .block-container {
-  max-width: 1600px !important;
-  margin: auto !important;
-  padding: 2rem 5rem !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 1rem 2rem !important;
 }
 
 .topbar {
@@ -46,9 +35,9 @@ css_base = """
   top: 0;
   z-index: 200;
   background: white;
-  padding: 10px 0 15px 0;
+  padding: 10px 0 5px 0;
   border-bottom: 2px solid var(--blue);
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 h1 {
   color: var(--blue);
@@ -61,7 +50,7 @@ h1 {
 }
 
 .map-wrapper {
-  height: 75vh; /* Altura um pouco menor no modo normal */
+  height: 78vh;
   overflow: auto;
   border-top: 3px solid var(--blue);
   border-bottom: 3px solid var(--blue);
@@ -170,7 +159,7 @@ h1 {
   border-top: 1px solid white !important;
   grid-column: 1;
   font-size: 0.9rem;
-  height: 110px !important;
+  height: 110px !important; /* Força altura também na célula GG */
 }
 
 .cell {
@@ -185,17 +174,13 @@ h1 {
   gap: 8px;
   align-items: center;
   align-content: center;
-  height: 100% !important;
-  overflow: hidden;
+  height: 100% !important; /* Ocupa toda a altura fixa da linha */
+  overflow: hidden; /* Evita que conteúdo excedente quebre o layout */
 }
 
 .job-card {
   background: #f9f9f9;
-  /* Define a largura da borda, mas a cor vem do Python */
-  border-left-width: 5px !important;
-  border-left-style: solid !important;
-  /* Cor fallback caso o Python falhe */
-  border-left-color: var(--gray-line);
+  border-left: 4px solid var(--blue);
   border-radius: 6px;
   padding: 6px 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -210,11 +195,6 @@ h1 {
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
-  transition: all 0.2s ease-in-out;
-}
-.job-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 10px rgba(0,0,0,0.15);
 }
 .job-card b {
   display: block;
@@ -249,51 +229,9 @@ h1 {
   pointer-events: none;
 }
 
-/* Botão de sair da tela cheia */
-.exit-fullscreen {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 99999;
-}
-
 @media (max-width: 1500px) { .block-container { zoom: 0.9; } }
 </style>
-"""
-
-# CSS PARA MODO TELA CHEIA REAL
-css_fullscreen = """
-<style>
-    /* Esconde tudo que não é o mapa */
-    header[data-testid="stHeader"], 
-    section[data-testid="stSidebar"],
-    .topbar, 
-    footer { display: none !important; }
-
-    /* Remove margens do container principal */
-    .block-container {
-        max-width: 100vw !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-
-    /* Faz o mapa ocupar a tela toda */
-    .map-wrapper {
-        position: fixed !important;
-        top: 0;
-        left: 0;
-        width: 100vw !important;
-        height: 100vh !important;
-        z-index: 9999;
-        border: none !important;
-        border-top: 5px solid var(--blue) !important;
-    }
-</style>
-"""
-
-st.markdown(css_base, unsafe_allow_html=True)
-if st.session_state.fullscreen:
-    st.markdown(css_fullscreen, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # ===========================================================
 # DADOS
@@ -317,78 +255,51 @@ df = df[~df["Global Grade"].isin(['nan', 'None', ''])]
 df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True)
 
 # ===========================================================
-# FILTROS E BOTÃO FULLSCREEN
+# FILTROS
 # ===========================================================
-if not st.session_state.fullscreen:
-    st.markdown("<div class='topbar'>", unsafe_allow_html=True)
-    section("🗺️ Job Map")
-    col1, col2, col3 = st.columns([2, 2, 0.8])
+st.markdown("<div class='topbar'>", unsafe_allow_html=True)
+section("🗺️ Job Map")
+col1, col2 = st.columns([2, 2])
 
-    preferred_order = [
-        "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
-        "Finance", "IT", "People & Culture", "Sales", "Marketing", "Technical Services",
-        "Research & Development", "Technical Engineering", "Operations", "Supply Chain & Logistics",
-        "Quality Management", "Facility & Administrative Services"
-    ]
-    existing_families = set(df["Job Family"].unique())
-    families_order = [f for f in preferred_order if f in existing_families]
-    families_order.extend(sorted(list(existing_families - set(families_order))))
+preferred_order = [
+    "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
+    "Finance", "IT", "People & Culture", "Sales", "Marketing", "Technical Services",
+    "Research & Development", "Technical Engineering", "Operations", "Supply Chain & Logistics",
+    "Quality Management", "Facility & Administrative Services"
+]
 
-    with col1:
-        family_filter = st.selectbox("Família", ["Todas"] + families_order)
+existing_families = set(df["Job Family"].unique())
+families_order = [f for f in preferred_order if f in existing_families]
+families_order.extend(sorted(list(existing_families - set(families_order))))
 
-    if family_filter != "Todas":
-        available_paths = df[df["Job Family"] == family_filter]["Career Path"].unique().tolist()
-    else:
-        available_paths = df["Career Path"].unique().tolist()
-    paths_options = ["Todas"] + sorted([p for p in available_paths if pd.notna(p) and p != 'nan' and p != ''])
+with col1:
+    family_filter = st.selectbox("Família", ["Todas"] + families_order)
 
-    with col2:
-        path_filter = st.selectbox("Trilha de Carreira", paths_options)
-
-    with col3:
-        st.write("")
-        st.write("")
-        st.button("⛶ Tela Cheia", on_click=toggle_fullscreen, use_container_width=True)
-
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.session_state.fam_filter = family_filter
-    st.session_state.path_filter = path_filter
-else:
-    family_filter = st.session_state.get('fam_filter', 'Todas')
-    path_filter = st.session_state.get('path_filter', 'Todas')
-    preferred_order = [
-        "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
-        "Finance", "IT", "People & Culture", "Sales", "Marketing", "Technical Services",
-        "Research & Development", "Technical Engineering", "Operations", "Supply Chain & Logistics",
-        "Quality Management", "Facility & Administrative Services"
-    ]
-    existing_families = set(df["Job Family"].unique())
-    families_order = [f for f in preferred_order if f in existing_families]
-    families_order.extend(sorted(list(existing_families - set(families_order))))
-    
-    with st.container():
-        st.markdown('<div class="exit-fullscreen">', unsafe_allow_html=True)
-        st.button("❌ Sair da Tela Cheia", on_click=toggle_fullscreen)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-# --- APLICAÇÃO DOS FILTROS ---
-df_filtered = df.copy()
 if family_filter != "Todas":
-    df_filtered = df_filtered[df_filtered["Job Family"] == family_filter]
-if path_filter != "Todas":
-    df_filtered = df_filtered[df_filtered["Career Path"] == path_filter]
+    available_paths = df[df["Job Family"] == family_filter]["Career Path"].unique().tolist()
+else:
+    available_paths = df["Career Path"].unique().tolist()
 
-if df_filtered.empty:
-    st.warning("Nenhum cargo encontrado com os filtros atuais.")
-    if st.session_state.fullscreen:
-         st.button("Voltar", on_click=toggle_fullscreen)
+paths_options = ["Todas"] + sorted([p for p in available_paths if pd.notna(p) and p != 'nan' and p != ''])
+
+with col2:
+    path_filter = st.selectbox("Trilha de Carreira", paths_options)
+
+st.markdown("</div>", unsafe_allow_html=True)
+
+if family_filter != "Todas":
+    df = df[df["Job Family"] == family_filter]
+if path_filter != "Todas":
+    df = df[df["Career Path"] == path_filter]
+
+if df.empty:
+    st.warning("Nenhum cargo encontrado.")
     st.stop()
 
 # ===========================================================
 # PREPARAÇÃO DO GRID
 # ===========================================================
-active_families = [f for f in families_order if f in df_filtered["Job Family"].unique()]
+active_families = [f for f in families_order if f in df["Job Family"].unique()]
 grades = sorted(df["Global Grade"].unique(), key=lambda x: int(x) if x.isdigit() else 999, reverse=True)
 
 subfamilias_map = {}
@@ -396,7 +307,7 @@ col_index = 2
 header_spans = {}
 
 for f in active_families:
-    subs = sorted(df_filtered[df_filtered["Job Family"] == f]["Sub Job Family"].unique().tolist())
+    subs = sorted(df[df["Job Family"] == f]["Sub Job Family"].unique().tolist())
     header_spans[f] = len(subs)
     for sf in subs:
         subfamilias_map[(f, sf)] = col_index
@@ -407,12 +318,14 @@ cards_count_map = {}
 
 for g in grades:
     for (f, sf), c_idx in subfamilias_map.items():
-        cell_df = df_filtered[(df_filtered["Job Family"] == f) & (df_filtered["Sub Job Family"] == sf) & (df_filtered["Global Grade"] == g)]
+        cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
         count = len(cell_df)
         cards_count_map[(g, c_idx)] = count
+
         if count == 0:
             content_map[(g, c_idx)] = None
             continue
+        
         jobs_sig = "|".join(sorted((cell_df["Job Profile"] + cell_df["Career Path"]).unique()))
         content_map[(g, c_idx)] = jobs_sig
 
@@ -434,20 +347,14 @@ for (_, c_idx) in subfamilias_map.items():
                 break
         span_map[(g, c_idx)] = span
 
-# --- FUNÇÃO DE CORES POR TRILHA (REINTEGRADA) ---
-def get_path_color(path_name):
-    p_lower = str(path_name).lower().strip()
-    if "manage" in p_lower or "executive" in p_lower: return "var(--blue)"
-    if "professional" in p_lower or "specialist" in p_lower: return "var(--green)"
-    if "techni" in p_lower or "support" in p_lower: return "var(--orange)"
-    return "var(--purple)"
-
 cell_html_cache = {}
 for i, g in enumerate(grades):
     for (f, sf), c_idx in subfamilias_map.items():
-        if (g, c_idx) in skip_set or content_map.get((g, c_idx)) is None: continue
-        
+        if (g, c_idx) in skip_set or content_map.get((g, c_idx)) is None:
+            continue
+
         span = span_map.get((g, c_idx), 1)
+        
         if span > 1:
             covered = grades[i : i + span]
             try:
@@ -458,37 +365,38 @@ for i, g in enumerate(grades):
         else:
             gg_label = f"GG {g}"
 
-        cell_df = df_filtered[(df_filtered["Job Family"] == f) & (df_filtered["Sub Job Family"] == sf) & (df_filtered["Global Grade"] == g)]
-        
-        cards = []
-        for _, row in cell_df.iterrows():
-            path_color = get_path_color(row['Career Path'])
-            tooltip = f"{row['Job Profile']} | {row['Career Path']} ({gg_label})"
-            cards.append(
-                f"<div class='job-card' style='border-left-color: {path_color} !important;' title='{tooltip}'>"
-                f"<b>{row['Job Profile']}</b>"
-                f"<span>{row['Career Path']} - {gg_label}</span>"
-                f"</div>"
-            )
-        cell_html_cache[(g, c_idx)] = "".join(cards)
+        cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
+        cards_html = "".join([
+            f"<div class='job-card'><b>{row['Job Profile']}</b><span>{row['Career Path']} - {gg_label}</span></div>"
+            for _, row in cell_df.iterrows()
+        ])
+        cell_html_cache[(g, c_idx)] = cards_html
 
 # ===========================================================
 # CÁLCULO DE LARGURAS
 # ===========================================================
-def largura_texto_minima(text): return len(str(text)) * 5 + 30
+def largura_texto_minima(text):
+    return len(str(text)) * 5 + 30
+
 col_widths = ["100px"]
+
 for (f, sf), c_idx in subfamilias_map.items():
     width_title = largura_texto_minima(sf)
     max_cards = 0
     for g in grades:
         if (g, c_idx) not in skip_set:
              max_cards = max(max_cards, cards_count_map.get((g, c_idx), 0))
-    if max_cards <= 1: width_cards = 135 + 25
-    elif max_cards == 2: width_cards = (2 * 135) + 8 + 25
+    
+    if max_cards <= 1:
+        width_cards = 135 + 25
+    elif max_cards == 2:
+        width_cards = (2 * 135) + 8 + 25
     else:
         cap = min(max(1, max_cards), 6)
         width_cards = (cap * 135) + ((cap - 1) * 8) + 25
+        
     col_widths.append(f"{max(width_title, width_cards)}px")
+
 grid_template = f"grid-template-columns: {' '.join(col_widths)};"
 
 # ===========================================================
