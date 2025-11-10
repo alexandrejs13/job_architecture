@@ -1,16 +1,15 @@
 import streamlit as st
-from utils.ui_components import section
-# Importa nossa nova função de visual global
+# Outros imports necessários
 from utils.ui import setup_sidebar
 
-# ===========================================================
-# 1. CONFIGURAÇÃO DA PÁGINA
-# ===========================================================
-st.set_page_config(layout="wide", page_title="🏛️ Job Architecture")
+# 1. Configuração da Página (SEMPRE EM PRIMEIRO se existir)
+st.set_page_config(
+    page_title="Job Architecture",
+    page_icon="🏛️",
+    layout="wide"
+)
 
-# ===========================================================
-# 2. APLICA O VISUAL GLOBAL
-# ===========================================================
+# 2. IMEDIATAMENTE INJETA O CSS
 setup_sidebar()
 
 # ===========================================================
