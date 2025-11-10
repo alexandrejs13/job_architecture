@@ -81,6 +81,7 @@ h1 {
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
+  /* Alturas fixas para cabeçalhos e linhas de conteúdo */
   grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
   grid-auto-rows: 110px !important;
   align-content: start !important;
@@ -195,6 +196,7 @@ h1 {
 
 .job-card {
   background: #f9f9f9;
+  /* Borda base, a cor será injetada pelo Python */
   border-left-width: 5px !important;
   border-left-style: solid !important;
   border-radius: 6px;
@@ -250,13 +252,14 @@ h1 {
   pointer-events: none;
 }
 
-/* Estilo para o botão "Tela Cheia" no modo normal */
-button[data-testid*="stButton"] > div > span:has-text("Tela Cheia") {
+/* Estilo para o botão "Tela Cheia" no modo normal (VERMELHO) */
+/* Alvo mais específico para evitar conflitos */
+div[data-testid="stVerticalBlock"] > div > div > button > div > span:has-text("Tela Cheia") {
     background-color: var(--red) !important;
     color: white !important;
     border-color: var(--red) !important;
 }
-button[data-testid*="stButton"] > div > span:has-text("Tela Cheia"):hover {
+div[data-testid="stVerticalBlock"] > div > div > button > div > span:has-text("Tela Cheia"):hover {
     background-color: #c82333 !important; /* Um tom mais escuro ao passar o mouse */
     border-color: #bd2130 !important;
 }
@@ -298,11 +301,12 @@ css_fullscreen = """
         margin: 0 !important;
     }
 
-    /* Estilo para o container do botão de sair - com margens */
+    /* Estilo para o container do botão de sair - com margens flutuantes */
     div[data-testid="stVerticalBlock"] > div:has(button[kind="primary"]) {
         position: fixed;
-        bottom: 30px; /* 30px de margem inferior */
-        right: 30px;  /* 30px de margem direita */
+        bottom: 10px; /* Margem de 1cm = 10px inferior */
+        right: 10px;  /* Margem de 1cm = 10px direita */
+        left: auto;   /* Garante que não está preso à esquerda */
         z-index: 100000 !important;
         background: transparent;
     }
@@ -405,7 +409,7 @@ else:
     families_order = [f for f in preferred_order if f in existing_families]
     families_order.extend(sorted(list(existing_families - set(families_order))))
 
-    # Botão de Sair (agora o CSS cuida da posição fixa e margens)
+    # Botão de Sair (o CSS agora lida com a posição fixa e as margens)
     if st.button("❌ Sair da Tela Cheia", type="primary"):
         toggle_fullscreen()
         st.rerun()
@@ -417,6 +421,7 @@ else:
             if (e.key === 'Escape') {
                 const buttons = window.parent.document.getElementsByTagName('button');
                 for (let i = 0; i < buttons.length; i++) {
+                    // Verifica o texto do botão para garantir que é o botão correto de sair
                     if (buttons[i].innerText.includes("Sair da Tela Cheia")) {
                         buttons[i].click();
                         break;
@@ -493,7 +498,7 @@ for (_, c_idx) in subfamilias_map.items():
                 break
         span_map[(g, c_idx)] = span
 
-# --- FUNÇÃO DE CORES ---
+# --- FUNÇÃO DE CORES (REINTEGRADA E VERIFICADA) ---
 def get_path_color(path_name):
     p_lower = str(path_name).lower().strip()
     if "manage" in p_lower or "executive" in p_lower: return "var(--blue)"
@@ -521,8 +526,9 @@ for i, g in enumerate(grades):
         
         cards = []
         for _, row in cell_df.iterrows():
-            path_color = get_path_color(row['Career Path'])
+            path_color = get_path_color(row['Career Path']) # Garante que a cor é obtida
             tooltip = f"{row['Job Profile']} | {row['Career Path']} ({gg_label})"
+            # INJEÇÃO DA COR DIRETO NO STYLE
             cards.append(
                 f"<div class='job-card' style='border-left-color: {path_color} !important;' title='{tooltip}'>"
                 f"<b>{row['Job Profile']}</b>"
