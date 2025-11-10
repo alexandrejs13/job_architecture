@@ -23,30 +23,34 @@ st.markdown("""
 .block-container {max-width: 1200px !important;}
 .stTextArea textarea {font-size: 16px !important;}
 
-/* CARD PRINCIPAL DE RESULTADO */
+/* CARD PRINCIPAL */
 .full-job-card {
     background-color: white;
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    margin-bottom: 30px;
+    margin-bottom: 40px;
+    border: 1px solid #e0e0e0;
     overflow: hidden;
-    border: 1px solid #eee;
 }
 
-/* CABEÇALHO DO CARD (Título, Score e GG) */
+/* CABEÇALHO DO CARD */
 .fjc-header {
-    padding: 20px 25px;
+    padding: 20px 30px;
     background: #f8f9fa;
     border-bottom: 1px solid #eee;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+}
+.fjc-title-block {
+    flex: 1;
 }
 .fjc-title {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 800;
     color: #2c3e50;
-    margin: 0;
+    margin: 0 0 5px 0;
+    line-height: 1.2;
 }
 .fjc-gg {
     color: #1E56E0;
@@ -54,53 +58,56 @@ st.markdown("""
     font-size: 1.1rem;
 }
 .fjc-score-badge {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 800;
-    padding: 6px 15px;
-    border-radius: 20px;
+    padding: 8px 18px;
+    border-radius: 30px;
     color: white;
+    white-space: nowrap;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-/* METADADOS (Família, Subfamília, etc) */
+/* METADADOS */
 .fjc-metadata {
-    padding: 15px 25px;
+    padding: 15px 30px;
     background: #fff;
     border-bottom: 1px solid #eee;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
     font-size: 0.9rem;
     color: #555;
 }
-.meta-item b { color: #333; }
+.meta-item strong { color: #333; font-weight: 700; }
 
-/* SEÇÕES DE CONTEÚDO (Role Description, etc) */
+/* CORPO DO CARD */
 .fjc-body {
-    padding: 25px;
+    padding: 30px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 25px;
 }
+
+/* SEÇÕES COLORIDAS */
 .info-section {
-    background: #fbfcfd;
-    border-left: 5px solid #1E56E0; /* Cor padrão, será sobrescrita inline se necessário */
-    padding: 15px 20px;
-    border-radius: 0 8px 8px 0;
+    background: #fff;
+    border-left-width: 5px;
+    border-left-style: solid;
+    padding: 0 0 0 20px;
 }
 .section-title {
     font-weight: 700;
-    color: #1E56E0;
-    margin-bottom: 10px;
+    font-size: 1.05rem;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 1rem;
 }
 .section-content {
     color: #444;
     line-height: 1.6;
     font-size: 0.95rem;
-    white-space: pre-line; /* Respeita quebras de linha do Excel */
+    white-space: pre-wrap;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -116,39 +123,39 @@ def load_model():
 def load_data_and_embeddings():
     data = load_excel_data()
     df_jobs = data.get("job_profile", pd.DataFrame()).fillna("")
-    df_levels = data.get("level_structure", pd.DataFrame()).fillna("")
-
-    # Normaliza colunas
+    
+    # Normaliza nomes de colunas
     if not df_jobs.empty: df_jobs.columns = df_jobs.columns.str.strip()
-    if not df_levels.empty: df_levels.columns = df_levels.columns.str.strip()
 
-    # Garante que todas as colunas possíveis existam para não quebrar o layout completo
-    possible_cols = [
+    # Garante existência de todas as colunas necessárias
+    cols_needed = [
         "Job Family", "Sub Job Family", "Job Profile", "Role Description", 
         "Grade Differentiator", "Qualifications", "Global Grade", "Career Path",
         "Sub Job Family Description", "Job Profile Description", "Career Band Description",
         "Function", "Discipline", "Full Job Code", "KPIs / Specific Parameters"
     ]
-    for c in possible_cols:
+    for c in cols_needed:
         if c not in df_jobs.columns: df_jobs[c] = "-"
-    
+
     df_jobs["Global Grade"] = df_jobs["Global Grade"].astype(str).str.replace(r"\.0$", "", regex=True).str.strip()
     
-    # Texto rico para o modelo (focado nas descrições principais)
+    # --- CRIAÇÃO DO TEXTO RICO PARA MATCHING (REFINADO) ---
+    # Foco exclusivo nos campos que diferenciam os cargos, ignorando os genéricos.
     df_jobs["Rich_Text"] = (
-        df_jobs["Job Profile"] + ". " +
-        df_jobs["Role Description"] + ". " +
-        df_jobs["Grade Differentiator"] + ". " +
-        df_jobs["Qualifications"]
+        "Job Profile: " + df_jobs["Job Profile"] + ". " +
+        "Role Description: " + df_jobs["Role Description"] + ". " +
+        "Grade Differentiator (Level Specifics): " + df_jobs["Grade Differentiator"] + ". " +
+        "Career Band Context: " + df_jobs["Career Band Description"] + ". " +
+        "Requirements: " + df_jobs["Qualifications"]
     )
 
     model = load_model()
     embeddings = model.encode(df_jobs["Rich_Text"].tolist(), show_progress_bar=True)
 
-    return df_jobs, df_levels, embeddings
+    return df_jobs, embeddings
 
 try:
-    df, df_levels, job_embeddings = load_data_and_embeddings()
+    df, job_embeddings = load_data_and_embeddings()
     model = load_model()
 except Exception as e:
     st.error(f"Erro crítico ao carregar dados: {e}")
@@ -173,7 +180,7 @@ with c2:
 desc_input = st.text_area(
     "📋 Descreva as responsabilidades e requisitos (Mínimo 50 palavras):",
     height=200,
-    placeholder="Cole aqui a descrição detalhada da posição..."
+    placeholder="Descreva as principais responsabilidades, escopo de atuação, nível de autonomia, gestão de pessoas e requisitos técnicos..."
 )
 
 word_count = len(desc_input.strip().split())
@@ -213,14 +220,12 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
 
     for i, (idx, row) in enumerate(top_results.iterrows()):
         score = row["similarity"] * 100
-        # Cores do score
         score_bg = "#28a745" if score > 85 else "#1E56E0" if score > 75 else "#fd7e14" if score > 60 else "#dc3545"
         
-        # Renderização HTML Completa (Estilo idêntico ao solicitado)
         st.markdown(f"""
         <div class="full-job-card">
             <div class="fjc-header">
-                <div>
+                <div class="fjc-title-block">
                     <div class="fjc-title">{row['Job Profile']}</div>
                     <div class="fjc-gg">Global Grade {row['Global Grade']}</div>
                 </div>
@@ -230,44 +235,42 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
             </div>
 
             <div class="fjc-metadata">
-                <div class="meta-item"><b>Família:</b> {row.get('Job Family', '-')}</div>
-                <div class="meta-item"><b>Subfamília:</b> {row.get('Sub Job Family', '-')}</div>
-                <div class="meta-item"><b>Carreira:</b> {row.get('Career Path', '-')}</div>
-                <div class="meta-item"><b>Função:</b> {row.get('Function', '-')}</div>
-                <div class="meta-item"><b>Disciplina:</b> {row.get('Discipline', '-')}</div>
-                <div class="meta-item"><b>Código:</b> {row.get('Full Job Code', '-')}</div>
+                <div class="meta-item"><strong>Família:</strong> {row['Job Family']}</div>
+                <div class="meta-item"><strong>Subfamília:</strong> {row['Sub Job Family']}</div>
+                <div class="meta-item"><strong>Carreira:</strong> {row['Career Path']}</div>
+                <div class="meta-item"><strong>Função:</strong> {row['Function']}</div>
+                <div class="meta-item"><strong>Disciplina:</strong> {row['Discipline']}</div>
+                <div class="meta-item"><strong>Código:</strong> {row['Full Job Code']}</div>
             </div>
 
             <div class="fjc-body">
                 <div class="info-section" style="border-left-color: #95a5a6;">
                     <div class="section-title" style="color: #7f8c8d;">🧭 Sub Job Family Description</div>
-                    <div class="section-content">{row.get('Sub Job Family Description', 'N/A')}</div>
+                    <div class="section-content">{row['Sub Job Family Description']}</div>
                 </div>
-
                 <div class="info-section" style="border-left-color: #e91e63;">
                     <div class="section-title" style="color: #c2185b;">🧠 Job Profile Description</div>
-                    <div class="section-content">{row.get('Job Profile Description', row['Role Description'])}</div>
+                    <div class="section-content">{row['Job Profile Description']}</div>
                 </div>
-
                  <div class="info-section" style="border-left-color: #673ab7;">
                     <div class="section-title" style="color: #512da8;">🏛️ Career Band Description</div>
-                    <div class="section-content">{row.get('Career Band Description', 'N/A')}</div>
+                    <div class="section-content">{row['Career Band Description']}</div>
                 </div>
-
                 <div class="info-section" style="border-left-color: #1E56E0;">
-                    <div class="section-title">🎯 Role Description (Responsabilidades Chave)</div>
+                    <div class="section-title" style="color: #0d47a1;">🎯 Role Description</div>
                     <div class="section-content">{row['Role Description']}</div>
                 </div>
-
                 <div class="info-section" style="border-left-color: #ff9800;">
                     <div class="section-title" style="color: #e65100;">🏅 Grade Differentiator</div>
                     <div class="section-content">{row['Grade Differentiator']}</div>
                 </div>
-                
-                {'<div class="info-section" style="border-left-color: #009688;"><div class="section-title" style="color: #00796b;">🎓 Qualifications</div><div class="section-content">' + row['Qualifications'] + '</div></div>' if row.get('Qualifications') and row['Qualifications'] != '-' else ''}
+                {f'''<div class="info-section" style="border-left-color: #009688;">
+                    <div class="section-title" style="color: #00796b;">🎓 Qualifications</div>
+                    <div class="section-content">{row['Qualifications']}</div>
+                </div>''' if row['Qualifications'] and str(row['Qualifications']).strip() not in ['-', '', 'nan'] else ''}
             </div>
         </div>
         """, unsafe_allow_html=True)
 
     if top_results.iloc[0]["similarity"] < 0.6:
-        st.info("💡 **Dica:** A aderência foi moderada. Tente detalhar mais a senioridade e o escopo de gestão na sua descrição.")
+        st.info("💡 **Dica:** Aderência moderada. Tente refinar a descrição com termos mais específicos da sua área.")
