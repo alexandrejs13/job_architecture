@@ -6,7 +6,6 @@ import pandas as pd
 import numpy as np
 import html
 import json
-import os
 import re
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
@@ -20,12 +19,12 @@ st.set_page_config(layout="wide", page_title="🧩 Job Match")
 lock_sidebar()
 
 # ===========================================================
-# ESTILO (MANTIDO O LAYOUT APROVADO)
+# ESTILO
 # ===========================================================
 st.markdown("""
 <style>
 .block-container {
-    max-width: 98% !important;
+    max-width: 95% !important;
     padding-left: 1rem !important;
     padding-right: 1rem !important;
 }
@@ -117,11 +116,9 @@ def load_model():
 @st.cache_data(show_spinner=False)
 def load_wtw_data():
     try:
-        # Ajuste o caminho se necessário, baseado na sua estrutura de pastas real
         with open("data/wtw_job_match.json", "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
-        # Retorna vazio se não encontrar, para não quebrar o app
         return None
 
 @st.cache_data(show_spinner=False)
@@ -144,16 +141,18 @@ def load_data_and_embeddings():
     if not df_levels.empty:
         df_levels.columns = df_levels.columns.str.strip()
 
-    df_jobs["Global Grade"] = df_jobs["Global Grade"].astype(str).str.replace(r"\.0$", "", regex=True).str.strip()
+    # Garante que Global Grade seja numérico para comparações de range
+    df_jobs["Global Grade Num"] = pd.to_numeric(df_jobs["Global Grade"].astype(str).str.replace(r"\.0$", "", regex=True).str.strip(), errors='coerce').fillna(0).astype(int)
+    df_jobs["Global Grade"] = df_jobs["Global Grade Num"].astype(str) # Mantém versão string para exibição
+
     if "Global Grade" in df_levels.columns:
         df_levels["Global Grade"] = df_levels["Global Grade"].astype(str).str.replace(r"\.0$", "", regex=True).str.strip()
     
-    # Texto rico para matching
     df_jobs["Rich_Text"] = (
-        df_jobs["Job Profile"] + ". " +
-        df_jobs["Role Description"] + ". " +
-        df_jobs["Grade Differentiator"] + ". " +
-        df_jobs["Qualifications"]
+        "Job Profile: " + df_jobs["Job Profile"] + ". " +
+        "Role Description: " + df_jobs["Role Description"] + ". " +
+        "Grade Differentiator: " + df_jobs["Grade Differentiator"] + ". " +
+        "Qualifications: " + df_jobs["Qualifications"]
     )
 
     model = load_model()
@@ -163,38 +162,53 @@ def load_data_and_embeddings():
 
 try:
     df, df_levels, job_embeddings = load_data_and_embeddings()
-    wtw_data = load_wtw_data() # Carrega o JSON novo
+    wtw_data = load_wtw_data()
     model = load_model()
 except Exception as e:
     st.error(f"Erro ao carregar dados: {e}")
     st.stop()
 
 # ===========================================================
-# NOVA FUNÇÃO: DETECÇÃO SEMÂNTICA DE NÍVEL (WTW)
+# MAPEAMENTO DE COERÊNCIA (NÍVEL -> GRADE RANGE)
+# ===========================================================
+# Define quais GGs são aceitáveis para cada nível detectado semanticamente.
+# Ajuste estes ranges conforme a realidade da sua organização.
+LEVEL_GG_MAPPING = {
+    # Operacional
+    "W1": [1, 2, 3, 4, 5], "W2": [5, 6, 7, 8], "W3": [7, 8, 9, 10],
+    # Suporte Administrativo
+    "U1": [4, 5, 6, 7], "U2": [6, 7, 8, 9], "U3": [8, 9, 10, 11],
+    # Profissional
+    "P1": [8, 9, 10], "P2": [10, 11, 12], "P3": [12, 13, 14], "P4": [14, 15, 16, 17],
+    # Gestão
+    "M1": [11, 12, 13, 14], "M2": [14, 15, 16], "M3": [16, 17, 18, 19],
+    # Executivo
+    "E1": [18, 19, 20, 21], "E2": [21, 22, 23, 24, 25]
+}
+
+# ===========================================================
+# DETECÇÃO SEMÂNTICA DE NÍVEL
 # ===========================================================
 def detect_level_from_text(text, wtw_db):
-    if not wtw_db or not text: return None, None, []
+    if not wtw_db or not text: return None, None, None, []
 
     text_lower = text.lower()
     best_score = 0
     best_band = None
     best_level = None
+    best_level_key = None
     matched_keywords = []
 
-    # Varre todas as bands e levels do JSON
     for band_key, band_info in wtw_db.get("career_bands", {}).items():
         for lvl_key, lvl_info in band_info.get("levels", {}).items():
             current_score = 0
             current_matches = []
-
-            # Peso 3 para palavras-chave principais (ex: "gerente", "diretor")
+            # Peso maior para palavras-chave principais
             for kw in lvl_info.get("core_keywords", []):
-                # Usa regex para buscar a palavra exata, evitando falsos positivos parciais
                 if re.search(r'\b' + re.escape(kw.lower()) + r'\b', text_lower):
                     current_score += 3
                     current_matches.append(kw)
-
-            # Peso 1 para expressões de usuário (ex: "lidera equipe")
+            # Peso menor para secundárias
             for ukw in lvl_info.get("user_keywords", []):
                 if ukw.lower() in text_lower:
                     current_score += 1
@@ -204,9 +218,10 @@ def detect_level_from_text(text, wtw_db):
                 best_score = current_score
                 best_band = band_info
                 best_level = lvl_info
-                matched_keywords = list(set(current_matches)) # Remove duplicatas
+                best_level_key = lvl_key
+                matched_keywords = list(set(current_matches))
 
-    return best_band, best_level, matched_keywords
+    return best_band, best_level, best_level_key, matched_keywords
 
 # ===========================================================
 # INTERFACE
@@ -227,57 +242,57 @@ with c2:
 desc_input = st.text_area(
     "📋 Cole aqui a descrição detalhada da posição (Mínimo 50 palavras):",
     height=200,
-    placeholder="Ex: Responsável por liderar a equipe de vendas, definir estratégias comerciais e acompanhar KPIs de performance..."
+    placeholder="Descreva as principais responsabilidades, escopo de atuação, nível de autonomia..."
 )
 word_count = len(desc_input.strip().split())
 st.caption(f"Contagem de palavras: {word_count} / 50")
 
 if st.button("🔍 Analisar Aderência", type="primary", use_container_width=True):
-    # --- VALIDAÇÃO ---
     if selected_family == "Selecione..." or selected_subfamily == "Selecione..." or word_count < 50:
-        st.warning("⚠️ Para uma análise precisa, selecione Família, Subfamília e insira uma descrição com pelo menos 50 palavras.")
+        st.warning("⚠️ Selecione Família, Subfamília e insira uma descrição com pelo menos 50 palavras.")
         st.stop()
 
-    # --- 1. DETECÇÃO DE NÍVEL (NOVA INTELIGÊNCIA) ---
-    detected_band, detected_level, keywords_found = detect_level_from_text(desc_input, wtw_data)
+    # 1. Filtro Base (Família/Subfamília)
+    mask = (df["Job Family"] == selected_family) & (df["Sub Job Family"] == selected_subfamily)
     
-    if detected_band and detected_level:
-        # Mostra o insight da IA para o usuário
+    # 2. Detecção Semântica e Filtro de Coerência de Grade
+    detected_band, detected_level, detected_key, keywords_found = detect_level_from_text(desc_input, wtw_data)
+    
+    allowed_grades = []
+    if detected_key and detected_key in LEVEL_GG_MAPPING:
+        allowed_grades = LEVEL_GG_MAPPING[detected_key]
+        # Aplica a "Trava de Nível"
+        mask &= df["Global Grade Num"].isin(allowed_grades)
+        
+        # Feedback para o usuário
         kws_formatted = ", ".join([f"'{k}'" for k in keywords_found[:3]])
         st.markdown(f"""
         <div class="ai-insight-box">
             <div class="ai-insight-title">🤖 Análise Semântica de Nível</div>
             Com base na sua descrição, identificamos características de um nível 
-            <strong>{detected_level['label']}</strong> na carreira de <strong>{detected_band['label']}</strong>.<br>
-            <small style="color: #555;">Termos chave detectados: {kws_formatted}...</small>
+            <strong>{detected_level['label']}</strong> (Carreira: {detected_band['label']}).<br>
+            <small>Filtrando resultados para Grades coerentes: {min(allowed_grades)} a {max(allowed_grades)}. Termos detectados: {kws_formatted}...</small>
         </div>
         """, unsafe_allow_html=True)
-        
-        # Opcional: Você pode usar detected_band['label'] para filtrar ou impulsionar resultados
-        # Por enquanto, vamos apenas usar como informação visual para o usuário.
 
-    # --- 2. MATCHING VETORIAL (SENTENCE TRANSFORMERS) ---
-    mask = (df["Job Family"] == selected_family) & (df["Sub Job Family"] == selected_subfamily)
     if not mask.any():
-        st.error("Não foram encontrados cargos para esta combinação.")
+        if allowed_grades:
+             st.error(f"Não foram encontrados cargos na família '{selected_family}' compatíveis com o nível detectado ({detected_level['label']} - GG {min(allowed_grades)}-{max(allowed_grades)}). Tente ajustar a descrição ou a família.")
+        else:
+             st.error("Não foram encontrados cargos para esta combinação.")
         st.stop()
 
+    # 3. Matching Vetorial (apenas nos cargos coerentes)
     filtered_indices = df[mask].index
     filtered_embeddings = job_embeddings[filtered_indices]
-    
-    # Enriquece a query com o nível detectado para guiar melhor o modelo vetorial
-    query_enriched = desc_input
-    if detected_band and detected_level:
-        query_enriched = f"{detected_band['label']} {detected_level['label']}. {desc_input}"
-
-    query_emb = model.encode([query_enriched])
+    query_emb = model.encode([desc_input])
     sims = cosine_similarity(query_emb, filtered_embeddings)[0]
     results = df.loc[filtered_indices].copy()
     results["similarity"] = sims
     top3 = results.sort_values("similarity", ascending=False).head(3)
 
     # ===========================================================
-    # RENDERIZAÇÃO DOS RESULTADOS
+    # RENDERIZAÇÃO (GRID ALINHADO)
     # ===========================================================
     st.markdown("---")
     st.subheader("🏆 Cargos Mais Compatíveis")
@@ -298,19 +313,13 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
              if not match.empty:
                  lvl_name = f"• {match['Level Name'].iloc[0]}"
 
-        cards_data.append({
-            "row": row,
-            "score_fmt": f"{score_val:.1f}%",
-            "score_bg": score_bg,
-            "lvl": lvl_name
-        })
+        cards_data.append({"row": row, "score_fmt": f"{score_val:.1f}%", "score_bg": score_bg, "lvl": lvl_name})
 
     while len(cards_data) < 3: cards_data.append(None)
 
-    # --- INÍCIO DO GRID HTML ---
     grid_html = '<div class="comparison-grid">'
 
-    # 1. CABEÇALHO
+    # 1. Cabeçalho
     for card in cards_data:
         if card:
             grid_html += f"""
@@ -323,7 +332,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
             </div>"""
         else: grid_html += "<div></div>"
 
-    # 2. METADADOS
+    # 2. Metadados
     for card in cards_data:
         if card:
             d = card['row']
@@ -336,7 +345,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
             </div>"""
         else: grid_html += "<div></div>"
 
-    # 3. SEÇÕES DE CONTEÚDO
+    # 3. Seções de Conteúdo
     sections = [
         ("🧭 Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
         ("🧠 Job Profile Description", "Job Profile Description", "#e91e63"),
@@ -360,7 +369,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
                     </div>"""
             else: grid_html += "<div></div>"
 
-    # 4. RODAPÉ
+    # 4. Rodapé
     for card in cards_data:
         if card: grid_html += '<div class="grid-cell footer-cell"></div>'
         else: grid_html += "<div></div>"
