@@ -9,6 +9,12 @@ FONT_REGULAR = "assets/fonts/PPSIGFlow-Regular.ttf"
 FONT_SEMIBOLD = "assets/fonts/PPSIGFlow-SemiBold.ttf"
 LOGO_URL = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
 
+# --- CORES DA PALETA SIG ---
+SIG_SKY = "#145efc"    # Azul Principal
+SIG_SAND = "#f2efeb"   # Bege Claro para Cards
+TEXT_BLACK = "#000000" # Preto Puro para Títulos
+TEXT_GRAY = "#333333"  # Cinza Escuro para Texto Corrido
+
 # ==============================================================================
 # 2. AUXILIARES
 # ==============================================================================
@@ -38,32 +44,15 @@ def setup_sidebar():
             /* --- FONTES --- */
             {font_css}
 
-            /* --- TIPOGRAFIA GLOBAL (Igual ao site SIG) --- */
-            h1, h2, h3, h4, h5, h6 {{
-                color: #000000 !important; /* Títulos PRETOS */
-                font-weight: 700 !important; /* Sempre negrito (usa SemiBold) */
-            }}
-            h1 {{ font-size: 2.4rem !important; }} /* Título Principal */
-            h2 {{ font-size: 1.8rem !important; }} /* Subtítulos */
-            h3 {{ font-size: 1.4rem !important; }} /* Títulos de Seção */
-            p, li, span, div {{ color: #333333; }} /* Texto corrido cinza escuro para leitura */
-
-            /* --- CARDS ESTILO SIG (Classe personalizada) --- */
-            .sig-card {{
-                background-color: #f2efeb; /* Cor Sand do site */
-                padding: 30px;
-                border-radius: 30px; /* Cantos BEM arredondados */
-                margin-bottom: 25px;
-            }}
-            .sig-card h3, .sig-card h4 {{
-                margin-top: 0 !important;
-            }}
+            /* --- TIPOGRAFIA GLOBAL --- */
+            h1, h2, h3, h4, h5, h6 {{ color: {TEXT_BLACK} !important; font-weight: 700 !important; }}
+            p, li, span, div {{ color: {TEXT_GRAY}; }}
 
             /* --- LIMPEZA --- */
             header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ visibility: hidden; }}
             [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{ display: none !important; }}
 
-            /* --- SIDEBAR --- */
+            /* --- SIDEBAR TRAVADA --- */
             [data-testid="stSidebar"] {{
                 min-width: 300px !important; max-width: 300px !important; width: 300px !important;
                 background-color: white !important;
@@ -71,40 +60,49 @@ def setup_sidebar():
             }}
             div[data-testid="stSidebar"] > div:last-child {{ display: none; }}
 
-            /* --- CABEÇALHO SIDEBAR --- */
+            /* --- CABEÇALHO --- */
             [data-testid="stSidebarNav"]::before {{
                 content: "Job Architecture";
                 display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
                 height: 180px;
                 background-image: url('{LOGO_URL}'); background-repeat: no-repeat;
                 background-position: center 10px; background-size: 100px auto;
-                color: #145efc; font-size: 1.5rem; font-weight: 900;
+                color: {SIG_SKY}; font-size: 1.5rem; font-weight: 900;
                 padding-bottom: 40px; margin-bottom: 20px;
                 border-bottom: 2px solid #f0f2f6;
             }}
 
-            /* --- MENU DE NAVEGAÇÃO (ESTILO PÍLULA) --- */
-            [data-testid="stSidebarNav"] > ul {{ padding: 0 15px; }} /* Espaço lateral para as pílulas não colarem na borda */
+            /* --- MENU DE NAVEGAÇÃO (PÍLULAS) --- */
+            [data-testid="stSidebarNav"] > ul {{ padding: 0 15px; }}
+            
+            /* Links Normais (Inativos) */
             [data-testid="stSidebarNav"] a {{
-                color: #333333 !important;
+                color: {TEXT_GRAY} !important;
                 font-weight: 500 !important;
-                border-radius: 50px !important; /* FORMA DE PÍLULA */
-                padding: 8px 20px !important;   /* Mais preenchimento interno */
-                margin-bottom: 5px;             /* Espaço entre os itens */
+                border-radius: 50px !important; /* Pílula */
+                padding: 8px 20px !important;
+                margin-bottom: 5px;
                 transition: all 0.2s;
             }}
+            /* Hover (Passar o mouse) */
             [data-testid="stSidebarNav"] a:hover {{
-                background-color: #f2efeb !important; /* Sand claro no hover */
-                color: #000000 !important;
+                background-color: #eef6fc !important; /* Azul muito claro */
+                color: {SIG_SKY} !important;
             }}
-            /* ITEM ATIVO (Pílula Azul Vibrante) */
+
+            /* --- ITEM ATIVO (Página Atual) --- */
+            /* Garante que pega o item certo usando aria-current="page" */
             [data-testid="stSidebarNav"] a[aria-current="page"] {{
-                background-color: #145efc !important; /* Azul SIG */
-                color: white !important;
+                background-color: {SIG_SKY} !important; /* Azul SIG Sky (#145efc) */
+                color: white !important;                 /* Texto Branco */
                 font-weight: 700 !important;
-                box-shadow: 0 4px 12px rgba(20, 94, 252, 0.25); /* Sombra suave azul */
+                box-shadow: 0 4px 12px rgba(20, 94, 252, 0.25);
             }}
-            [data-testid="stSidebarNav"] a[aria-current="page"] span {{ color: white !important; }}
+            /* Força o span interno (onde fica o texto real) a ser branco também */
+            [data-testid="stSidebarNav"] a[aria-current="page"] span {{
+                color: white !important;
+            }}
+
         </style>
         """,
         unsafe_allow_html=True
