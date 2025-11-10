@@ -209,7 +209,7 @@ h1 {
 }
 
 .gg-header::after, .gg-cell::after {
-  content: \"\";
+  content: "";
   position: absolute;
   right: -5px;
   top: 0;
@@ -326,7 +326,7 @@ for g in grades:
         if count == 0:
             content_map[(g, c_idx)] = None
             continue
-
+        
         jobs_sig = "|".join(sorted((cell_df["Job Profile"] + cell_df["Career Path"]).unique()))
         content_map[(g, c_idx)] = jobs_sig
 
@@ -334,7 +334,8 @@ span_map = {}
 skip_set = set()
 for (_, c_idx) in subfamilias_map.items():
     for i, g in enumerate(grades):
-        if (g, c_idx) in skip_set: continue
+        if (g, c_idx) in skip_set:
+            continue
         current_sig = content_map.get((g, c_idx))
         if current_sig is None:
             span_map[(g, c_idx)] = 1
@@ -355,20 +356,20 @@ for i, g in enumerate(grades):
             continue
 
         span = span_map.get((g, c_idx), 1)
-
+        
         if span > 1:
             covered = grades[i : i + span]
             try:
                 nums = [int(x) for x in covered if x.isdigit()]
-                gg_label = f\"GG {min(nums)}-{max(nums)}\"
+                gg_label = f"GG {min(nums)}-{max(nums)}"
             except:
-                gg_label = f\"GG {covered[-1]}-{covered[0]}\"
+                gg_label = f"GG {covered[-1]}-{covered[0]}"
         else:
-            gg_label = f\"GG {g}\"
+            gg_label = f"GG {g}"
 
-        cell_df = df[(df[\"Job Family\"] == f) & (df[\"Sub Job Family\"] == sf) & (df[\"Global Grade\"] == g)]
-        cards_html = \"\".join([
-            f\"<div class='job-card'><b>{row['Job Profile']}</b><span>{row['Career Path']} - {gg_label}</span></div>\"
+        cell_df = df[(df["Job Family"] == f) & (df["Sub Job Family"] == sf) & (df["Global Grade"] == g)]
+        cards_html = "".join([
+            f"<div class='job-card'><b>{row['Job Profile']}</b><span>{row['Career Path']} - {gg_label}</span></div>"
             for _, row in cell_df.iterrows()
         ])
         cell_html_cache[(g, c_idx)] = cards_html
@@ -379,7 +380,7 @@ for i, g in enumerate(grades):
 def largura_texto_minima(text):
     return len(str(text)) * 5 + 30
 
-col_widths = [\"100px\"]
+col_widths = ["100px"]
 
 for (f, sf), c_idx in subfamilias_map.items():
     width_title = largura_texto_minima(sf)
@@ -387,7 +388,7 @@ for (f, sf), c_idx in subfamilias_map.items():
     for g in grades:
         if (g, c_idx) not in skip_set:
              max_cards = max(max_cards, cards_count_map.get((g, c_idx), 0))
-
+    
     if max_cards <= 1:
         width_cards = 135 + 25
     elif max_cards == 2:
@@ -395,25 +396,25 @@ for (f, sf), c_idx in subfamilias_map.items():
     else:
         cap = min(max(1, max_cards), 6)
         width_cards = (cap * 135) + ((cap - 1) * 8) + 25
+        
+    col_widths.append(f"{max(width_title, width_cards)}px")
 
-    col_widths.append(f\"{max(width_title, width_cards)}px\")
-
-grid_template = f\"grid-template-columns: {' '.join(col_widths)};\"
+grid_template = f"grid-template-columns: {' '.join(col_widths)};"
 
 # ===========================================================
 # PALETA DE CORES
 # ===========================================================
 palette_pairs = [
-    (\"#4F6D7A\", \"#E6EFF2\"),
-    (\"#5C7A67\", \"#E8F2EB\"),
-    (\"#7A5C5C\", \"#F2E6E6\"),
-    (\"#6B5C7A\", \"#EBE6F2\"),
-    (\"#7A725C\", \"#F2EFE6\"),
-    (\"#5C6B7A\", \"#E6EBF2\"),
-    (\"#7A5C74\", \"#F2E6EF\"),
-    (\"#5C7A78\", \"#E6F2F1\"),
-    (\"#736A62\", \"#F0EDEB\"),
-    (\"#626A73\", \"#EBEDF0\"),
+    ("#4F6D7A", "#E6EFF2"),
+    ("#5C7A67", "#E8F2EB"),
+    ("#7A5C5C", "#F2E6E6"),
+    ("#6B5C7A", "#EBE6F2"),
+    ("#7A725C", "#F2EFE6"),
+    ("#5C6B7A", "#E6EBF2"),
+    ("#7A5C74", "#F2E6EF"),
+    ("#5C7A78", "#E6F2F1"),
+    ("#736A62", "#F0EDEB"),
+    ("#626A73", "#EBEDF0"),
 ]
 
 map_cor_fam = {f: palette_pairs[i % len(palette_pairs)][0] for i, f in enumerate(families_order)}
@@ -422,26 +423,26 @@ map_cor_sub = {f: palette_pairs[i % len(palette_pairs)][1] for i, f in enumerate
 # ===========================================================
 # RENDERIZAÇÃO FINAL
 # ===========================================================
-html = [\"<div class='map-wrapper'><div class='jobmap-grid' style='{grid_template}'>\".format(grid_template=grid_template)]
-html.append(\"<div class='gg-header'>GG</div>\")
+html = ["<div class='map-wrapper'><div class='jobmap-grid' style='{grid_template}'>".format(grid_template=grid_template)]
+html.append("<div class='gg-header'>GG</div>")
 
 current_col = 2
 for f in active_families:
     span = header_spans[f]
-    html.append(f\"<div class='header-family' style='grid-column: {current_col} / span {span}; background:{map_cor_fam[f]};'>{f}</div>\")
+    html.append(f"<div class='header-family' style='grid-column: {current_col} / span {span}; background:{map_cor_fam[f]};'>{f}</div>")
     current_col += span
 
 for (f, sf), c_idx in subfamilias_map.items():
-    html.append(f\"<div class='header-subfamily' style='grid-column: {c_idx}; background:{map_cor_sub[f]};'>{sf}</div>\")
+    html.append(f"<div class='header-subfamily' style='grid-column: {c_idx}; background:{map_cor_sub[f]};'>{sf}</div>")
 
 for i, g in enumerate(grades):
     row_idx = i + 3
-    html.append(f\"<div class='gg-cell' style='grid-row: {row_idx};'>GG {g}</div>\")
+    html.append(f"<div class='gg-cell' style='grid-row: {row_idx};'>GG {g}</div>")
     for (f, sf), c_idx in subfamilias_map.items():
         if (g, c_idx) in skip_set: continue
         span = span_map.get((g, c_idx), 1)
-        row_str = f\"grid-row: {row_idx} / span {span};\" if span > 1 else f\"grid-row: {row_idx};\"
-        html.append(f\"<div class='cell' style='grid-column: {c_idx}; {row_str}'>{cell_html_cache.get((g, c_idx), '')}</div>\")
+        row_str = f"grid-row: {row_idx} / span {span};" if span > 1 else f"grid-row: {row_idx};"
+        html.append(f"<div class='cell' style='grid-column: {c_idx}; {row_str}'>{cell_html_cache.get((g, c_idx), '')}</div>")
 
-html.append(\"</div></div>\")
-st.markdown(\"\".join(html), unsafe_allow_html=True)
+html.append("</div></div>")
+st.markdown("".join(html), unsafe_allow_html=True)
