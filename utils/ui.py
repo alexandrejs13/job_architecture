@@ -1,6 +1,5 @@
 import streamlit as st
-import base64
-import os
+import base64, os
 
 # ==============================================================================
 # 1. CONFIGURAÇÕES
@@ -8,20 +7,21 @@ import os
 FONT_REGULAR = "assets/fonts/PPSIGFlow-Regular.ttf"
 FONT_SEMIBOLD = "assets/fonts/PPSIGFlow-SemiBold.ttf"
 LOGO_URL = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
-SIG_SKY = "#145efc"
+
+# Paleta SIG
+SIG_SKY = "#145efc"     # Azul principal
 TEXT_BLACK = "#000000"
 TEXT_GRAY = "#333333"
 
 # ==============================================================================
-# 2. AUXILIARES
+# 2. AUXILIAR
 # ==============================================================================
 def get_font_base64(file_path):
     if not os.path.exists(file_path): return None
-    with open(file_path, "rb") as f: data = f.read()
-    return base64.b64encode(data).decode("utf-8")
+    with open(file_path, "rb") as f: return base64.b64encode(f.read()).decode("utf-8")
 
 # ==============================================================================
-# 3. SETUP UI (VERSÃO ESTÁVEL & POSICIONADA)
+# 3. CONFIGURAÇÃO DO LAYOUT E MENU
 # ==============================================================================
 def setup_sidebar():
     font_reg_b64 = get_font_base64(FONT_REGULAR)
@@ -29,72 +29,102 @@ def setup_sidebar():
     font_css = ""
     if font_reg_b64 and font_sb_b64:
         font_css = f"""
-        @font-face {{ font-family: 'PP SIG Flow'; src: url(data:font/ttf;base64,{font_reg_b64}) format('truetype'); font-weight: 400; font-style: normal; }}
-        @font-face {{ font-family: 'PP SIG Flow'; src: url(data:font/ttf;base64,{font_sb_b64}) format('truetype'); font-weight: 700; font-style: normal; }}
-        html, body, [class*="css"] {{ font-family: 'PP SIG Flow', sans-serif !important; }}
+        @font-face {{
+            font-family: 'PP SIG Flow';
+            src: url(data:font/ttf;base64,{font_reg_b64}) format('truetype');
+            font-weight: 400; font-style: normal;
+        }}
+        @font-face {{
+            font-family: 'PP SIG Flow';
+            src: url(data:font/ttf;base64,{font_sb_b64}) format('truetype');
+            font-weight: 700; font-style: normal;
+        }}
+        html, body, [class*="css"] {{
+            font-family: 'PP SIG Flow', sans-serif !important;
+        }}
         """
 
     st.markdown(
         f"""
         <style>
             {font_css}
-            /* --- LIMPEZA --- */
-            header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ display: none !important; }}
+
+            /* Remove header/footer nativos */
+            header, footer, #MainMenu {{ display: none !important; }}
             [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{ display: none !important; }}
 
-            /* --- BARRA LATERAL --- */
+            /* Sidebar fixa e estável */
             [data-testid="stSidebar"] {{
-                min-width: 300px !important; max-width: 300px !important; width: 300px !important;
-                background-color: white !important; border-right: 1px solid #f0f0f0;
+                min-width: 300px !important; max-width: 300px !important;
+                background-color: white !important;
+                border-right: 1px solid #eee;
+                position: fixed !important;
             }}
-            div[data-testid="stSidebar"] > div:last-child {{ display: none; }}
 
-            /* --- CABEÇALHO FIXO (ESTÁVEL) --- */
-            /* Usamos ::before no stSidebar para criar um cabeçalho que não depende do carregamento do menu */
+            /* Cabeçalho SIG */
             [data-testid="stSidebar"]::before {{
-                content: "Job Architecture";
-                position: absolute; top: 0; left: 0; width: 100%; height: 190px;
-                background-color: white; z-index: 999; /* Fica por cima de qualquer flash de menu */
+                content: "";
+                position: absolute; top: 20px; left: 0;
+                width: 100%; height: 160px;
+                background: url('{LOGO_URL}') no-repeat center 40px / 100px auto;
                 border-bottom: 2px solid #f0f2f6;
-                display: flex; flex-direction: column; align-items: center;
-                /* LOGO: background-position controla a altura. Aumente 40px para descer mais. */
-                background-image: url('{LOGO_URL}'); background-repeat: no-repeat;
-                background-position: center 40px; background-size: 100px auto;
-                /* TEXTO: padding-top empurra o texto para baixo do logo. Ajuste para aproximar/afastar. */
-                padding-top: 125px;
-                color: {TEXT_BLACK}; font-size: 1.5rem; font-weight: 900;
+                z-index: 10;
             }}
 
-            /* --- MENU DE NAVEGAÇÃO --- */
-            /* Empurra o menu para baixo para não ficar escondido atrás do cabeçalho fixo */
+            /* Espaço do menu abaixo do cabeçalho */
             [data-testid="stSidebarNav"] {{
-                padding-top: 200px !important;
+                padding-top: 190px !important;
+                z-index: 9;
             }}
-            [data-testid="stSidebarNav"] > ul {{ padding: 0 15px !important; }}
 
-            /* ESTILO DOS LINKS (SEM EMOJI) */
+            /* Remove emojis */
             [data-testid="stSidebarNav"] a span:first-child {{ display: none !important; }}
-            [data-testid="stSidebarNav"] a span:last-child {{ display: inline-block !important; }}
-            
+
+            /* Estilo dos links */
             [data-testid="stSidebarNav"] a {{
-                color: {TEXT_GRAY} !important; font-weight: 500 !important;
-                padding: 10px 24px !important; margin-bottom: 4px !important;
-                background-color: transparent !important; transition: none !important;
+                color: {TEXT_GRAY} !important;
+                font-weight: 500 !important;
+                padding: 10px 24px !important;
+                margin: 6px 10px !important;
+                border-radius: 30px !important;
+                transition: all 0.2s ease-in-out !important;
+                background-color: transparent !important;
+                display: block !important;
+                text-align: center;
             }}
-            /* Hover Sutil */
-            [data-testid="stSidebarNav"] a:hover span {{ color: {SIG_SKY} !important; }}
 
-            /* ATIVO (MANTENDO O PADRÃO STREAMLIT POR ENQUANTO PARA EVITAR FLASH) */
-             /* Se quiser tentar a pílula de novo, me avise, mas ela é a maior causadora de flash */
+            /* Hover (texto azul) */
+            [data-testid="stSidebarNav"] a:hover span {{
+                color: {SIG_SKY} !important;
+            }}
+
+            /* Item ativo — pílula azul */
             [data-testid="stSidebarNav"] a[aria-current="page"] {{
-                background-color: #f5f5f5 !important; /* Cinza bem claro nativo */
+                background-color: {SIG_SKY} !important;
+                color: white !important;
             }}
-             [data-testid="stSidebarNav"] a[aria-current="page"] span {{
-                color: {TEXT_BLACK} !important;
-                font-weight: 900 !important;
+            [data-testid="stSidebarNav"] a[aria-current="page"] span {{
+                color: white !important;
+                font-weight: 700 !important;
             }}
 
+            /* Ajuste de área principal (centralizada e tamanho fixo) */
+            [data-testid="stAppViewContainer"] > div:first-child {{
+                max-width: 1200px;
+                margin: 0 auto !important;
+                padding-top: 2rem !important;
+            }}
+            [data-testid="stAppViewContainer"] {{
+                background-color: #ffffff !important;
+            }}
         </style>
         """,
         unsafe_allow_html=True
     )
+
+# ==============================================================================
+# 4. EXEMPLO DE USO
+# ==============================================================================
+setup_sidebar()
+st.title("Página de Exemplo")
+st.write("O conteúdo da página fica centralizado, com largura máxima fixa e o menu lateral estável.")
