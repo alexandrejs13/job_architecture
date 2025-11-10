@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (AJUSTE FINAL DE ALTURA E LINHAS)
+# CSS COMPLETO (ALTURA FIXA PARA SIMETRIA PERFEITA)
 # ===========================================================
 st.markdown("""
 <style>
@@ -65,9 +65,9 @@ h1 {
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
-  /* TRAVA AS ALTURAS: Cabeçalhos fixos, conteúdo com altura base uniforme de 100px */
-  grid-template-rows: 50px 45px !important;
-  grid-auto-rows: minmax(100px, auto) !important;
+  /* ALTURA FIXA E EXATA PARA TODAS AS LINHAS DE CONTEÚDO */
+  grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
+  grid-auto-rows: 110px !important;
   align-content: start !important;
   row-gap: 0px !important;
   column-gap: 0px !important;
@@ -106,7 +106,6 @@ h1 {
 
 .header-subfamily {
   font-weight: 600;
-  /* background definido via Python */
   padding: 0 5px;
   text-align: center;
   position: sticky;
@@ -160,6 +159,7 @@ h1 {
   border-top: 1px solid white !important;
   grid-column: 1;
   font-size: 0.9rem;
+  height: 110px !important; /* Força altura também na célula GG */
 }
 
 .cell {
@@ -174,6 +174,8 @@ h1 {
   gap: 8px;
   align-items: center;
   align-content: center;
+  height: 100% !important; /* Ocupa toda a altura fixa da linha */
+  overflow: hidden; /* Evita que conteúdo excedente quebre o layout */
 }
 
 .job-card {
