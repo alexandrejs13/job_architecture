@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO (CORES DE VOLTA + CORREÇÕES DE LINHA)
+# CSS COMPLETO (AJUSTE FINAL DE ALTURA E LINHAS)
 # ===========================================================
 st.markdown("""
 <style>
@@ -65,9 +65,9 @@ h1 {
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
-  /* Trava a altura dos cabeçalhos e define altura base para conteúdo */
+  /* TRAVA AS ALTURAS: Cabeçalhos fixos, conteúdo com altura base uniforme de 100px */
   grid-template-rows: 50px 45px !important;
-  grid-auto-rows: minmax(95px, auto) !important;
+  grid-auto-rows: minmax(100px, auto) !important;
   align-content: start !important;
   row-gap: 0px !important;
   column-gap: 0px !important;
@@ -106,7 +106,7 @@ h1 {
 
 .header-subfamily {
   font-weight: 600;
-  /* background removido daqui para usar o inline do Python */
+  /* background definido via Python */
   padding: 0 5px;
   text-align: center;
   position: sticky;
@@ -423,7 +423,8 @@ for f in active_families:
     current_col += span
 
 for (f, sf), c_idx in subfamilias_map.items():
-    html.append(f"<div class='header-subfamily' style='grid-column: {c_idx}; background:{map_cor_sub[f]};'>{sf}</div>")
+    style = f"grid-column: {c_idx}; background:{map_cor_sub[f]};"
+    html.append(f"<div class='header-subfamily' style='{style}'>{sf}</div>")
 
 for i, g in enumerate(grades):
     row_idx = i + 3
