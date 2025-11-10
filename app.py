@@ -1,9 +1,18 @@
+import streamlit as st
+# Importa a função de visual que criamos em utils/ui.py
+from utils.ui import setup_sidebar
+
+# --- Configuração Inicial da Página ---
 st.set_page_config(
     page_title="Job Architecture Explorer",
     page_icon="🧭",
     layout="wide"
 )
 
+# --- Aplica o Visual (Logo + Barra Preta) ---
+setup_sidebar()
+
+# --- Conteúdo da Página ---
 st.markdown("""
 # 🧭 Job Architecture Explorer
 
