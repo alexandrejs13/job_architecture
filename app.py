@@ -1,15 +1,15 @@
 import streamlit as st
-# Importa a função de visual que criamos em utils/ui.py
+# Outros imports necessários
 from utils.ui import setup_sidebar
 
-# --- Configuração Inicial da Página (PRIMEIRO COMANDO SEMPRE) ---
+# 1. Configuração da Página (SEMPRE EM PRIMEIRO se existir)
 st.set_page_config(
-    page_title="Job Architecture Explorer",
-    page_icon="🧭",
+    page_title="Job Architecture",
+    page_icon="🏛️",
     layout="wide"
 )
 
-# --- Aplica o Visual (SEGUNDO COMANDO) ---
+# 2. IMEDIATAMENTE INJETA O CSS
 setup_sidebar()
 
 # --- Conteúdo da Página ---
