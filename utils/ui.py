@@ -38,26 +38,24 @@ def setup_sidebar():
             /* --- FONTES --- */
             {font_css}
 
-            /* --- TIPOGRAFIA GLOBAL (Igual ao site SIG) --- */
+            /* --- TIPOGRAFIA GLOBAL --- */
             h1, h2, h3, h4, h5, h6 {{
-                color: #000000 !important; /* Títulos PRETOS */
-                font-weight: 700 !important; /* Sempre negrito (usa SemiBold) */
+                color: #000000 !important;
+                font-weight: 700 !important;
             }}
-            h1 {{ font-size: 2.4rem !important; }} /* Título Principal */
-            h2 {{ font-size: 1.8rem !important; }} /* Subtítulos */
-            h3 {{ font-size: 1.4rem !important; }} /* Títulos de Seção */
-            p, li, span, div {{ color: #333333; }} /* Texto corrido cinza escuro para leitura */
+            h1 {{ font-size: 2.4rem !important; }}
+            h2 {{ font-size: 1.8rem !important; }}
+            h3 {{ font-size: 1.4rem !important; }}
+            p, li, span, div {{ color: #333333; }}
 
-            /* --- CARDS ESTILO SIG (Classe personalizada) --- */
+            /* --- CARDS ESTILO SIG --- */
             .sig-card {{
-                background-color: #f2efeb; /* Cor Sand do site */
+                background-color: #f2efeb;
                 padding: 30px;
-                border-radius: 30px; /* Cantos BEM arredondados */
+                border-radius: 30px;
                 margin-bottom: 25px;
             }}
-            .sig-card h3, .sig-card h4 {{
-                margin-top: 0 !important;
-            }}
+            .sig-card h3, .sig-card h4 {{ margin-top: 0 !important; }}
 
             /* --- LIMPEZA --- */
             header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ visibility: hidden; }}
@@ -71,38 +69,40 @@ def setup_sidebar():
             }}
             div[data-testid="stSidebar"] > div:last-child {{ display: none; }}
 
-            /* --- CABEÇALHO SIDEBAR --- */
+            /* --- CABEÇALHO SIDEBAR (ALTERADO AQUI) --- */
             [data-testid="stSidebarNav"]::before {{
                 content: "Job Architecture";
                 display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
                 height: 180px;
                 background-image: url('{LOGO_URL}'); background-repeat: no-repeat;
                 background-position: center 10px; background-size: 100px auto;
-                color: #145efc; font-size: 1.5rem; font-weight: 900;
+                color: #000000 !important; /* <--- MUDANÇA: Cor preta */
+                font-size: 1.5rem;
+                font-weight: 700; /* Garante uso do SemiBold/Bold */
                 padding-bottom: 40px; margin-bottom: 20px;
                 border-bottom: 2px solid #f0f2f6;
+                font-family: 'PP SIG Flow', sans-serif !important; /* Reforço da fonte */
             }}
 
-            /* --- MENU DE NAVEGAÇÃO (ESTILO PÍLULA) --- */
-            [data-testid="stSidebarNav"] > ul {{ padding: 0 15px; }} /* Espaço lateral para as pílulas não colarem na borda */
+            /* --- MENU DE NAVEGAÇÃO --- */
+            [data-testid="stSidebarNav"] > ul {{ padding: 0 15px; }}
             [data-testid="stSidebarNav"] a {{
                 color: #333333 !important;
                 font-weight: 500 !important;
-                border-radius: 50px !important; /* FORMA DE PÍLULA */
-                padding: 8px 20px !important;   /* Mais preenchimento interno */
-                margin-bottom: 5px;             /* Espaço entre os itens */
+                border-radius: 50px !important;
+                padding: 8px 20px !important;
+                margin-bottom: 5px;
                 transition: all 0.2s;
             }}
             [data-testid="stSidebarNav"] a:hover {{
-                background-color: #f2efeb !important; /* Sand claro no hover */
+                background-color: #f2efeb !important;
                 color: #000000 !important;
             }}
-            /* ITEM ATIVO (Pílula Azul Vibrante) */
             [data-testid="stSidebarNav"] a[aria-current="page"] {{
-                background-color: #145efc !important; /* Azul SIG */
+                background-color: #145efc !important;
                 color: white !important;
                 font-weight: 700 !important;
-                box-shadow: 0 4px 12px rgba(20, 94, 252, 0.25); /* Sombra suave azul */
+                box-shadow: 0 4px 12px rgba(20, 94, 252, 0.25);
             }}
             [data-testid="stSidebarNav"] a[aria-current="page"] span {{ color: white !important; }}
         </style>
