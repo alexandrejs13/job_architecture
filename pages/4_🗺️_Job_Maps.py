@@ -9,9 +9,13 @@ from utils.ui_components import section, lock_sidebar
 from utils.ui import setup_sidebar
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA E ESTADO
+# 1. CONFIGURAÇÃO DE PÁGINA E ESTADO (PRIMEIRO COMANDO ST)
 # ===========================================================
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
+
+# ===========================================================
+# 2. APLICA VISUAL
+# ===========================================================
 setup_sidebar()
 lock_sidebar()
 
@@ -22,41 +26,246 @@ def toggle_fullscreen():
     st.session_state.fullscreen = not st.session_state.fullscreen
 
 # ===========================================================
-# 2. CSS BASE
+# 3. CSS BASE (ADAPTADO PARA O NOVO TEMA)
 # ===========================================================
 css_base = """
 <style>
 :root {
-  --blue: #145efc;
-  --green: #28a745;
-  --orange: #fd7e14;
-  --purple: #6f42c1;
-  --red: #dc3545;
+  --blue: #145efc;    /* SIG Sky - Destaque principal */
+  --green: #28a745;   /* Professional (mantido para distinção funcional) */
+  --orange: #fd7e14;  /* Technical (mantido para distinção funcional) */
+  --purple: #6f42c1;  /* Outros */
+  --red: #dc3545;     /* Ações destrutivas/sair */
   --gray-line: #e0e0e0;
   --gray-bg: #f8f9fa;
   --dark-gray: #333333;
 }
-.block-container { max-width: 1600px !important; margin: auto !important; padding: 2rem 5rem !important; }
-.topbar { position: sticky; top: 0; z-index: 200; background: var(--gray-bg); padding: 15px 20px; border-bottom: 2px solid var(--blue); margin-bottom: 20px; border-radius: 8px; }
-h1 { color: var(--blue); font-weight: 900 !important; font-size: 1.9rem !important; display: flex; align-items: center; gap: 8px; margin-top: 0px !important; margin-bottom: 10px !important; padding-top: 0px !important; }
-.map-wrapper { height: 75vh; overflow: auto; border-top: 3px solid var(--blue); border-bottom: 3px solid var(--blue); background: white; position: relative; will-change: transform; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 8px; }
-.jobmap-grid { display: grid; border-collapse: collapse; width: max-content; font-size: 0.88rem; grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important; grid-auto-rows: 110px !important; align-content: start !important; row-gap: 0px !important; column-gap: 0px !important; background-color: white !important; }
-.jobmap-grid > div { background-color: white; border-right: 1px solid var(--gray-line); border-bottom: 1px solid var(--gray-line); box-sizing: border-box; }
-.header-family { font-weight: 800; color: #fff; padding: 0 5px; text-align: center; border-right: 1px solid rgba(255,255,255,0.3) !important; border-bottom: 0px none !important; outline: none !important; margin-bottom: 0px !important; position: sticky; top: 0; z-index: 57; white-space: normal; height: 50px !important; max-height: 50px !important; display: flex; align-items: center; justify-content: center; grid-row: 1; font-size: 0.9rem; overflow: hidden; }
-.header-subfamily { font-weight: 600; padding: 0 5px; text-align: center; position: sticky; top: 50px; z-index: 56; white-space: normal; border-top: 0px none !important; margin-top: 0px !important; border-bottom: 0px none !important; outline: none !important; height: 45px !important; max-height: 45px !important; display: flex; align-items: center; justify-content: center; grid-row: 2; font-size: 0.85rem; overflow: hidden; color: var(--dark-gray); }
-.gg-header { background: var(--dark-gray) !important; color: white; font-weight: 800; text-align: center; display: flex; align-items: center; justify-content: center; grid-row: 1 / span 2; grid-column: 1; position: sticky; left: 0; top: 0; z-index: 60; border-right: 2px solid white !important; border-bottom: 0px none !important; height: 95px !important; }
-.gg-cell { background: var(--dark-gray) !important; color: white; font-weight: 700; display: flex; align-items: center; justify-content: center; position: sticky; left: 0; z-index: 55; border-right: 2px solid white !important; border-top: 1px solid #555 !important; grid-column: 1; font-size: 0.9rem; height: 110px !important; }
-.cell { background: white !important; padding: 8px; text-align: left; vertical-align: middle; z-index: 1; display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px; align-items: center; align-content: center; height: 100% !important; overflow: hidden; }
-.job-card { background: #ffffff; border: 1px solid var(--gray-line); border-left-width: 5px !important; border-left-style: solid !important; border-radius: 6px; padding: 6px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.75rem; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; width: 135px; height: 75px; flex: 0 0 135px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; transition: all 0.2s ease-in-out; }
-.job-card:hover { transform: translateY(-3px); box-shadow: 0 5px 12px rgba(0,0,0,0.1); border-color: var(--blue); }
-.job-card b { display: block; font-weight: 700; margin-bottom: 3px; line-height: 1.2; color: #222; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.job-card span { display: block; font-size: 0.7rem; color: #666; line-height: 1.1; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.gg-header::after, .gg-cell::after { content: ""; position: absolute; right: -5px; top: 0; bottom: 0; width: 5px; background: linear-gradient(to right, rgba(0,0,0,0.1), transparent); pointer-events: none; }
-[data-testid="stButton"] button { border-color: var(--blue) !important; color: var(--blue) !important; font-weight: 600 !important; }
-[data-testid="stButton"] button:hover { background-color: var(--blue) !important; color: white !important; }
+
+.block-container {
+  max-width: 1600px !important;
+  margin: auto !important;
+  padding: 2rem 5rem !important;
+}
+
+/* Topbar ajustada para não conflitar com o novo cabeçalho global se houver */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: var(--gray-bg);
+  padding: 15px 20px;
+  border-bottom: 2px solid var(--blue);
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+/* h1 agora é controlado pelo utils/ui.py (preto e bold) */
+
+.map-wrapper {
+  height: 75vh;
+  overflow: auto;
+  border-top: 3px solid var(--blue);
+  border-bottom: 3px solid var(--blue);
+  background: white;
+  position: relative;
+  will-change: transform;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  border-radius: 8px;
+}
+
+.jobmap-grid {
+  display: grid;
+  border-collapse: collapse;
+  width: max-content;
+  font-size: 0.88rem;
+  grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
+  grid-auto-rows: 110px !important;
+  align-content: start !important;
+  row-gap: 0px !important;
+  column-gap: 0px !important;
+  background-color: white !important;
+}
+
+.jobmap-grid > div {
+  background-color: white;
+  border-right: 1px solid var(--gray-line);
+  border-bottom: 1px solid var(--gray-line);
+  box-sizing: border-box;
+}
+
+.header-family {
+  font-weight: 800;
+  color: #fff;
+  padding: 0 5px;
+  text-align: center;
+  border-right: 1px solid rgba(255,255,255,0.3) !important;
+  border-bottom: 0px none !important;
+  outline: none !important;
+  margin-bottom: 0px !important;
+  position: sticky;
+  top: 0;
+  z-index: 57;
+  white-space: normal;
+  height: 50px !important;
+  max-height: 50px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  grid-row: 1;
+  font-size: 0.9rem;
+  overflow: hidden;
+}
+
+.header-subfamily {
+  font-weight: 600;
+  padding: 0 5px;
+  text-align: center;
+  position: sticky;
+  top: 50px;
+  z-index: 56;
+  white-space: normal;
+  border-top: 0px none !important;
+  margin-top: 0px !important;
+  border-bottom: 0px none !important;
+  outline: none !important;
+  height: 45px !important;
+  max-height: 45px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  grid-row: 2;
+  font-size: 0.85rem;
+  overflow: hidden;
+  color: var(--dark-gray);
+}
+
+.gg-header {
+  background: var(--dark-gray) !important;
+  color: white;
+  font-weight: 800;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  grid-row: 1 / span 2;
+  grid-column: 1;
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 60;
+  border-right: 2px solid white !important;
+  border-bottom: 0px none !important;
+  height: 95px !important;
+}
+
+.gg-cell {
+  background: var(--dark-gray) !important;
+  color: white;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: sticky;
+  left: 0;
+  z-index: 55;
+  border-right: 2px solid white !important;
+  border-top: 1px solid #555 !important;
+  grid-column: 1;
+  font-size: 0.9rem;
+  height: 110px !important;
+}
+
+.cell {
+  background: white !important;
+  padding: 8px;
+  text-align: left;
+  vertical-align: middle;
+  z-index: 1;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  align-content: center;
+  height: 100% !important;
+  overflow: hidden;
+}
+
+.job-card {
+  background: #ffffff;
+  border: 1px solid var(--gray-line);
+  border-left-width: 5px !important;
+  border-left-style: solid !important;
+  border-radius: 6px;
+  padding: 6px 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  font-size: 0.75rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  width: 135px;
+  height: 75px;
+  flex: 0 0 135px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  transition: all 0.2s ease-in-out;
+}
+.job-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 12px rgba(0,0,0,0.1);
+  border-color: var(--blue);
+}
+.job-card b {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 3px;
+  line-height: 1.2;
+  color: #222;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.job-card span {
+  display: block;
+  font-size: 0.7rem;
+  color: #666;
+  line-height: 1.1;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gg-header::after, .gg-cell::after {
+  content: "";
+  position: absolute;
+  right: -5px;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(to right, rgba(0,0,0,0.1), transparent);
+  pointer-events: none;
+}
+[data-testid="stButton"] button {
+    border-color: var(--blue) !important;
+    color: var(--blue) !important;
+    font-weight: 600 !important;
+}
+[data-testid="stButton"] button:hover {
+    background-color: var(--blue) !important;
+    color: white !important;
+}
+
 @media (max-width: 1500px) { .block-container { zoom: 0.9; } }
 </style>
 """
+
+# ===========================================================
+# CSS MODO TELA CHEIA
+# ===========================================================
 css_fullscreen = """
 <style>
     header, section[data-testid="stSidebar"], .topbar, footer { display: none !important; }
@@ -71,7 +280,7 @@ st.markdown(css_base, unsafe_allow_html=True)
 if st.session_state.fullscreen: st.markdown(css_fullscreen, unsafe_allow_html=True)
 
 # ===========================================================
-# 3. FUNÇÕES DE CACHE E UTILITÁRIOS
+# 4. FUNÇÕES DE CACHE E UTILITÁRIOS
 # ===========================================================
 @st.cache_data(ttl=3600)
 def get_prepared_data():
@@ -111,11 +320,7 @@ def generate_map_html(df_filtered, families_order):
             subfamilias_map[(f, sf)] = col_index
             col_index += 1
 
-    # Pré-cálculo de contagens e conteúdos das células
-    # Agrupa por Família, Subfamília e Grade para processar em lote
     grouped = df_filtered.groupby(["Job Family", "Sub Job Family", "Global Grade"])
-    
-    # Dicionários para busca rápida
     cards_data = {}
     for name, group in grouped:
         cards_data[name] = group.to_dict('records')
@@ -129,7 +334,6 @@ def generate_map_html(df_filtered, families_order):
             count = len(records)
             cards_count_map[(g, c_idx)] = count
             if count > 0:
-                 # Cria assinatura única para agrupar células iguais
                  content_map[(g, c_idx)] = "|".join(sorted(set(r["Job Profile"] + r["Career Path"] for r in records)))
             else:
                  content_map[(g, c_idx)] = None
@@ -152,7 +356,6 @@ def generate_map_html(df_filtered, families_order):
                     break
             span_map[(g, c_idx)] = span
 
-    # Geração do HTML das células
     cell_html_cache = {}
     for i, g in enumerate(grades):
         for (f, sf), c_idx in subfamilias_map.items():
@@ -175,7 +378,6 @@ def generate_map_html(df_filtered, families_order):
                  )
             cell_html_cache[(g, c_idx)] = "".join(cards_html)
 
-    # Cálculo de larguras
     col_widths = ["100px"]
     for (_, sf), c_idx in subfamilias_map.items():
         max_cards = 0
@@ -186,13 +388,11 @@ def generate_map_html(df_filtered, families_order):
         col_widths.append(f"{max(len(str(sf)) * 5 + 30, width_cards)}px")
     grid_template = f"grid-template-columns: {' '.join(col_widths)};"
 
-    # Paleta de cores para cabeçalhos
     palette = [("#4F6D7A", "#E6EFF2"), ("#5C7A67", "#E8F2EB"), ("#7A5C5C", "#F2E6E6"), ("#6B5C7A", "#EBE6F2"),
                ("#7A725C", "#F2EFE6"), ("#5C6B7A", "#E6EBF2"), ("#7A5C74", "#F2E6EF"), ("#5C7A78", "#E6F2F1")]
     map_cor_fam = {f: palette[i % len(palette)][0] for i, f in enumerate(families_order)}
     map_cor_sub = {f: palette[i % len(palette)][1] for i, f in enumerate(families_order)}
 
-    # Montagem do HTML final
     html = [f"<div class='map-wrapper'><div class='jobmap-grid' style='{grid_template}'>"]
     html.append("<div class='gg-header'>GG</div>")
     
@@ -215,7 +415,7 @@ def generate_map_html(df_filtered, families_order):
     return "".join(html)
 
 # ===========================================================
-# 4. LÓGICA DA PÁGINA
+# 5. LÓGICA DA PÁGINA
 # ===========================================================
 df = get_prepared_data()
 if df.empty:
