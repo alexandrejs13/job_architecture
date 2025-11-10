@@ -1,24 +1,144 @@
-:root {
-  --sig-blue: #1E56E0;
-  --sig-bg: #f7f9ff;
-  --sig-card: #ffffff;
-  --sig-border: #e1e5f2;
+/* ================================================================== */
+/* 1. FONTES GLOBAIS (PP SIG FLOW) */
+/* ================================================================== */
+
+@font-face {
+    font-family: 'PP SIG Flow';
+    src: url('fonts/PPSIGFlow-Regular.ttf') format('truetype');
+    font-weight: 400; /* Regular */
+    font-style: normal;
 }
 
-body {
-  background-color: var(--sig-bg);
-  font-family: 'Inter', sans-serif;
+@font-face {
+    font-family: 'PP SIG Flow';
+    src: url('fonts/PPSIGFlow-SemiBold.ttf') format('truetype');
+    font-weight: 700; /* Bold (usando seu SemiBold) */
+    font-style: normal;
 }
 
-.block-container {
-  padding: 2rem 3rem;
+/* Aplica a fonte globalmente */
+html, body, [class*="css"], [data-testid="stAppViewContainer"] {
+    font-family: 'PP SIG Flow', sans-serif !important;
 }
 
-.card {
-  background-color: var(--sig-card);
-  border-radius: 16px;
-  padding: 1rem 1.2rem;
-  margin-bottom: 1rem;
-  border: 1px solid var(--sig-border);
-  box-shadow: 0px 2px 6px rgba(0,0,0,0.05);
+/* Define o peso dos títulos para usar a fonte Bold/SemiBold */
+h1, h2, h3, h4, h5, h6, b, strong {
+    font-weight: 700 !important;
+    color: #000000 !important; /* Títulos sempre pretos */
+}
+
+/* ================================================================== */
+/* 2. LIMPEZA DA INTERFACE (REMOVE ELEMENTOS NATIVOS) */
+/* ================================================================== */
+
+/* Esconde header, footer, e menu "Made with Streamlit" */
+header, footer, #MainMenu, .st-emotion-cache-h5rgjs {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Oculta o primeiro item do menu ('app') */
+[data-testid="stSidebarNav"] > ul:first-child > li:first-child {
+    display: none !important;
+}
+
+/* Oculta emojis dos menus */
+[data-testid="stSidebarNav"] a span:first-child {
+    display: none !important;
+}
+[data-testid="stSidebarNav"] a span:last-child {
+    display: inline-block !important;
+}
+
+/* ================================================================== */
+/* 3. BARRA LATERAL (SIDEBAR) */
+/* ================================================================== */
+
+/* Trava a largura da sidebar e esconde a alça de redimensionar */
+[data-testid="stSidebar"] {
+    min-width: 300px !important;
+    max-width: 300px !important;
+    width: 300px !important;
+    background-color: white !important;
+    border-right: 1px solid #f0f0f0 !important;
+}
+div[data-testid="stSidebar"] > div:last-child {
+    display: none !important; /* Esconde alça */
+}
+
+/* Cria o espaço no topo da sidebar para o nosso cabeçalho */
+[data-testid="stSidebarNav"] {
+    padding-top: 180px !important; /* Espaço para o cabeçalho */
+}
+
+/* Cria o cabeçalho (Logo + Título + Divisor) */
+[data-testid="stSidebar"]::before {
+    content: "Job Architecture";
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end; /* Alinha na base */
+    
+    position: absolute; /* Fixa no topo da sidebar */
+    top: 0;
+    left: 0;
+    width: 300px; /* Largura exata da sidebar */
+    height: 180px; /* Altura do bloco de cabeçalho */
+    z-index: 100;
+    
+    background-color: white; /* Fundo branco para cobrir qualquer flash */
+    background-image: url('https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png');
+    background-repeat: no-repeat;
+    background-position: center 10px; /* Logo 10px do topo */
+    background-size: 100px auto; /* Logo elegante */
+
+    color: #000000 !important; /* Título Preto */
+    font-size: 1.5rem;
+    font-weight: 900;
+    font-family: 'PP SIG Flow', sans-serif !important;
+
+    padding-bottom: 40px; /* Distância do texto até a linha */
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f0f2f6;
+    box-sizing: border-box; /* Garante que o padding/borda não aumentem o tamanho */
+}
+
+/* ================================================================== */
+/* 4. MENU DE NAVEGAÇÃO (PÍLULAS) */
+/* ================================================================== */
+[data-testid="stSidebarNav"] > ul {
+    padding: 0 15px !important; /* Espaço lateral para as pílulas */
+}
+
+/* Links Inativos (Base) */
+[data-testid="stSidebarNav"] a {
+    color: #333333 !important;
+    font-weight: 500 !important;
+    border-radius: 999px !important; /* Pílula */
+    padding: 10px 24px !important;
+    margin-bottom: 4px !important;
+    background-color: transparent !important;
+    transition: none !important;
+    border: none !important;
+    text-decoration: none !important;
+}
+
+/* Hover (Passar o mouse) - SÓ TEXTO AZUL */
+[data-testid="stSidebarNav"] a:hover {
+    background-color: transparent !important;
+    color: #145efc !important;
+}
+[data-testid="stSidebarNav"] a:hover span {
+    color: #145efc !important;
+}
+
+/* ITEM ATIVO (A PÍLULA AZUL) */
+/* Este é o seletor mais específico que o Streamlit usa */
+div[data-testid="stSidebarNavItems"] ul li a[aria-current="page"] {
+    background-color: #145efc !important; /* Azul SIG Sky */
+    color: #ffffff !important;           /* Texto Branco */
+    font-weight: 700 !important;
+}
+div[data-testid="stSidebarNavItems"] ul li a[aria-current="page"] span {
+    color: #ffffff !important;
 }
