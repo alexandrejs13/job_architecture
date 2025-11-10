@@ -1,47 +1,25 @@
 import streamlit as st
-import base64
 import os
 
 # ==============================================================================
 # 1. CONFIGURAÇÕES
 # ==============================================================================
-FONT_REGULAR = "assets/fonts/PPSIGFlow-Regular.ttf"
-FONT_SEMIBOLD = "assets/fonts/PPSIGFlow-SemiBold.ttf"
 LOGO_URL = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
 
 # --- CORES DA PALETA SIG ---
 SIG_SKY = "#145efc"    # Azul Principal (Pantone 2387 C)
-SIG_SAND = "#f2efeb"   # Bege Claro para Cards
 TEXT_BLACK = "#000000" # Preto Puro para Títulos
-TEXT_GRAY = "#333333"  # Cinza Escuro para Texto Corrido
 
 # ==============================================================================
-# 2. AUXILIARES
-# ==============================================================================
-def get_font_base64(file_path):
-    if not os.path.exists(file_path): return None
-    with open(file_path, "rb") as f: data = f.read()
-    return base64.b64encode(data).decode("utf-8")
-
-# ==============================================================================
-# 3. SETUP UI (CSS GLOBAL DEFINITIVO)
+# 2. SETUP UI (CSS GLOBAL DEFINITIVO)
 # ==============================================================================
 def setup_sidebar():
-    font_reg_b64 = get_font_base64(FONT_REGULAR)
-    font_sb_b64 = get_font_base64(FONT_SEMIBOLD)
-
-    font_css = ""
-    if font_reg_b64 and font_sb_b64:
-        font_css = f"""
-        @font-face {{ font-family: 'PP SIG Flow'; src: url(data:font/ttf;base64,{font_reg_b64}) format('truetype'); font-weight: 400; font-style: normal; }}
-        @font-face {{ font-family: 'PP SIG Flow'; src: url(data:font/ttf;base64,{font_sb_b64}) format('truetype'); font-weight: 700; font-style: normal; }}
-        html, body, [class*="css"] {{ font-family: 'PP SIG Flow', sans-serif !important; }}
-        """
+    # A lógica de carregamento de fontes foi removida para simplificar e evitar SyntaxError.
+    # Se precisar das fontes, você pode injetá-las em um st.markdown separado ou usar um arquivo .css.
 
     st.markdown(
         f"""
         <style>
-            {font_css}
             /* Oculta elementos nativos */
             header, footer, #MainMenu, .st-emotion-cache-h5rgjs {{ visibility: hidden !important; }}
             [data-testid="stSidebarNav"] > ul:first-child > li:first-child {{ display: none !important; }}
@@ -71,7 +49,7 @@ def setup_sidebar():
                 border-radius: 999px !important; /* Pílula */
                 padding: 10px 24px !important;
                 margin-bottom: 5px !important;
-                transition: color 0.2s, background-color 0.2s !important; /* Adicionado transição para hover */
+                transition: color 0.2s, background-color 0.2s !important;
                 border: none !important;
                 text-decoration: none !important;
             }}
@@ -115,3 +93,7 @@ def setup_sidebar():
         </style>
         """,
         unsafe_allow_html=True
+    )
+
+
+ao vivo
