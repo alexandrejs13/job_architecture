@@ -73,28 +73,28 @@ def setup_sidebar():
             /* --- MENU DE NAVEGAÇÃO --- */
             [data-testid="stSidebarNav"] > ul {{ padding: 0 15px; }}
             
-            /* REMOVE EMOJIS DO MENU */
-            /* Oculta o primeiro span dentro do link, que geralmente contém o emoji */
+            /* Oculta emojis dos menus (primeiro span) */
             [data-testid="stSidebarNav"] a span:first-child {{
                 display: none !important;
             }}
-            /* Garante que o texto do link (segundo span) fique visível e alinhado */
             [data-testid="stSidebarNav"] a span:last-child {{
                 display: inline-block !important;
             }}
 
-            /* LINKS NORMAIS (Inativos) */
+            /* Links Normais (Inativos) */
             [data-testid="stSidebarNav"] a {{
                 color: {TEXT_GRAY} !important;
                 font-weight: 500 !important;
-                border-radius: 50px !important; /* Forma de Pílula */
-                padding: 8px 20px !important;
+                /* Forma de Pílula Perfeita */
+                border-radius: 999px !important;
+                /* Padding para não colar o texto nas bordas da pílula */
+                padding: 10px 24px !important;
                 margin-bottom: 5px;
                 transition: none !important;
                 background-color: transparent !important;
             }}
             
-            /* HOVER (Passar o mouse) - Apenas texto azul, SEM pílula de fundo */
+            /* Hover (Passar o mouse) - SEM PÍLULA, SÓ TEXTO AZUL */
             [data-testid="stSidebarNav"] a:hover {{
                 background-color: transparent !important;
                 color: {SIG_SKY} !important;
@@ -103,14 +103,13 @@ def setup_sidebar():
                 color: {SIG_SKY} !important;
             }}
 
-            /* --- ITEM ATIVO (Página Atual) - AQUI A PÍLULA AZUL APARECE --- */
+            /* --- ITEM ATIVO (Página Atual) - PÍLULA AZUL + TEXTO BRANCO --- */
             [data-testid="stSidebarNav"] a[aria-current="page"],
             [data-testid="stSidebarNav"] a[data-active="true"] {{
-                background-color: {SIG_SKY} !important; /* Fundo AZUL SIG SKY */
-                color: white !important;                 /* Texto BRANCO */
-                font-weight: 700 !important;
+                background-color: {SIG_SKY} !important; /* Azul SIG Sky */
+                color: white !important;                 /* Texto Branco */
+                font-weight: 700 !important;             /* Negrito */
             }}
-            /* Garante que o texto dentro da pílula ativa seja branco */
             [data-testid="stSidebarNav"] a[aria-current="page"] span,
             [data-testid="stSidebarNav"] a[data-active="true"] span {{
                 color: white !important;
