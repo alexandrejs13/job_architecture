@@ -3,6 +3,7 @@
 
 import streamlit as st
 import pandas as pd
+import streamlit.components.v1 as components # Necessário para o JavaScript da tecla ESC
 from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar
 
@@ -34,25 +35,25 @@ css_base = """
   --dark-gray: #333333;
 }
 
-/* MODO NORMAL: Margens maiores para não parecer tela cheia */
+/* MODO NORMAL: Margens maiores */
 .block-container {
   max-width: 1600px !important;
   margin: auto !important;
   padding: 2rem 5rem !important;
 }
 
-/* Topbar ajustada para os filtros, não mais para o título principal */
+/* Topbar apenas para os filtros agora */
 .topbar {
   position: sticky;
   top: 0;
   z-index: 200;
   background: white;
-  padding: 10px 0 15px 0;
+  padding: 15px 0 15px 0;
   border-bottom: 2px solid var(--blue);
   margin-bottom: 20px;
 }
 
-/* Título principal sem linha acima */
+/* Ajuste do Título para não ter linhas indesejadas */
 h1 {
   color: var(--blue);
   font-weight: 900 !important;
@@ -60,13 +61,13 @@ h1 {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 0px !important; /* Remove margem superior extra */
-  margin-bottom: 20px !important;
+  margin-top: 0px !important;
+  margin-bottom: 10px !important; /* Espaço menor entre título e filtros */
   padding-top: 0px !important;
 }
 
 .map-wrapper {
-  height: 75vh; /* Altura um pouco menor no modo normal */
+  height: 75vh;
   overflow: auto;
   border-top: 3px solid var(--blue);
   border-bottom: 3px solid var(--blue);
@@ -81,7 +82,6 @@ h1 {
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
-  /* ALTURA FIXA E EXATA PARA TODAS AS LINHAS DE CONTEÚDO */
   grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
   grid-auto-rows: 110px !important;
   align-content: start !important;
@@ -196,11 +196,10 @@ h1 {
 
 .job-card {
   background: #f9f9f9;
-  /* Define a largura da borda, mas a cor vem do Python */
+  /* Largura e estilo da borda (cor vem do Python) */
   border-left-width: 5px !important;
   border-left-style: solid !important;
-  /* Cor fallback caso o Python falhe */
-  border-left-color: var(--gray-line);
+  border-left-color: var(--gray-line); /* Fallback */
   border-radius: 6px;
   padding: 6px 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -215,6 +214,11 @@ h1 {
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
+  transition: all 0.2s ease-in-out;
+}
+.job-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0,0,0,0.15);
 }
 .job-card b {
   display: block;
@@ -253,8 +257,13 @@ h1 {
 .exit-fullscreen {
     position: fixed;
     bottom: 20px;
-    right: 20px;
+    right: 30px;
     z-index: 99999;
+}
+/* Estilo do botão dentro do container flutuante */
+.exit-fullscreen button {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    border: 1px solid #ccc !important;
 }
 
 @media (max-width: 1500px) { .block-container { zoom: 0.9; } }
@@ -264,20 +273,17 @@ h1 {
 # CSS PARA MODO TELA CHEIA REAL
 css_fullscreen = """
 <style>
-    /* Esconde tudo que não é o mapa */
     header[data-testid="stHeader"], 
     section[data-testid="stSidebar"],
     .topbar, 
     footer { display: none !important; }
 
-    /* Remove margens do container principal */
     .block-container {
         max-width: 100vw !important;
         padding: 0 !important;
         margin: 0 !important;
     }
 
-    /* Faz o mapa ocupar a tela toda */
     .map-wrapper {
         position: fixed !important;
         top: 0;
@@ -319,14 +325,13 @@ df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True)
 # ===========================================================
 # FILTROS E BOTÃO FULLSCREEN
 # ===========================================================
-# REMOVIDO O DIV TOPBAR DO TÍTULO PRINCIPAL
+# Título FORA da topbar para não ter a linha azul acima dele
 section("🗺️ Job Map")
 
-# Se NÃO estiver em fullscreen, mostra os filtros normalmente
 if not st.session_state.fullscreen:
-    # Topbar agora envolve apenas os filtros
+    # Topbar inicia AQUI, apenas envolvendo os filtros
     st.markdown("<div class='topbar'>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([2, 2, 0.8]) # Coluna 3 para o botão
+    col1, col2, col3 = st.columns([2, 2, 0.8])
 
     preferred_order = [
         "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
@@ -353,21 +358,18 @@ if not st.session_state.fullscreen:
     with col3:
         st.write("") # Espaçador
         st.write("")
-        # Botão para ATIVAR tela cheia
         st.button("⛶ Tela Cheia", on_click=toggle_fullscreen, use_container_width=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Salva filtros no session state para persistir no modo fullscreen se necessário
+    # Salva filtros
     st.session_state.fam_filter = family_filter
     st.session_state.path_filter = path_filter
 
 else:
-    # MODO TELA CHEIA ATIVO: Usa os filtros salvos
+    # Modo Fullscreen
     family_filter = st.session_state.get('fam_filter', 'Todas')
     path_filter = st.session_state.get('path_filter', 'Todas')
-    
-    # Recria a lista de famílias apenas para manter a consistência do código abaixo
     preferred_order = [
         "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
         "Finance", "IT", "People & Culture", "Sales", "Marketing", "Technical Services",
@@ -378,11 +380,30 @@ else:
     families_order = [f for f in preferred_order if f in existing_families]
     families_order.extend(sorted(list(existing_families - set(families_order))))
 
-    # Botão FLUTUANTE para SAIR da tela cheia
+    # Botão flutuante para SAIR + JavaScript para capturar ESC
     with st.container():
         st.markdown('<div class="exit-fullscreen">', unsafe_allow_html=True)
-        st.button("❌ Sair da Tela Cheia", on_click=toggle_fullscreen)
+        st.button("❌ Sair da Tela Cheia (ESC)", on_click=toggle_fullscreen)
         st.markdown('</div>', unsafe_allow_html=True)
+        
+        # JavaScript para capturar a tecla ESC e clicar no botão de sair
+        components.html(
+            """
+            <script>
+            const doc = window.parent.document;
+            doc.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    // Procura o botão dentro da div .exit-fullscreen
+                    const exitBtn = doc.querySelector('.exit-fullscreen button');
+                    if (exitBtn) { 
+                        exitBtn.click(); 
+                    }
+                }
+            });
+            </script>
+            """,
+            height=0, width=0
+        )
 
 # --- APLICAÇÃO DOS FILTROS ---
 df_filtered = df.copy()
