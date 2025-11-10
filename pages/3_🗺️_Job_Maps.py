@@ -20,16 +20,16 @@ def toggle_fullscreen():
     st.session_state.fullscreen = not st.session_state.fullscreen
 
 # ===========================================================
-# CSS BASE
+# CSS BASE (MODO NORMAL)
 # ===========================================================
 css_base = """
 <style>
 :root {
-  --blue: #145efc;    /* Management/Executive */
-  --green: #28a745;   /* Professional/Specialist */
-  --orange: #fd7e14;  /* Technical/Support */
+  --blue: #145efc;    /* Management */
+  --green: #28a745;   /* Professional */
+  --orange: #fd7e14;  /* Technical */
   --purple: #6f42c1;  /* Outros */
-  --red: #dc3545;     /* Vermelho para botões de ação */
+  --red: #dc3545;     /* Botões de Ação */
   --gray-line: #dadada;
   --gray-bg: #f8f9fa;
   --dark-gray: #333333;
@@ -41,7 +41,6 @@ css_base = """
   padding: 2rem 5rem !important;
 }
 
-/* Topbar apenas para os filtros */
 .topbar {
   position: sticky;
   top: 0;
@@ -52,7 +51,6 @@ css_base = """
   margin-bottom: 20px;
 }
 
-/* Título sem linhas acima */
 h1 {
   color: var(--blue);
   font-weight: 900 !important;
@@ -81,7 +79,6 @@ h1 {
   border-collapse: collapse;
   width: max-content;
   font-size: 0.88rem;
-  /* Alturas fixas para cabeçalhos e linhas de conteúdo */
   grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
   grid-auto-rows: 110px !important;
   align-content: start !important;
@@ -194,11 +191,13 @@ h1 {
   overflow: hidden;
 }
 
+/* === JOB CARD (CORRIGIDO PARA CORES DINÂMICAS) === */
 .job-card {
   background: #f9f9f9;
-  /* Borda base, a cor será injetada pelo Python */
+  /* Borda padrão removida para não conflitar com o inline style */
   border-left-width: 5px !important;
   border-left-style: solid !important;
+  /* A COR VEM APENAS DO PYTHON AGORA */
   border-radius: 6px;
   padding: 6px 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -252,45 +251,30 @@ h1 {
   pointer-events: none;
 }
 
-/* Estilo para o botão "Tela Cheia" no modo normal (VERMELHO) */
-/* Seletor simplificado para maior robustez */
-button[data-testid*="stButton"] > div > p { /* Streamlit 1.30+ usa <p> dentro do botão para o texto */
-    color: white !important;
-    background-color: var(--red) !important;
+/* === BOTÃO TELA CHEIA (VERMELHO) === */
+/* Força a cor vermelha no botão específico de entrada em tela cheia */
+[data-testid="stButton"] button {
     border-color: var(--red) !important;
-    font-weight: 600 !important;
+    color: var(--red) !important;
+    font-weight: 700 !important;
 }
-button[data-testid*="stButton"] > div > p:hover {
-    background-color: #c82333 !important; /* Um tom mais escuro ao passar o mouse */
-    border-color: #bd2130 !important;
+[data-testid="stButton"] button:hover {
+    border-color: #c82333 !important;
+    color: #c82333 !important;
+    background-color: #fff5f5 !important;
 }
-/* Estiliza o próprio botão para ter borda e cor de fundo consistentes */
-button[data-testid*="stButton"] {
-    background-color: var(--red) !important;
-    border-color: var(--red) !important;
-}
-button[data-testid*="stButton"]:hover {
-    background-color: #c82333 !important; 
-    border-color: #bd2130 !important;
-}
-
 
 @media (max-width: 1500px) { .block-container { zoom: 0.9; } }
 </style>
 """
 
 # ===========================================================
-# CSS MODO TELA CHEIA (COM BOTÃO DE SAIR FIXO E MARGENS)
+# CSS MODO TELA CHEIA (COM CONTAINER FIXO PARA O BOTÃO SAIR)
 # ===========================================================
 css_fullscreen = """
 <style>
-    /* Esconde elementos padrão */
-    header[data-testid="stHeader"], 
-    section[data-testid="stSidebar"],
-    .topbar, 
-    footer { display: none !important; }
+    header, section[data-testid="stSidebar"], .topbar, footer { display: none !important; }
 
-    /* Maximiza o container principal */
     .block-container {
         max-width: 100vw !important;
         padding: 0 !important;
@@ -298,41 +282,35 @@ css_fullscreen = """
         overflow: hidden !important;
     }
 
-    /* Força o mapa a ocupar 100% da tela */
     .map-wrapper {
         position: fixed !important;
-        top: 0;
-        left: 0;
-        width: 100vw !important;
-        height: 100vh !important;
+        top: 0; left: 0;
+        width: 100vw !important; height: 100vh !important;
         z-index: 9999;
         border: none !important;
         border-top: 5px solid var(--blue) !important;
         margin: 0 !important;
     }
 
-    /* Estilo para o container do botão de sair - com margens flutuantes (CORRIGIDO) */
-    div[data-testid="stVerticalBlock"] > div:has(button[kind="primary"]) {
-        position: fixed !important; /* Reforça fixed */
-        bottom: 1cm !important;     /* Margem de 1cm inferior */
-        right: 1cm !important;      /* Margem de 1cm direita */
-        left: unset !important;     /* Garante que não está preso à esquerda */
-        z-index: 100000 !important; /* Garante que está no topo */
-        background: transparent !important;
+    /* CONTAINER FIXO PARA O BOTÃO SAIR (SOLUÇÃO DEFINITIVA) */
+    #fixed-exit-container {
+        position: fixed !important;
+        bottom: 30px !important;
+        right: 30px !important;
+        z-index: 100000 !important;
     }
-    
-    /* Estilo específico para o botão de sair */
-    button[kind="primary"] {
+    /* Estilo do botão DENTRO do container fixo */
+    #fixed-exit-container button {
         background-color: var(--red) !important;
         color: white !important;
-        border-color: var(--red) !important;
+        border: none !important;
         box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+        padding: 10px 25px !important;
         font-weight: 800 !important;
-        padding: 0.5rem 1.5rem !important;
+        border-radius: 8px !important;
     }
-    button[kind="primary"]:hover {
-        background-color: #c82333 !important; /* Um tom mais escuro ao passar o mouse */
-        border-color: #bd2130 !important;
+    #fixed-exit-container button:hover {
+        background-color: #c82333 !important;
     }
 </style>
 """
@@ -395,12 +373,11 @@ if not st.session_state.fullscreen:
 
     with col3:
         st.write("")
-        # Adicionei um div para ajudar no alinhamento vertical
         st.markdown('<div style="margin-top: 15px;">', unsafe_allow_html=True) 
         if st.button("⛶ Tela Cheia", use_container_width=True):
             toggle_fullscreen()
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True) # Fecha o div
+        st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
     st.session_state.fam_filter = family_filter
@@ -419,23 +396,24 @@ else:
     families_order = [f for f in preferred_order if f in existing_families]
     families_order.extend(sorted(list(existing_families - set(families_order))))
 
-    # Botão de Sair (o CSS agora lida com a posição fixa e as margens)
-    if st.button("❌ Sair da Tela Cheia", type="primary"):
+    # BOTÃO DE SAIR EM CONTAINER FIXO
+    # Envolvemos o botão em uma div com ID específico para o CSS posicionar
+    st.markdown('<div id="fixed-exit-container">', unsafe_allow_html=True)
+    if st.button("❌ Sair da Tela Cheia"):
         toggle_fullscreen()
         st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
+    # JS para ESC
     components.html(
         """
         <script>
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                const buttons = window.parent.document.getElementsByTagName('button');
-                for (let i = 0; i < buttons.length; i++) {
-                    // Verifica o texto do botão para garantir que é o botão correto de sair
-                    if (buttons[i].innerText.includes("Sair da Tela Cheia")) {
-                        buttons[i].click();
-                        break;
-                    }
+                const container = window.parent.document.getElementById('fixed-exit-container');
+                if (container) {
+                    const btn = container.querySelector('button');
+                    if (btn) btn.click();
                 }
             }
         });
@@ -470,7 +448,7 @@ col_index = 2
 header_spans = {}
 
 for f in active_families:
-    subs = sorted(df_filtered[df["Job Family"] == f]["Sub Job Family"].unique().tolist()) # Use df aqui para pegar todas as subfamílias da família, não apenas as filtradas
+    subs = sorted(df_filtered[df_filtered["Job Family"] == f]["Sub Job Family"].unique().tolist())
     header_spans[f] = len(subs)
     for sf in subs:
         subfamilias_map[(f, sf)] = col_index
@@ -508,7 +486,7 @@ for (_, c_idx) in subfamilias_map.items():
                 break
         span_map[(g, c_idx)] = span
 
-# --- FUNÇÃO DE CORES (REINTEGRADA E VERIFICADA) ---
+# --- FUNÇÃO DE CORES (GARANTIDA) ---
 def get_path_color(path_name):
     p_lower = str(path_name).lower().strip()
     if "manage" in p_lower or "executive" in p_lower: return "var(--blue)"
@@ -536,9 +514,9 @@ for i, g in enumerate(grades):
         
         cards = []
         for _, row in cell_df.iterrows():
-            path_color = get_path_color(row['Career Path']) # Garante que a cor é obtida
+            # Obtém a cor e injeta DIRETAMENTE no style com !important
+            path_color = get_path_color(row['Career Path'])
             tooltip = f"{row['Job Profile']} | {row['Career Path']} ({gg_label})"
-            # INJEÇÃO DA COR DIRETO NO STYLE
             cards.append(
                 f"<div class='job-card' style='border-left-color: {path_color} !important;' title='{tooltip}'>"
                 f"<b>{row['Job Profile']}</b>"
