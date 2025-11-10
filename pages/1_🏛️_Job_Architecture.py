@@ -11,52 +11,46 @@ st.set_page_config(layout="wide", page_title="🏛️ Job Architecture")
 # ===========================================================
 # 2. APLICA O VISUAL GLOBAL
 # ===========================================================
-# Isso aplica a barra lateral branca, o logo azul e os ajustes de menu.
-# O fundo "Sand 1" já está garantido pelo arquivo .streamlit/config.toml
 setup_sidebar()
 
 # ===========================================================
 # 3. ESTILOS ESPECÍFICOS DA PÁGINA
 # ===========================================================
-# Mantive seus estilos de texto originais. Eles devem contrastar bem com o fundo Sand.
 st.markdown("""
 <style>
 .block-container {
   max-width: 1400px !important;
   padding: 2rem 2rem;
 }
-h1 { /* Título principal da 'section' */
-  color: #1E56E0;
-  font-weight: 800;
+/* Estilos de h1 e h2 agora herdam a cor preta global de utils/ui.py */
+h1 {
   font-size: 2.2rem !important;
-  border-bottom: 2px solid #d0d0d0; /* Ajustei levemente a cor da borda para o fundo Sand */
+  border-bottom: 2px solid #d0d0d0;
   padding-bottom: 10px;
 }
-h2 { /* Subtítulos principais (##) */
-  color: #1E56E0;
-  font-weight: 700;
+h2 {
   font-size: 1.8rem !important;
   margin-top: 2.5rem;
   margin-bottom: 1rem;
   border-bottom: 1px solid #d0d0d0;
   padding-bottom: 5px;
 }
-h3 { /* Subtítulos secundários (###) */
+h3 {
   font-weight: 600;
   font-size: 1.3rem !important;
   color: #333;
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
 }
-p, li { /* Texto principal e itens de lista */
+p, li {
   font-size: 1.05rem;
   line-height: 1.6;
   color: #222;
 }
 /* Estiliza o st.info como um callout */
 div[data-testid="stAlert"] {
-    border: 1px solid #1E56E0;
-    background-color: #e8f0fe; /* Ajustei levemente para combinar melhor com o fundo Sand */
+    border: 1px solid #145efc; /* Mantém a borda azul */
+    background-color: #e8f0fe;
     border-radius: 8px;
 }
 div[data-testid="stAlert"] p {
@@ -70,7 +64,7 @@ div[data-testid="stAlert"] p {
 # 4. TÍTULO E CONTEÚDO
 # ===========================================================
 
-section("🏛️ Job Architecture")
+section("🏛️ Job Architecture") # A função section() provavelmente define o H1
 
 st.markdown("""
 A Job Architecture (JA) é a estrutura fundamental de P&C na SIG, que organiza e nivela os cargos em toda a organização. Ela serve como base para processos críticos de pessoas, garantindo consistência e clareza.
