@@ -12,7 +12,7 @@ from utils.ui_components import section, lock_sidebar
 st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
-# Inicializa o estado de tela cheia se não existir
+# Controle de estado para tela cheia
 if 'fullscreen' not in st.session_state:
     st.session_state.fullscreen = False
 
@@ -20,7 +20,7 @@ def toggle_fullscreen():
     st.session_state.fullscreen = not st.session_state.fullscreen
 
 # ===========================================================
-# CSS COMPLETO (BASE + TELA CHEIA CONDICIONAL)
+# CSS BASE (MODO NORMAL)
 # ===========================================================
 css_base = """
 <style>
@@ -34,10 +34,11 @@ css_base = """
   --dark-gray: #333333;
 }
 
+/* MODO NORMAL: Margens maiores para não parecer tela cheia */
 .block-container {
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 1rem 2rem !important;
+  max-width: 1600px !important;
+  margin: auto !important;
+  padding: 2rem 5rem !important;
 }
 
 .topbar {
@@ -45,9 +46,9 @@ css_base = """
   top: 0;
   z-index: 200;
   background: white;
-  padding: 10px 0 5px 0;
+  padding: 10px 0 15px 0;
   border-bottom: 2px solid var(--blue);
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 h1 {
   color: var(--blue);
@@ -60,7 +61,7 @@ h1 {
 }
 
 .map-wrapper {
-  height: 78vh;
+  height: 75vh; /* Altura um pouco menor no modo normal */
   overflow: auto;
   border-top: 3px solid var(--blue);
   border-bottom: 3px solid var(--blue);
@@ -191,7 +192,7 @@ h1 {
   background: #f9f9f9;
   border-left-width: 5px !important;
   border-left-style: solid !important;
-  border-left-color: var(--gray-line); /* Fallback */
+  border-left-color: var(--gray-line);
   border-radius: 6px;
   padding: 6px 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -245,48 +246,48 @@ h1 {
   pointer-events: none;
 }
 
+/* Botão de sair da tela cheia */
+.exit-fullscreen {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 99999;
+}
+
 @media (max-width: 1500px) { .block-container { zoom: 0.9; } }
 </style>
 """
 
-# CSS ADICIONAL PARA MODO TELA CHEIA
+# CSS PARA MODO TELA CHEIA REAL
 css_fullscreen = """
 <style>
-  /* Esconde elementos padrão do Streamlit no modo fullscreen */
-  header[data-testid="stHeader"], 
-  section[data-testid="stSidebar"],
-  .topbar, 
-  footer {
-    display: none !important;
-  }
-  .block-container {
-    padding: 0 !important;
-    margin: 0 !important;
-    max-width: 100vw !important;
-  }
-  /* Força o mapa a ocupar tudo */
-  .map-wrapper {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    z-index: 9999 !important;
-    margin: 0 !important;
-    border: none !important;
-    border-top: 5px solid var(--blue) !important; /* Mantém uma borda superior visual */
-  }
-  /* Botão flutuante para sair do modo tela cheia */
-  .exit-fullscreen-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 100000;
-  }
+    /* Esconde tudo que não é o mapa */
+    header[data-testid="stHeader"], 
+    section[data-testid="stSidebar"],
+    .topbar, 
+    footer { display: none !important; }
+
+    /* Remove margens do container principal */
+    .block-container {
+        max-width: 100vw !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Faz o mapa ocupar a tela toda */
+    .map-wrapper {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 9999;
+        border: none !important;
+        border-top: 5px solid var(--blue) !important;
+    }
 </style>
 """
 
-# Aplica o CSS base e, se necessário, o CSS de fullscreen
 st.markdown(css_base, unsafe_allow_html=True)
 if st.session_state.fullscreen:
     st.markdown(css_fullscreen, unsafe_allow_html=True)
@@ -313,13 +314,13 @@ df = df[~df["Global Grade"].isin(['nan', 'None', ''])]
 df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True)
 
 # ===========================================================
-# FILTROS E BARRA SUPERIOR
+# FILTROS E BOTÃO FULLSCREEN
 # ===========================================================
-# Se estiver em fullscreen, não mostra os filtros normais
+# Se NÃO estiver em fullscreen, mostra os filtros normalmente
 if not st.session_state.fullscreen:
     st.markdown("<div class='topbar'>", unsafe_allow_html=True)
     section("🗺️ Job Map")
-    col1, col2, col3 = st.columns([2, 2, 1]) # Coluna 3 para o botão
+    col1, col2, col3 = st.columns([2, 2, 0.8]) # Coluna 3 para o botão
 
     preferred_order = [
         "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
@@ -344,16 +345,23 @@ if not st.session_state.fullscreen:
         path_filter = st.selectbox("Trilha de Carreira", paths_options)
 
     with col3:
-        # Botão de Tela Cheia Nativo do Streamlit
-        st.write("") # Espaçador para alinhamento
+        st.write("") # Espaçador
         st.write("")
+        # Botão para ATIVAR tela cheia
         st.button("⛶ Tela Cheia", on_click=toggle_fullscreen, use_container_width=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
+
+    # Salva filtros no session state para persistir no modo fullscreen se necessário
+    st.session_state.fam_filter = family_filter
+    st.session_state.path_filter = path_filter
+
 else:
-    # Filtros padrão se estiver em fullscreen (para não quebrar a lógica abaixo)
-    family_filter = "Todas"
-    path_filter = "Todas"
+    # MODO TELA CHEIA ATIVO: Usa os filtros salvos
+    family_filter = st.session_state.get('fam_filter', 'Todas')
+    path_filter = st.session_state.get('path_filter', 'Todas')
+    
+    # Recria a lista de famílias apenas para manter a consistência do código abaixo
     preferred_order = [
         "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
         "Finance", "IT", "People & Culture", "Sales", "Marketing", "Technical Services",
@@ -363,30 +371,24 @@ else:
     existing_families = set(df["Job Family"].unique())
     families_order = [f for f in preferred_order if f in existing_families]
     families_order.extend(sorted(list(existing_families - set(families_order))))
-    
-    # Botão flutuante para SAIR do fullscreen
-    st.markdown('<div class="exit-fullscreen-btn">', unsafe_allow_html=True)
-    st.button("❌ Sair da Tela Cheia", on_click=toggle_fullscreen)
-    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Botão FLUTUANTE para SAIR da tela cheia
+    with st.container():
+        st.markdown('<div class="exit-fullscreen">', unsafe_allow_html=True)
+        st.button("❌ Sair da Tela Cheia", on_click=toggle_fullscreen)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # --- APLICAÇÃO DOS FILTROS ---
 df_filtered = df.copy()
-# (Precisamos manter o estado dos filtros mesmo em fullscreen, 
-# mas por simplicidade aqui resetei. Se quiser manter, precisa usar session_state para os filtros também)
-if 'family_filter_state' not in st.session_state: st.session_state.family_filter_state = "Todas"
-if 'path_filter_state' not in st.session_state: st.session_state.path_filter_state = "Todas"
-
-if not st.session_state.fullscreen:
-    st.session_state.family_filter_state = family_filter
-    st.session_state.path_filter_state = path_filter
-
-if st.session_state.family_filter_state != "Todas":
-    df_filtered = df_filtered[df_filtered["Job Family"] == st.session_state.family_filter_state]
-if st.session_state.path_filter_state != "Todas":
-    df_filtered = df_filtered[df_filtered["Career Path"] == st.session_state.path_filter_state]
+if family_filter != "Todas":
+    df_filtered = df_filtered[df_filtered["Job Family"] == family_filter]
+if path_filter != "Todas":
+    df_filtered = df_filtered[df_filtered["Career Path"] == path_filter]
 
 if df_filtered.empty:
     st.warning("Nenhum cargo encontrado com os filtros atuais.")
+    if st.session_state.fullscreen:
+         st.button("Voltar", on_click=toggle_fullscreen)
     st.stop()
 
 # ===========================================================
