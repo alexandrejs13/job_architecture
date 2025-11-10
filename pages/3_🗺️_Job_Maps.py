@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 lock_sidebar()
 
 # ===========================================================
-# CSS COMPLETO COM REMOÇÃO DA LINHA CINZA ENTRE LINHA 1 E 2
+# CSS SEM LINHA CINZA ENTRE LINHA 1 E 2
 # ===========================================================
 st.markdown("""
 <style>
@@ -23,13 +23,11 @@ st.markdown("""
   --gray-bg: #f8f9fa;
   --dark-gray: #333333;
 }
-
 .block-container {
   max-width: 100% !important;
   margin: 0 !important;
   padding: 1rem 2rem !important;
 }
-
 .topbar {
   position: sticky;
   top: 0;
@@ -48,7 +46,6 @@ h1 {
   gap: 8px;
   margin-bottom: 10px !important;
 }
-
 .map-wrapper {
   height: 78vh;
   overflow: auto;
@@ -59,7 +56,6 @@ h1 {
   will-change: transform;
   box-shadow: 0 0 15px rgba(0,0,0,0.05);
 }
-
 .jobmap-grid {
   display: grid;
   border-collapse: collapse;
@@ -70,22 +66,26 @@ h1 {
   column-gap: 0px !important;
   background-color: var(--gray-line);
 }
-
 .jobmap-grid > div {
   background-color: white;
   border-right: 1px solid var(--gray-line);
   border-bottom: 1px solid var(--gray-line);
   box-sizing: border-box;
 }
+.jobmap-grid > .header-family,
+.jobmap-grid > .header-subfamily,
+.jobmap-grid > .gg-header {
+  border-bottom: none !important;
+  border-top: none !important;
+}
 
-/* Removidas bordas inferiores para eliminar linha cinza entre linha 1 e 2 */
 .header-family {
   font-weight: 800;
   color: #fff;
   padding: 10px 5px;
   text-align: center;
   border-right: 1px solid rgba(255,255,255,0.5) !important;
-  border-bottom: 0 none !important;
+  border-bottom: none !important;
   margin-bottom: 0px !important;
   padding-bottom: 10px !important;
   position: sticky;
@@ -99,7 +99,6 @@ h1 {
   grid-row: 1;
   font-size: 0.9rem;
 }
-
 .header-subfamily {
   font-weight: 600;
   color: #333;
@@ -109,9 +108,8 @@ h1 {
   top: 50px;
   z-index: 55;
   white-space: normal;
-  border-top: 0 none !important;
-  margin-top: 0px !important;
-  border-bottom: 2px solid var(--gray-line) !important;
+  border-top: none !important;
+  border-bottom: none !important;
   min-height: 40px;
   display: flex;
   align-items: center;
@@ -119,7 +117,6 @@ h1 {
   grid-row: 2;
   font-size: 0.85rem;
 }
-
 .gg-header {
   background: #000 !important;
   color: white;
@@ -137,7 +134,6 @@ h1 {
   border-right: 2px solid white !important;
   border-bottom: none !important;
 }
-
 .gg-cell {
   background: #000 !important;
   color: white;
@@ -153,7 +149,6 @@ h1 {
   grid-column: 1;
   font-size: 0.9rem;
 }
-
 .cell {
   background: white !important;
   padding: 8px;
@@ -167,7 +162,6 @@ h1 {
   align-items: center;
   align-content: center;
 }
-
 .job-card {
   background: #f9f9f9;
   border-left: 4px solid var(--blue);
@@ -207,7 +201,6 @@ h1 {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .gg-header::after, .gg-cell::after {
   content: "";
   position: absolute;
@@ -218,7 +211,6 @@ h1 {
   background: linear-gradient(to right, rgba(0,0,0,0.15), transparent);
   pointer-events: none;
 }
-
 @media (max-width: 1500px) { .block-container { zoom: 0.9; } }
 </style>
 """, unsafe_allow_html=True)
@@ -242,7 +234,7 @@ df["Sub Job Family"] = df["Sub Job Family"].replace(['nan', 'None', '', '<NA>'],
 df = df[~df["Job Family"].isin(['nan', 'None', ''])]
 df = df[~df["Job Profile"].isin(['nan', 'None', ''])]
 df = df[~df["Global Grade"].isin(['nan', 'None', ''])]
-df["Global Grade"] = df["Global Grade"].str.replace(r"\\.0$", "", regex=True)
+df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True)
 
 # ===========================================================
 # FILTROS
@@ -326,7 +318,6 @@ for g in grades:
         if count == 0:
             content_map[(g, c_idx)] = None
             continue
-        
         jobs_sig = "|".join(sorted((cell_df["Job Profile"] + cell_df["Career Path"]).unique()))
         content_map[(g, c_idx)] = jobs_sig
 
@@ -354,9 +345,7 @@ for i, g in enumerate(grades):
     for (f, sf), c_idx in subfamilias_map.items():
         if (g, c_idx) in skip_set or content_map.get((g, c_idx)) is None:
             continue
-
         span = span_map.get((g, c_idx), 1)
-        
         if span > 1:
             covered = grades[i : i + span]
             try:
@@ -381,14 +370,12 @@ def largura_texto_minima(text):
     return len(str(text)) * 5 + 30
 
 col_widths = ["100px"]
-
 for (f, sf), c_idx in subfamilias_map.items():
     width_title = largura_texto_minima(sf)
     max_cards = 0
     for g in grades:
         if (g, c_idx) not in skip_set:
              max_cards = max(max_cards, cards_count_map.get((g, c_idx), 0))
-    
     if max_cards <= 1:
         width_cards = 135 + 25
     elif max_cards == 2:
@@ -396,7 +383,6 @@ for (f, sf), c_idx in subfamilias_map.items():
     else:
         cap = min(max(1, max_cards), 6)
         width_cards = (cap * 135) + ((cap - 1) * 8) + 25
-        
     col_widths.append(f"{max(width_title, width_cards)}px")
 
 grid_template = f"grid-template-columns: {' '.join(col_widths)};"
@@ -416,7 +402,6 @@ palette_pairs = [
     ("#736A62", "#F0EDEB"),
     ("#626A73", "#EBEDF0"),
 ]
-
 map_cor_fam = {f: palette_pairs[i % len(palette_pairs)][0] for i, f in enumerate(families_order)}
 map_cor_sub = {f: palette_pairs[i % len(palette_pairs)][1] for i, f in enumerate(families_order)}
 
@@ -425,16 +410,13 @@ map_cor_sub = {f: palette_pairs[i % len(palette_pairs)][1] for i, f in enumerate
 # ===========================================================
 html = ["<div class='map-wrapper'><div class='jobmap-grid' style='{grid_template}'>".format(grid_template=grid_template)]
 html.append("<div class='gg-header'>GG</div>")
-
 current_col = 2
 for f in active_families:
     span = header_spans[f]
     html.append(f"<div class='header-family' style='grid-column: {current_col} / span {span}; background:{map_cor_fam[f]};'>{f}</div>")
     current_col += span
-
 for (f, sf), c_idx in subfamilias_map.items():
     html.append(f"<div class='header-subfamily' style='grid-column: {c_idx}; background:{map_cor_sub[f]};'>{sf}</div>")
-
 for i, g in enumerate(grades):
     row_idx = i + 3
     html.append(f"<div class='gg-cell' style='grid-row: {row_idx};'>GG {g}</div>")
@@ -443,6 +425,5 @@ for i, g in enumerate(grades):
         span = span_map.get((g, c_idx), 1)
         row_str = f"grid-row: {row_idx} / span {span};" if span > 1 else f"grid-row: {row_idx};"
         html.append(f"<div class='cell' style='grid-column: {c_idx}; {row_str}'>{cell_html_cache.get((g, c_idx), '')}</div>")
-
 html.append("</div></div>")
 st.markdown("".join(html), unsafe_allow_html=True)
