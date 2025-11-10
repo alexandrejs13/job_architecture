@@ -67,7 +67,8 @@ def setup_sidebar():
                 height: 180px;
                 background-image: url('{LOGO_URL}'); background-repeat: no-repeat;
                 background-position: center 10px; background-size: 100px auto;
-                color: {SIG_SKY}; font-size: 1.5rem; font-weight: 900;
+                color: {TEXT_BLACK} !important; /* AJUSTE: Título PRETO */
+                font-size: 1.5rem; font-weight: 900;
                 padding-bottom: 40px; margin-bottom: 20px;
                 border-bottom: 2px solid #f0f2f6;
             }}
@@ -82,21 +83,24 @@ def setup_sidebar():
                 border-radius: 50px !important; /* Pílula */
                 padding: 8px 20px !important;
                 margin-bottom: 5px;
-                transition: all 0.2s;
+                transition: none !important; /* AJUSTE: Remove transição para parar 'tilt' */
+                background-color: transparent !important; /* Garante fundo transparente */
+                border: 1px solid transparent; /* Reserva espaço da borda */
             }}
-            /* Hover (Passar o mouse) */
+            
+            /* Hover (Passar o mouse) - SÓ MUDA A COR DO TEXTO */
             [data-testid="stSidebarNav"] a:hover {{
-                background-color: #eef6fc !important; /* Azul muito claro */
-                color: {SIG_SKY} !important;
+                background-color: transparent !important; /* AJUSTE: Sem pílula no hover */
+                color: {SIG_SKY} !important; /* AJUSTE: Apenas texto fica azul */
             }}
 
             /* --- ITEM ATIVO (Página Atual) --- */
-            /* Garante que pega o item certo usando aria-current="page" */
             [data-testid="stSidebarNav"] a[aria-current="page"] {{
                 background-color: {SIG_SKY} !important; /* Azul SIG Sky (#145efc) */
                 color: white !important;                 /* Texto Branco */
                 font-weight: 700 !important;
-                box-shadow: 0 4px 12px rgba(20, 94, 252, 0.25);
+                /* AJUSTE: Remove sombra para parar 'tilt' */
+                box-shadow: none !important;
             }}
             /* Força o span interno (onde fica o texto real) a ser branco também */
             [data-testid="stSidebarNav"] a[aria-current="page"] span {{
