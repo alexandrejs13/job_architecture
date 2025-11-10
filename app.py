@@ -1,27 +1,17 @@
 import streamlit as st
-# Outros imports necessários
-from utils.ui import setup_sidebar
+from utils.ui import setup_sidebar, section
 
-# 1. Configuração da Página (SEMPRE EM PRIMEIRO se existir)
+# 1. Configuração da Página (SEMPRE EM PRIMEIRO LUGAR)
 st.set_page_config(
     page_title="Job Architecture",
-    page_icon="🏛️",
+    page_icon="🏠",
     layout="wide"
 )
 
-# 2. IMEDIATAMENTE INJETA O CSS
+# 2. Aplica o CSS imediatamente
 setup_sidebar()
 
-# --- Conteúdo da Página ---
-st.markdown("""
-# 🧭 Job Architecture Explorer
+# 3. Conteúdo da Página
+section("🏠 Home")
 
-Bem-vindo ao painel de cargos corporativos.
-
-Use o menu lateral para acessar as ferramentas disponíveis, como:
-- **🧠 Find My Job Profile** (busca semântica de cargos)
-- **📊 Comparativo de Cargos Selecionados** (comparação detalhada)
-- **📚 Tabelas de Arquitetura de Cargos** (estrutura completa)
-
----
-""")
+st.write("Bem-vindo ao sistema de Job Architecture.")
