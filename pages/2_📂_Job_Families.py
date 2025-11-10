@@ -5,7 +5,7 @@ import os
 from utils.ui import setup_sidebar
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DA PÁGINA
+# 1. CONFIGURAÇÃO DA PÁGINA (PRIMEIRO COMANDO)
 # ===========================================================
 st.set_page_config(
     page_title="Job Families",
@@ -14,14 +14,13 @@ st.set_page_config(
 )
 
 # ===========================================================
-# 2. APLICA O VISUAL GLOBAL (Barra Branca + Logo Azul)
+# 2. APLICA O VISUAL GLOBAL (SEGUNDO COMANDO)
 # ===========================================================
 setup_sidebar()
 
 # ===========================================================
 # 3. ESTILOS CSS DA PÁGINA
 # ===========================================================
-# Ajustei levemente as cores para combinar melhor com o tema "Sand"
 st.markdown("""
 <style>
     .jf-description-card {
@@ -47,7 +46,7 @@ st.markdown("""
     }
     /* Ajuste dos rótulos dos Selectbox para ficarem consistentes */
     .stSelectbox label p {
-        font-weight: 600 !important;
+        font-weight: 700 !important; /* Usando 700 para negrito (PP SIG Flow SemiBold) */
         color: #333333 !important;
         font-size: 1rem !important;
     }
@@ -88,7 +87,7 @@ st.markdown(
 )
 
 with st.container():
-    col_analogy_icon, col_analogy_text = st.columns([1, 15]) # Ajustei a proporção para o ícone não ficar tão longe
+    col_analogy_icon, col_analogy_text = st.columns([1, 15])
     with col_analogy_icon:
         st.markdown("## 🧭")
     with col_analogy_text:
@@ -100,7 +99,6 @@ with st.container():
 
 st.markdown("### Por que dividimos assim?")
 c1, c2, c3 = st.columns(3)
-# Usando st.success/info com ícones personalizados para ficar mais visual
 with c1:
     st.success("**🛣️ Clareza de Carreira**\n\nFacilita entender para onde você pode crescer na sua especialização.")
 with c2:
