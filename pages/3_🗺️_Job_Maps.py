@@ -20,7 +20,7 @@ def toggle_fullscreen():
     st.session_state.fullscreen = not st.session_state.fullscreen
 
 # ===========================================================
-# CSS BASE (MODO NORMAL)
+# CSS BASE
 # ===========================================================
 css_base = """
 <style>
@@ -29,19 +29,19 @@ css_base = """
   --green: #28a745;   /* Professional/Specialist */
   --orange: #fd7e14;  /* Technical/Support */
   --purple: #6f42c1;  /* Outros */
+  --red: #dc3545;     /* Vermelho para botões de ação */
   --gray-line: #dadada;
   --gray-bg: #f8f9fa;
   --dark-gray: #333333;
 }
 
-/* MODO NORMAL: Margens maiores */
 .block-container {
   max-width: 1600px !important;
   margin: auto !important;
   padding: 2rem 5rem !important;
 }
 
-/* Topbar apenas para os filtros agora */
+/* Topbar apenas para os filtros */
 .topbar {
   position: sticky;
   top: 0;
@@ -52,7 +52,7 @@ css_base = """
   margin-bottom: 20px;
 }
 
-/* Ajuste do Título */
+/* Título sem linhas acima */
 h1 {
   color: var(--blue);
   font-weight: 900 !important;
@@ -197,7 +197,6 @@ h1 {
   background: #f9f9f9;
   border-left-width: 5px !important;
   border-left-style: solid !important;
-  border-left-color: var(--gray-line);
   border-radius: 6px;
   padding: 6px 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -251,12 +250,24 @@ h1 {
   pointer-events: none;
 }
 
+/* Estilo para o botão "Tela Cheia" no modo normal */
+button[data-testid*="stButton"] > div > span:has-text("Tela Cheia") {
+    background-color: var(--red) !important;
+    color: white !important;
+    border-color: var(--red) !important;
+}
+button[data-testid*="stButton"] > div > span:has-text("Tela Cheia"):hover {
+    background-color: #c82333 !important; /* Um tom mais escuro ao passar o mouse */
+    border-color: #bd2130 !important;
+}
+
+
 @media (max-width: 1500px) { .block-container { zoom: 0.9; } }
 </style>
 """
 
 # ===========================================================
-# CSS MODO TELA CHEIA (COM BOTÃO DE SAIR FIXO)
+# CSS MODO TELA CHEIA (COM BOTÃO DE SAIR FIXO E MARGENS)
 # ===========================================================
 css_fullscreen = """
 <style>
@@ -264,8 +275,7 @@ css_fullscreen = """
     header[data-testid="stHeader"], 
     section[data-testid="stSidebar"],
     .topbar, 
-    footer,
-    #MainMenu { display: none !important; }
+    footer { display: none !important; }
 
     /* Maximiza o container principal */
     .block-container {
@@ -288,21 +298,27 @@ css_fullscreen = """
         margin: 0 !important;
     }
 
-    /* Estilo para o container do botão de sair */
+    /* Estilo para o container do botão de sair - com margens */
     div[data-testid="stVerticalBlock"] > div:has(button[kind="primary"]) {
         position: fixed;
-        bottom: 30px;
-        right: 30px;
+        bottom: 30px; /* 30px de margem inferior */
+        right: 30px;  /* 30px de margem direita */
         z-index: 100000 !important;
         background: transparent;
     }
     
     /* Estilo específico para o botão de sair */
     button[kind="primary"] {
+        background-color: var(--red) !important;
+        color: white !important;
+        border-color: var(--red) !important;
         box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
-        border: 2px solid white !important;
         font-weight: 800 !important;
         padding: 0.5rem 1.5rem !important;
+    }
+    button[kind="primary"]:hover {
+        background-color: #c82333 !important; /* Um tom mais escuro ao passar o mouse */
+        border-color: #bd2130 !important;
     }
 </style>
 """
@@ -338,7 +354,6 @@ df["Global Grade"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True)
 section("🗺️ Job Map")
 
 if not st.session_state.fullscreen:
-    # Modo Normal: Mostra filtros
     st.markdown("<div class='topbar'>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([2, 2, 0.8])
 
@@ -366,22 +381,20 @@ if not st.session_state.fullscreen:
 
     with col3:
         st.write("")
-        st.write("")
+        # Adicionei um div para ajudar no alinhamento vertical
+        st.markdown('<div style="margin-top: 15px;">', unsafe_allow_html=True) 
         if st.button("⛶ Tela Cheia", use_container_width=True):
             toggle_fullscreen()
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True) # Fecha o div
 
     st.markdown("</div>", unsafe_allow_html=True)
-
-    # Persiste filtros
     st.session_state.fam_filter = family_filter
     st.session_state.path_filter = path_filter
 
 else:
-    # Modo Tela Cheia: Usa filtros salvos e mostra SÓ o botão de sair
     family_filter = st.session_state.get('fam_filter', 'Todas')
     path_filter = st.session_state.get('path_filter', 'Todas')
-    
     preferred_order = [
         "Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit",
         "Finance", "IT", "People & Culture", "Sales", "Marketing", "Technical Services",
@@ -392,22 +405,18 @@ else:
     families_order = [f for f in preferred_order if f in existing_families]
     families_order.extend(sorted(list(existing_families - set(families_order))))
 
-    # Botão de Sair (renderizado fora do fluxo normal graças ao CSS 'fixed')
-    # Usamos tipo 'primary' para facilitar o alvo do CSS
+    # Botão de Sair (agora o CSS cuida da posição fixa e margens)
     if st.button("❌ Sair da Tela Cheia", type="primary"):
         toggle_fullscreen()
         st.rerun()
 
-    # JavaScript para capturar a tecla ESC
     components.html(
         """
         <script>
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                // Procura botões na página
                 const buttons = window.parent.document.getElementsByTagName('button');
                 for (let i = 0; i < buttons.length; i++) {
-                    // Clica no botão que tem o texto exato de sair
                     if (buttons[i].innerText.includes("Sair da Tela Cheia")) {
                         buttons[i].click();
                         break;
@@ -484,7 +493,7 @@ for (_, c_idx) in subfamilias_map.items():
                 break
         span_map[(g, c_idx)] = span
 
-# --- FUNÇÃO DE CORES POR TRILHA ---
+# --- FUNÇÃO DE CORES ---
 def get_path_color(path_name):
     p_lower = str(path_name).lower().strip()
     if "manage" in p_lower or "executive" in p_lower: return "var(--blue)"
