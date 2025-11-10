@@ -4,7 +4,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import html # Para escapar strings e evitar HTML bruto na tela
+import html
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 from utils.data_loader import load_excel_data
@@ -17,93 +17,73 @@ st.set_page_config(layout="wide", page_title="🧩 Job Match")
 lock_sidebar()
 
 # ===========================================================
-# ESTILO (CSS REFINADO PARA ALINHAMENTO FORÇADO DE SEÇÕES)
+# ESTILO (CSS GRID PARA ALINHAMENTO PERFEITO)
 # ===========================================================
 st.markdown("""
 <style>
-/* Ajuste para caber 3 cards lado a lado confortavelmente */
 .block-container {
-    max-width: 95% !important;
+    max-width: 98% !important;
     padding-left: 1rem !important;
     padding-right: 1rem !important;
 }
 .stTextArea textarea {font-size: 16px !important;}
 
-/* O container de cada card será um flexbox para gerenciar seus blocos internos */
-.job-card-container {
-    display: flex;
-    flex-direction: column;
+/* Grid Container Principal */
+.comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 colunas iguais */
+    gap: 20px;
+    margin-top: 20px;
+}
+
+/* Estilo das Células do Grid */
+.grid-cell {
+    background: #fff;
     border: 1px solid #e0e0e0;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    overflow: hidden; /* Garante que bordas arredondadas funcionem */
-    height: 100%; /* Importante para que as colunas se estiquem */
-    margin-bottom: 20px; /* Espaçamento entre as 'linhas' de cards se houver mais de 3 */
-}
-
-/* CABEÇALHO do Card */
-.card-header-block {
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-bottom: 1px solid #eee;
-    min-height: 120px; /* Garante altura mínima para cabeçalhos de tamanhos diferentes */
+    padding: 15px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
 }
-.fjc-title { font-size: 20px; font-weight: 800; color: #2c3e50; line-height: 1.3; margin-bottom: 10px; }
-.fjc-gg-row { display: flex; justify-content: space-between; align-items: center; }
-.fjc-gg { color: #1E56E0; font-weight: 700; font-size: 0.95rem; }
-.fjc-score { color: white; font-weight: 700; padding: 4px 12px; border-radius: 12px; font-size: 0.9rem; }
 
-/* METADADOS do Card */
-.card-meta-block {
-    background-color: white;
-    padding: 15px 20px;
+/* Cabeçalho (Título, GG, Score) */
+.header-cell {
+    background: #f8f9fa;
+    border-radius: 12px 12px 0 0;
+    border-bottom: none;
+}
+.fjc-title { font-size: 18px; font-weight: 800; color: #2c3e50; margin-bottom: 10px; min-height: 50px; }
+.fjc-gg-row { display: flex; justify-content: space-between; align-items: center; }
+.fjc-gg { color: #1E56E0; font-weight: 700; }
+.fjc-score { color: white; font-weight: 700; padding: 4px 10px; border-radius: 12px; font-size: 0.9rem; }
+
+/* Metadados */
+.meta-cell {
+    border-top: 1px solid #eee;
     border-bottom: 1px solid #eee;
     font-size: 0.85rem;
     color: #555;
-    min-height: 100px; /* Garante altura mínima para metadados */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    min-height: 120px; /* Garante altura mínima igual */
 }
-.meta-row { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 5px; }
-.meta-item strong { color: #333; font-weight: 700; }
+.meta-row { margin-bottom: 5px; }
 
-/* SEÇÕES DE CONTEÚDO (Role Description, Qualifications, etc.) */
-/* CRUCIAL: height: 100% e flex-grow para alinhamento */
-.card-section-block {
-    background-color: #fdfdfd;
-    border-left: 5px solid #ccc; /* Cor padrão */
-    padding: 15px 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1; /* Permite que o bloco cresça e ocupe espaço para alinhar */
-    justify-content: flex-start; /* Alinha o conteúdo ao topo */
-    min-height: 80px; /* Altura mínima para cada seção, ajustável */
+/* Seções de Conteúdo (com cores na borda esquerda) */
+.section-cell {
+    border-left-width: 5px;
+    border-left-style: solid;
+    border-top: none; /* Remove borda superior para conectar visualmente */
+    background: #fdfdfd;
 }
-.section-title {
-    font-weight: 700;
-    font-size: 0.9rem;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+.section-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; color: #333; display: flex; align-items: center; gap: 5px;}
+.section-content { color: #444; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; }
+
+/* Rodapé para fechar a borda */
+.footer-cell {
+    height: 10px;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    background: #fff;
 }
-.section-content {
-    color: #333;
-    line-height: 1.5;
-    font-size: 0.9rem;
-    white-space: pre-wrap; /* Mantém quebras de linha e formatação */
-}
-/* Estilo para a última seção de um card (remove border-bottom) */
-.job-card-container > .card-section-block:last-of-type {
-    border-bottom: none;
-}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -120,11 +100,10 @@ def load_data_and_embeddings():
     df_jobs = data.get("job_profile", pd.DataFrame()).fillna("")
     df_levels = data.get("level_structure", pd.DataFrame()).fillna("")
 
-    # Normalização para evitar erros de chave
     if not df_jobs.empty:
         df_jobs.columns = df_jobs.columns.str.strip()
         cols_needed = [
-            "Job Family", "Sub Job Family", "Job Profile", "Role Description",
+            "Job Family", "Sub Job Family", "Job Profile", "Role Description", 
             "Grade Differentiator", "Qualifications", "Global Grade", "Career Path",
             "Sub Job Family Description", "Job Profile Description", "Career Band Description",
             "Function", "Discipline", "Full Job Code", "KPIs / Specific Parameters"
@@ -134,18 +113,16 @@ def load_data_and_embeddings():
 
     if not df_levels.empty:
         df_levels.columns = df_levels.columns.str.strip()
-        
+
     df_jobs["Global Grade"] = df_jobs["Global Grade"].astype(str).str.replace(r"\.0$", "", regex=True).str.strip()
     if "Global Grade" in df_levels.columns:
         df_levels["Global Grade"] = df_levels["Global Grade"].astype(str).str.replace(r"\.0$", "", regex=True).str.strip()
-
-    # Texto rico (apenas campos distintivos para melhor match)
+    
     df_jobs["Rich_Text"] = (
         df_jobs["Job Profile"] + ". " +
         df_jobs["Role Description"] + ". " +
         df_jobs["Grade Differentiator"] + ". " +
-        df_jobs["Qualifications"] + ". " +
-        df_jobs["Career Band Description"]
+        df_jobs["Qualifications"]
     )
 
     model = load_model()
@@ -157,7 +134,7 @@ try:
     df, df_levels, job_embeddings = load_data_and_embeddings()
     model = load_model()
 except Exception as e:
-    st.error(f"Erro ao carregar dados: {e}. Verifique se 'job_profile' e 'level_structure' existem no Excel e se as colunas estão corretas.")
+    st.error(f"Erro ao carregar dados: {e}")
     st.stop()
 
 # ===========================================================
@@ -178,145 +155,125 @@ with c2:
 
 desc_input = st.text_area(
     "📋 Cole aqui a descrição detalhada da posição (Mínimo 50 palavras):",
-    height=200,
-    placeholder="Descreva as principais responsabilidades, escopo de atuação, nível de autonomia, gestão de pessoas e requisitos técnicos..."
+    height=150
 )
 word_count = len(desc_input.strip().split())
 st.caption(f"Contagem de palavras: {word_count} / 50")
 
 if st.button("🔍 Analisar Aderência", type="primary", use_container_width=True):
-    # Validação
-    errors = []
-    if selected_family == "Selecione...": errors.append("• Selecionar a Família.")
-    if selected_subfamily == "Selecione...": errors.append("• Selecionar a Subfamília.")
-    if word_count < 50: errors.append(f"• Detalhar mais a descrição (faltam {50 - word_count} palavras).")
-    if errors:
-        st.warning("⚠️ Para uma análise precisa, por favor:\n" + "\n".join(errors))
+    if selected_family == "Selecione..." or selected_subfamily == "Selecione..." or word_count < 50:
+        st.warning("⚠️ Selecione Família, Subfamília e insira uma descrição com pelo menos 50 palavras.")
         st.stop()
 
-    # Matching
     mask = (df["Job Family"] == selected_family) & (df["Sub Job Family"] == selected_subfamily)
     if not mask.any():
-        st.error(f"Não foram encontrados cargos para a combinação '{selected_family}' e '{selected_subfamily}'.")
+        st.error("Não foram encontrados cargos para esta combinação.")
         st.stop()
 
     filtered_indices = df[mask].index
-    if len(filtered_indices) == 0:
-        st.error("Não há cargos com embeddings gerados para esta seleção. Verifique os dados.")
-        st.stop()
-        
     filtered_embeddings = job_embeddings[filtered_indices]
     query_emb = model.encode([desc_input])
     sims = cosine_similarity(query_emb, filtered_embeddings)[0]
-    
     results = df.loc[filtered_indices].copy()
     results["similarity"] = sims
     top3 = results.sort_values("similarity", ascending=False).head(3)
 
+    # ===========================================================
+    # RENDERIZAÇÃO EM GRID ÚNICO (PARA ALINHAMENTO PERFEITO)
+    # ===========================================================
     st.markdown("---")
     st.subheader("🏆 Cargos Mais Compatíveis")
 
-    if len(top3) == 0:
-        st.info("Nenhum cargo compatível encontrado para os critérios selecionados.")
+    if len(top3) < 1:
+        st.warning("Nenhum resultado encontrado.")
         st.stop()
-        
-    # Prepara dados para renderização segura e Level Name
-    rows_data = []
-    for _, row_data in top3.iterrows():
-        score_val = row_data["similarity"] * 100
+
+    # Prepara os dados
+    cards_data = []
+    for _, row in top3.iterrows():
+        score_val = row["similarity"] * 100
         score_bg = "#28a745" if score_val > 85 else "#1E56E0" if score_val > 75 else "#fd7e14" if score_val > 60 else "#dc3545"
         
-        # Busca Level Name de forma segura
         lvl_name = ""
-        gg_val = str(row_data["Global Grade"]).strip()
+        gg_val = str(row["Global Grade"]).strip()
         if not df_levels.empty and "Global Grade" in df_levels.columns and "Level Name" in df_levels.columns:
-            match_level = df_levels[df_levels["Global Grade"].astype(str).str.strip() == gg_val]
-            if not match_level.empty:
-                lvl_name = f"• {match_level['Level Name'].iloc[0]}"
-        
-        rows_data.append({
-            "data": row_data,
+             match = df_levels[df_levels["Global Grade"].astype(str).str.strip() == gg_val]
+             if not match.empty:
+                 lvl_name = f"• {match['Level Name'].iloc[0]}"
+
+        cards_data.append({
+            "row": row,
             "score_fmt": f"{score_val:.1f}%",
             "score_bg": score_bg,
-            "lvl_name": lvl_name
+            "lvl": lvl_name
         })
 
-    # CRIA AS 3 COLUNAS PRINCIPAIS (onde cada coluna conterá um CARD COMPLETO)
-    cols = st.columns(3)
+    # Garante 3 slots mesmo que tenha menos resultados (para manter o grid)
+    while len(cards_data) < 3:
+        cards_data.append(None)
 
-    # Itera sobre as colunas e injeta o HTML completo de cada card
-    for i, col in enumerate(cols):
-        if i < len(rows_data):
-            r = rows_data[i]
-            d = r['data']
+    # INÍCIO DO GRID HTML
+    grid_html = '<div class="comparison-grid">'
 
-            # HTML para as seções, usando html.escape()
-            sub_job_family_desc = f"""<div class="card-section-block" style="border-left-color: #95a5a6;">
-                <div class="section-title" style="color: #7f8c8d;">🧭 Sub Job Family Description</div>
-                <div class="section-content">{html.escape(str(d.get('Sub Job Family Description','-')))}</div>
-            </div>"""
-            
-            job_profile_desc = f"""<div class="card-section-block" style="border-left-color: #e91e63;">
-                <div class="section-title" style="color: #c2185b;">🧠 Job Profile Description</div>
-                <div class="section-content">{html.escape(str(d.get('Job Profile Description','-')))}</div>
-            </div>"""
-
-            career_band_desc = f"""<div class="card-section-block" style="border-left-color: #673ab7;">
-                <div class="section-title" style="color: #512da8;">🏛️ Career Band Description</div>
-                <div class="section-content">{html.escape(str(d.get('Career Band Description','-')))}</div>
-            </div>"""
-
-            role_desc = f"""<div class="card-section-block" style="border-left-color: #1E56E0;">
-                <div class="section-title" style="color: #0d47a1;">🎯 Role Description</div>
-                <div class="section-content">{html.escape(str(d.get('Role Description','-')))}</div>
-            </div>"""
-
-            grade_diff = f"""<div class="card-section-block" style="border-left-color: #ff9800;">
-                <div class="section-title" style="color: #e65100;">🏅 Grade Differentiator</div>
-                <div class="section-content">{html.escape(str(d.get('Grade Differentiator','-')))}</div>
-            </div>"""
-            
-            qualifications = ""
-            if d.get('Qualifications') and str(d['Qualifications']).strip() not in ['-', '', 'nan']:
-                qualifications = f"""<div class="card-section-block" style="border-left-color: #009688;">
-                    <div class="section-title" style="color: #00796b;">🎓 Qualifications</div>
-                    <div class="section-content">{html.escape(str(d['Qualifications']))}</div>
-                </div>"""
-            
-            # Monta o card completo
-            card_html = f"""
-            <div class="job-card-container">
-                <div class="card-header-block">
-                    <div class="fjc-title">{html.escape(r['data']['Job Profile'])}</div>
-                    <div class="fjc-gg-row">
-                        <div class="fjc-gg">GG {r['data']['Global Grade']} {r['lvl_name']}</div>
-                        <div class="fjc-score" style="background-color: {r['score_bg']};">{r['score_fmt']} Match</div>
-                    </div>
+    # --- 1. LINHA DE CABEÇALHO ---
+    for card in cards_data:
+        if card:
+            grid_html += f"""
+            <div class="grid-cell header-cell">
+                <div class="fjc-title">{html.escape(card['row']['Job Profile'])}</div>
+                <div class="fjc-gg-row">
+                    <div class="fjc-gg">GG {card['row']['Global Grade']} {card['lvl']}</div>
+                    <div class="fjc-score" style="background-color: {card['score_bg']};">{card['score_fmt']} Match</div>
                 </div>
+            </div>"""
+        else: grid_html += "<div></div>"
 
-                <div class="card-meta-block">
-                    <div class="meta-row">
-                        <div class="meta-item"><strong>Família:</strong> {html.escape(str(d.get('Job Family','-')))}</div>
-                    </div>
-                    <div class="meta-row">
-                        <div class="meta-item"><strong>Subfamília:</strong> {html.escape(str(d.get('Sub Job Family','-')))}</div>
-                    </div>
-                    <div class="meta-row">
-                        <div class="meta-item"><strong>Carreira:</strong> {html.escape(str(d.get('Career Path','-')))}</div>
-                        <div class="meta-item"><strong>Cód:</strong> {html.escape(str(d.get('Full Job Code','-')))}</div>
-                    </div>
-                </div>
-                
-                {sub_job_family_desc}
-                {job_profile_desc}
-                {career_band_desc}
-                {role_desc}
-                {grade_diff}
-                {qualifications}
-                
-            </div>
-            """
-            col.markdown(card_html, unsafe_allow_html=True)
-            
+    # --- 2. LINHA DE METADADOS ---
+    for card in cards_data:
+        if card:
+            d = card['row']
+            grid_html += f"""
+            <div class="grid-cell meta-cell">
+                <div class="meta-row"><strong>Família:</strong> {html.escape(str(d.get('Job Family','-')))}</div>
+                <div class="meta-row"><strong>Subfamília:</strong> {html.escape(str(d.get('Sub Job Family','-')))}</div>
+                <div class="meta-row"><strong>Carreira:</strong> {html.escape(str(d.get('Career Path','-')))}</div>
+                <div class="meta-row"><strong>Cód:</strong> {html.escape(str(d.get('Full Job Code','-')))}</div>
+            </div>"""
+        else: grid_html += "<div></div>"
+
+    # --- 3. SEÇÕES DE CONTEÚDO (ALINHADAS) ---
+    sections = [
+        ("🧭 Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
+        ("🧠 Job Profile Description", "Job Profile Description", "#e91e63"),
+        ("🏛️ Career Band Description", "Career Band Description", "#673ab7"),
+        ("🎯 Role Description", "Role Description", "#1E56E0"),
+        ("🏅 Grade Differentiator", "Grade Differentiator", "#ff9800"),
+        ("🎓 Qualifications", "Qualifications", "#009688")
+    ]
+
+    for title, field, color in sections:
+        for card in cards_data:
+            if card:
+                content = str(card['row'].get(field, '-'))
+                # Só mostra Qualifications se não for vazio/nan
+                if field == "Qualifications" and (len(content) < 2 or content.lower() == 'nan'):
+                     grid_html += f'<div class="grid-cell section-cell" style="border-left-color: transparent; background: transparent; border: none;"></div>'
+                else:
+                    grid_html += f"""
+                    <div class="grid-cell section-cell" style="border-left-color: {color};">
+                        <div class="section-title" style="color: {color};">{title}</div>
+                        <div class="section-content">{html.escape(content)}</div>
+                    </div>"""
+            else: grid_html += "<div></div>"
+
+    # --- 4. RODAPÉ (FECHAMENTO) ---
+    for card in cards_data:
+        if card: grid_html += '<div class="grid-cell footer-cell"></div>'
+        else: grid_html += "<div></div>"
+
+    grid_html += '</div>' # Fim do Grid
+
+    st.markdown(grid_html, unsafe_allow_html=True)
+
     if top3.iloc[0]["similarity"] < 0.6:
-        st.info("💡 Aderência moderada. Tente refinar sua descrição com mais detalhes sobre o nível de senioridade e responsabilidades específicas.")
+        st.info("💡 Aderência moderada. Tente refinar sua descrição.")
