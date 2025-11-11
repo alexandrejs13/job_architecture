@@ -1,5 +1,5 @@
 # ===========================================================
-# 2_JOB_FAMILIES.PY — PADRONIZADO COM HEADER E SIDEBAR GLOBAL
+# 2_JOB_FAMILIES.PY — ALINHADO COM O LAYOUT DA PÁGINA 1
 # ===========================================================
 
 import streamlit as st
@@ -37,7 +37,7 @@ st.markdown("""
     background-color: #145efc;
     color: white;
     font-weight: 750;
-    font-size: 1.45rem;
+    font-size: 1.35rem;
     border-radius: 12px;
     padding: 22px 36px;
     display: flex;
@@ -49,8 +49,8 @@ st.markdown("""
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 .page-header img {
-    width: 54px;
-    height: 54px;
+    width: 48px;
+    height: 48px;
 }
 .block-container {
     max-width: 900px !important;
@@ -62,28 +62,54 @@ st.markdown("""
     color: #202020;
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
 }
-/* Estilos específicos da página */
-.jf-description-card {
-    background-color: #ffffff;
-    border-left: 5px solid #145efc;
-    padding: 25px;
-    border-radius: 8px;
-    margin-top: 20px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+/* Títulos com tamanhos padronizados à página 1 */
+h2 {
+    font-weight: 700 !important;
+    color: #000000 !important;
+    font-size: 1.35rem !important;
+    margin-top: 25px !important;
+    margin-bottom: 12px !important;
 }
-.jf-label {
+h3 {
+    font-weight: 700 !important;
+    color: #000000 !important;
+    font-size: 1.15rem !important;
+}
+/* Cards nivelados com altura fixa e layout consistente */
+.card-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 20px;
+}
+.info-card {
+    flex: 1;
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 18px;
+    height: 160px; /* mesma altura para todos */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    border-left: 5px solid transparent;
+}
+.info-card h4 {
+    font-size: 1rem;
     font-weight: 700;
-    color: #145efc;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
     margin-bottom: 8px;
 }
-.jf-text {
-    color: #333333;
-    font-size: 1.1rem;
-    line-height: 1.6;
+.card-green { border-left-color: #4CAF50; background-color: #e8f5e9; }
+.card-blue { border-left-color: #2196F3; background-color: #e3f2fd; }
+.card-yellow { border-left-color: #f9a825; background-color: #fff8e1; }
+.info-card p { font-size: 0.95rem; color: #333; line-height: 1.4; }
+
+/* Caixa informativa refinada */
+.stAlert {
+    background-color: #eef3ff !important;
+    border-left: 4px solid #145efc !important;
+    color: #000 !important;
+    border-radius: 6px;
 }
+
+/* Ajustes no seletor */
 .stSelectbox label p {
     font-weight: 700 !important;
     color: #333333 !important;
@@ -119,38 +145,40 @@ df = load_job_family_data()
 required_columns = ["Job Family", "Sub Job Family", "Sub Job Family Description"]
 data_loaded = not df.empty and all(col in df.columns for col in required_columns)
 
-if not data_loaded and not df.empty:
-    st.warning(f"⚠️ Colunas esperadas não encontradas. Disponíveis: {', '.join(df.columns)}")
-
 # ===========================================================
 # 5. CONTEÚDO PRINCIPAL
 # ===========================================================
 st.markdown("""
-Bem-vindo à nossa estrutura de **Job Families**.  
-Aqui explicamos como organizamos as diferentes áreas de especialização dentro da empresa, garantindo clareza sobre **carreiras, mobilidade e desenvolvimento**.
+## Introdução  
+A **Job Family** representa uma área funcional ampla que agrupa papéis relacionados dentro da organização.  
+Ela promove **clareza, consistência e alinhamento global** sobre carreiras e especializações.
 """)
 
-with st.container():
-    col_analogy_icon, col_analogy_text = st.columns([1, 15])
-    with col_analogy_icon:
-        st.markdown("## 🧭")
-    with col_analogy_text:
-        st.subheader("O que é uma \"Job Family\"?")
-        st.markdown("""
-        Imagine que nossa empresa é uma **grande cidade**.  
-        Uma Job Family é como um **bairro** dessa cidade.  
-        Dentro de um bairro, você tem várias casas e prédios diferentes (os Cargos),  
-        mas todos compartilham a mesma região, infraestrutura e propósito geral.
-        """)
+st.markdown("""
+## O que é uma Job Family?
+Imagine que nossa empresa é uma **grande cidade**.  
+Uma Job Family é como um **bairro** dessa cidade.  
+Dentro de um bairro, você tem várias casas e prédios diferentes (os Cargos),  
+mas todos compartilham a mesma região, infraestrutura e propósito geral.
+""")
 
-st.markdown("### Por que dividimos assim?")
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.success("**🛣️ Clareza de Carreira**\n\nFacilita entender para onde você pode crescer na sua especialização.")
-with c2:
-    st.info("**⚖️ Equidade**\n\nGarante que funções similares sejam tratadas de forma justa.")
-with c3:
-    st.warning("**🧠 Desenvolvimento**\n\nPermite treinamentos específicos para cada 'bairro'.")
+st.markdown("## Por que dividimos assim?")
+st.markdown("""
+<div class="card-container">
+    <div class="info-card card-green">
+        <h4>🛣️ Clareza de Carreira</h4>
+        <p>Facilita entender para onde você pode crescer na sua especialização.</p>
+    </div>
+    <div class="info-card card-blue">
+        <h4>⚖️ Equidade</h4>
+        <p>Garante que funções similares sejam tratadas de forma justa.</p>
+    </div>
+    <div class="info-card card-yellow">
+        <h4>🧠 Desenvolvimento</h4>
+        <p>Permite treinamentos específicos para cada “bairro”.</p>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 st.divider()
 
@@ -197,9 +225,7 @@ if data_loaded:
             <div class="jf-text">{descricao}</div>
         </div>
         """, unsafe_allow_html=True)
-
     elif selected_family and not selected_sub_family:
         st.info("👆 Selecione uma **Sub-Família** para ver os detalhes.")
 else:
-    if df.empty:
-        st.warning("Não foi possível carregar os dados para exibir o explorador.")
+    st.warning("⚠️ Não foi possível carregar os dados para exibir o explorador.")
