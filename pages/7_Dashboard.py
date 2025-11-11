@@ -5,7 +5,7 @@ from pathlib import Path
 from utils.ui import sidebar_logo_and_title
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DA PÁGINA
+# 1. CONFIGURAÇÃO GERAL
 # ===========================================================
 st.set_page_config(
     page_title="Dashboard",
@@ -25,7 +25,7 @@ if css_path.exists():
 sidebar_logo_and_title()
 
 # ===========================================================
-# 3. HEADER PADRONIZADO
+# 3. CABEÇALHO PADRÃO
 # ===========================================================
 st.markdown("""
 <style>
@@ -49,7 +49,7 @@ st.markdown("""
     height: 54px;
 }
 .block-container {
-    max-width: 1300px !important;
+    max-width: 1400px !important;
     padding-left: 40px !important;
     padding-right: 40px !important;
 }
@@ -59,167 +59,125 @@ st.markdown("""
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
 }
 .metric-card {
-    background-color: white;
-    border-left: 5px solid #145efc;
-    border-radius: 8px;
-    padding: 18px 24px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.07);
-    text-align: center;
-}
-.metric-title {
-    color: #555;
-    font-size: 0.9rem;
-    font-weight: 600;
+    background-color: #ffffff;
+    border-left: 6px solid #145efc;
+    border-radius: 10px;
+    padding: 20px 30px;
+    text-align: left;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 .metric-value {
-    color: #145efc;
     font-size: 2rem;
     font-weight: 800;
+    color: #000000;
+}
+.metric-label {
+    font-size: 0.9rem;
+    color: #555;
 }
 </style>
 
 <div class="page-header">
-    <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/data%202%20perfromance.png" alt="icon">
-    Dashboard — Job Architecture Overview
+  <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/data%202%20perfromance.png" alt="icon">
+  Dashboard — Indicadores de Arquitetura de Cargos
 </div>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 4. CARREGAMENTO DE DADOS
+# 4. CARREGAMENTO DOS DADOS
 # ===========================================================
-@st.cache_data(ttl="1h")
-def load_job_data():
-    file_path = Path("data/Job Profile.xlsx")
-    df = pd.read_excel(file_path)
+@st.cache_data
+def load_data():
+    df = pd.read_excel("data/Job Profile.xlsx")
     df.columns = df.columns.str.strip()
     return df
 
-df = load_job_data()
+try:
+    df = load_data()
+except Exception as e:
+    st.error(f"Erro ao carregar dados: {e}")
+    st.stop()
 
 # ===========================================================
-# 5. INDICADORES RESUMIDOS
+# 5. CARDS RESUMO
 # ===========================================================
-total_profiles = len(df)
-total_families = df["Job Family"].nunique()
-total_subfamilies = df["Sub Job Family"].nunique()
-total_career_paths = df["Career Path"].nunique()
+total_cargos = len(df["Job Profile"].unique())
+total_familias = len(df["Job Family"].unique())
+total_subfamilias = len(df["Sub Job Family"].unique())
+total_trilhas = len(df["Career Path"].unique())
+total_grades = len(df["Global Grade"].unique())
 
-c1, c2, c3, c4 = st.columns(4)
-with c1:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-title">Perfis de Cargo</div>
-        <div class="metric-value">{total_profiles}</div>
-    </div>
-    """, unsafe_allow_html=True)
-with c2:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-title">Famílias</div>
-        <div class="metric-value">{total_families}</div>
-    </div>
-    """, unsafe_allow_html=True)
-with c3:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-title">Sub-Famílias</div>
-        <div class="metric-value">{total_subfamilies}</div>
-    </div>
-    """, unsafe_allow_html=True)
-with c4:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-title">Trilhas de Carreira</div>
-        <div class="metric-value">{total_career_paths}</div>
-    </div>
-    """, unsafe_allow_html=True)
+c1, c2, c3, c4, c5 = st.columns(5)
+c1.markdown(f"<div class='metric-card'><div class='metric-value'>{total_cargos}</div><div class='metric-label'>Perfis de Cargo</div></div>", unsafe_allow_html=True)
+c2.markdown(f"<div class='metric-card'><div class='metric-value'>{total_familias}</div><div class='metric-label'>Famílias</div></div>", unsafe_allow_html=True)
+c3.markdown(f"<div class='metric-card'><div class='metric-value'>{total_subfamilias}</div><div class='metric-label'>Sub-Famílias</div></div>", unsafe_allow_html=True)
+c4.markdown(f"<div class='metric-card'><div class='metric-value'>{total_trilhas}</div><div class='metric-label'>Trilhas de Carreira</div></div>", unsafe_allow_html=True)
+c5.markdown(f"<div class='metric-card'><div class='metric-value'>{total_grades}</div><div class='metric-label'>Global Grades</div></div>", unsafe_allow_html=True)
 
-st.divider()
+st.markdown("---")
 
 # ===========================================================
-# 6. VISUALIZAÇÕES
+# 6. GRÁFICOS INTERATIVOS
 # ===========================================================
 
-# ---- 6.1 Cargos por Família ----
-st.subheader("📂 Quantidade de Cargos por Família (Job Family)")
-df_familia = df["Job Family"].value_counts().reset_index()
-df_familia.columns = ["Job Family", "Count"]
+tab1, tab2, tab3 = st.tabs(["📊 Job Family", "🎯 Trilhas de Carreira", "🏛️ Níveis e Grades"])
 
-fig1 = px.bar(
-    df_familia,
-    x="Job Family",
-    y="Count",
-    text="Count",
-    color="Job Family",
-    color_discrete_sequence=px.colors.qualitative.Safe,
-)
-fig1.update_traces(textposition="outside")
-fig1.update_layout(
-    xaxis_title=None, yaxis_title="Quantidade de Cargos",
-    showlegend=False, plot_bgcolor="rgba(0,0,0,0)"
-)
-st.plotly_chart(fig1, use_container_width=True)
+with tab1:
+    st.subheader("Distribuição de Cargos por Job Family")
+    job_family_counts = df["Job Family"].value_counts().reset_index()
+    job_family_counts.columns = ["Job Family", "Qtd"]
+    fig = px.bar(
+        job_family_counts,
+        x="Job Family",
+        y="Qtd",
+        color="Job Family",
+        text="Qtd",
+        title="Cargos por Família",
+        color_discrete_sequence=px.colors.qualitative.Bold
+    )
+    fig.update_layout(xaxis_title="", yaxis_title="Quantidade", showlegend=False)
+    st.plotly_chart(fig, use_container_width=True)
 
-st.divider()
+with tab2:
+    st.subheader("Perfis por Trilha de Carreira")
+    career_path_counts = df["Career Path"].value_counts().reset_index()
+    career_path_counts.columns = ["Career Path", "Qtd"]
+    fig2 = px.pie(
+        career_path_counts,
+        names="Career Path",
+        values="Qtd",
+        color_discrete_sequence=px.colors.qualitative.Set2,
+        title="Distribuição por Trilha de Carreira"
+    )
+    st.plotly_chart(fig2, use_container_width=True)
 
-# ---- 6.2 Sub-Famílias por Família ----
-st.subheader("🧩 Número de Sub-Famílias por Família")
-df_sub = df.groupby("Job Family")["Sub Job Family"].nunique().reset_index()
-df_sub.columns = ["Job Family", "Sub-Families"]
-
-fig2 = px.treemap(
-    df_sub,
-    path=["Job Family"],
-    values="Sub-Families",
-    color="Sub-Families",
-    color_continuous_scale="Blues",
-)
-st.plotly_chart(fig2, use_container_width=True)
-
-st.divider()
-
-# ---- 6.3 Cargos por Trilha de Carreira ----
-st.subheader("🚀 Distribuição de Cargos por Trilha de Carreira")
-df_trilha = df["Career Path"].value_counts().reset_index()
-df_trilha.columns = ["Career Path", "Count"]
-
-fig3 = px.pie(
-    df_trilha,
-    names="Career Path",
-    values="Count",
-    color_discrete_sequence=px.colors.sequential.Blues,
-    hole=0.4
-)
-fig3.update_traces(textinfo="label+percent", pull=[0.05]*len(df_trilha))
-st.plotly_chart(fig3, use_container_width=True)
-
-st.divider()
-
-# ---- 6.4 Distribuição por Global Grade (caso exista) ----
-if "Global Grade" in df.columns:
-    st.subheader("🏅 Distribuição por Global Grade")
-    df_grade = df["Global Grade"].astype(str).value_counts().reset_index()
-    df_grade.columns = ["Global Grade", "Count"]
-    fig4 = px.bar(
-        df_grade,
+with tab3:
+    st.subheader("Distribuição de Cargos por Global Grade")
+    grade_counts = df["Global Grade"].value_counts().reset_index()
+    grade_counts.columns = ["Global Grade", "Qtd"]
+    fig3 = px.bar(
+        grade_counts,
         x="Global Grade",
-        y="Count",
-        text="Count",
-        color="Global Grade",
-        color_discrete_sequence=px.colors.qualitative.Pastel,
+        y="Qtd",
+        text="Qtd",
+        title="Cargos por Nível Global (Grade)",
+        color_discrete_sequence=["#145efc"]
     )
-    fig4.update_traces(textposition="outside")
-    fig4.update_layout(
-        xaxis_title="Global Grade", yaxis_title="Qtd. de Cargos",
-        showlegend=False, plot_bgcolor="rgba(0,0,0,0)"
-    )
-    st.plotly_chart(fig4, use_container_width=True)
+    fig3.update_layout(xaxis_title="Global Grade", yaxis_title="Quantidade")
+    st.plotly_chart(fig3, use_container_width=True)
+
+st.markdown("---")
 
 # ===========================================================
-# 7. FOOTER
+# 7. TABELA DE VISÃO GERAL
 # ===========================================================
-st.markdown("""
----
-📘 *Dashboard de Arquitetura de Cargos — SIG*  
-Visualização analítica das famílias, trilhas e níveis de cargos.
-""")
+st.subheader("📋 Visão Geral de Perfis")
+st.dataframe(
+    df[["Job Family", "Sub Job Family", "Career Path", "Job Profile", "Global Grade"]]
+    .sort_values(by=["Job Family", "Sub Job Family"]),
+    use_container_width=True
+)
