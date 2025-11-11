@@ -1,39 +1,46 @@
+
 # -*- coding: utf-8 -*-
 # pages/6_Structure_Level.py
 
 import streamlit as st
 import pandas as pd
 from pathlib import Path
-# Importa a função de carregamento específica do usuário
+# Importa a função de carregamento específica do usuário (assumindo que 'load_excel_data'
+# é a fonte para df_jobs, e 'load_level_structure_df' para df_levels)
 from utils.data_loader import load_level_structure_df, load_excel_data 
 # Importa a nossa função de visual global
 from utils.ui import setup_sidebar, sidebar_logo_and_title
 import html
 
 # ===========================================================
-# 4. DADOS (MOVIDO PARA O TOPO E GARANTIDA A SINTAXE CORRETA) 
+# 4. DADOS (FUNÇÃO DE CARREGAMENTO NO TOPO PARA EVITAR ERROS)
 # ===========================================================
-@st.cache_data # <--- DEVE ESTAR NO TOPO DO ARQUIVO PARA EVITAR ERROS DE INDENTAÇÃO/ESCOPO
+@st.cache_data 
 def load_and_prepare_data():
     try:
-        # Carrega a tabela de estrutura de níveis usando a função do usuário
+        # Carrega a tabela de estrutura de níveis (df_levels)
         df_levels = load_level_structure_df()
     except NameError:
         st.error("Erro: A função `load_level_structure_df()` não foi encontrada.")
         return pd.DataFrame(), {}
         
-    # Carrega a tabela de perfil de cargo para obter o Career Band Description (Contexto de Carreira)
-    data = load_excel_data() # Supondo que esta função carregue todos os dados excel
-    df_jobs = data.get("job_profile", pd.DataFrame())
+    try:
+        # Carrega a tabela de perfil de cargo para obter o Career Band Description
+        data = load_excel_data()
+        df_jobs = data.get("job_profile", pd.DataFrame())
+    except NameError:
+        st.warning("Aviso: A função `load_excel_data()` não foi encontrada. Descrições de Carreira serão limitadas.")
+        df_jobs = pd.DataFrame()
     
     if df_levels.empty: return df_levels, {}
     
-    # --- CORREÇÃO DE KEYERROR NO df_jobs ---
+    # --- PROCESSAMENTO DE df_jobs PARA OBTER DESCRIÇÕES DE CARREIRA ---
+    career_bands_desc = {}
     if not df_jobs.empty:
         # 1. Limpa nomes de colunas
         df_jobs.columns = df_jobs.columns.str.strip()
         
-        # 2. Garante que colunas essenciais para o mapeamento existam
+        # 2. Garante que colunas essenciais existam
         job_cols_needed = ["Career Band", "Career Band Description"]
         for col in job_cols_needed:
             if col not in df_jobs.columns:
@@ -41,12 +48,10 @@ def load_and_prepare_data():
             df_jobs[col] = df_jobs[col].astype(str).str.strip()
             
         # 3. Mapear Descrição da Faixa de Carreira
-        career_bands_desc = df_jobs.set_index('Career Band')['Career Band Description'].dropna().drop_duplicates().to_dict()
-    else:
-        career_bands_desc = {}
-    # --- FIM DA CORREÇÃO DE KEYERROR ---
+        if "Career Band" in df_jobs.columns and "Career Band Description" in df_jobs.columns:
+             career_bands_desc = df_jobs.set_index('Career Band')['Career Band Description'].dropna().drop_duplicates().to_dict()
     
-    # Limpeza de colunas do df_levels
+    # --- PROCESSAMENTO DE df_levels ---
     required_level_cols = ["Career Band", "Level Key", "Level Name", "Global Grade", "Level Description"]
     for col in required_level_cols:
         if col not in df_levels.columns: df_levels[col] = "-"
@@ -221,7 +226,7 @@ Esta visualização mostra a estrutura de níveis agrupada por **Faixa de Carrei
 st.markdown('<div class="level-explorer">', unsafe_allow_html=True)
 
 for band, group in grouped_by_band:
-    if band == '-': continue 
+    if band == '-' or band == 'NAN': continue 
     
     # 1. Ordenar os níveis dentro da carreira por Global Grade (GG) crescente
     group['GG_Num'] = pd.to_numeric(group['Global Grade'], errors='coerce').fillna(0)
