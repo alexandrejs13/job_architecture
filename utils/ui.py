@@ -43,31 +43,22 @@ def sidebar_logo_and_title():
 
         .sidebar-header img {{
             width: 95px;  /* logo ajustado */
-            margin-bottom: 6px; /* espaço menor entre logo e título */
+            margin-bottom: 5px; /* espaço menor entre logo e título */
         }}
 
         .sidebar-header h2 {{
             color: #000000;
-            font-size: 1.3rem; /* equilibrado */
+            font-size: 1.35rem; /* ligeiramente maior para equilíbrio */
             font-weight: 800;
             margin: 0;
             line-height: 1.1;
+            letter-spacing: -0.3px;
         }}
 
         /* === Alinhamento visual com container azul === */
         [data-testid="stSidebar"] > div:first-child {{
             border-bottom: none !important;
-            padding-left: 6px !important; /* ligeiro ajuste horizontal */
+            padding-left: 10px !important; /* ligeiro ajuste horizontal */
         }}
 
-        /* Remove divisor inferior */
-        [data-testid="stSidebarNav"]::after {{
-            display: none !important;
-        }}
-    </style>
-
-    <div class="sidebar-header">
-        <img src="{logo_url}" alt="SIG Logo">
-        <h2>Job Architecture</h2>
-    </div>
-    """, unsafe_allow_html=True)
+        /* === Linha sutil para refinamento visual ==*
