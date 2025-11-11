@@ -13,34 +13,51 @@ from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar
 # Importa a nossa função de visual global
 from utils.ui import setup_sidebar
+from pathlib import Path
 
 # ===========================================================
 # 1. CONFIGURAÇÃO DE PÁGINA (TEM QUE SER O PRIMEIRO COMANDO ST)
 # ===========================================================
-st.set_page_config(layout="wide", page_title="🧩 Job Match")
+st.set_page_config(layout="wide", page_title="🧩 Job Match", page_icon="🧩")
 
 # ===========================================================
-# 2. APLICA O VISUAL GLOBAL
+# 2. APLICA O VISUAL GLOBAL E SIDEBAR
 # ===========================================================
+# --- INJEÇÃO DO CSS DE SIDEBAR/HEADER (Essencial para a formatação da sidebar) ---
+css_path = Path(__file__).parents[1] / "assets" / "header.css"
+if css_path.exists():
+    with open(css_path) as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+# ----------------------------------------------------------------------------------
+
 setup_sidebar()
 lock_sidebar()
 
 # ===========================================================
-# 3. ESTILO DA PÁGINA
+# 3. ESTILO DA PÁGINA (ADICIONANDO HEADER PADRÃO E NEUTRALIZANDO H1)
 # ===========================================================
 st.markdown("""
 <style>
-/* h1 é controlado globalmente (preto) */
-h1 {
-    font-weight: 900 !important;
-    font-size: 1.9rem !important;
+/* ============ NOVO HEADER PADRÃO ============ */
+.page-header {
+    background-color: #145efc;
+    color: white;
+    font-weight: 750;
+    font-size: 1.35rem;
+    border-radius: 12px;
+    padding: 22px 36px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin: 0 !important;
-    padding-top: 15px;
-    margin-bottom: 25px !important;
+    gap: 18px;
+    width: 100%;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
+.page-header img { width: 48px; height: 48px; }
+
+/* Neutraliza o h1 padrão do Streamlit/section para usar o .page-header */
+h1 { display: none !important; }
+
 .block-container {
     max-width: 95% !important;
     padding-left: 1rem !important;
@@ -48,6 +65,7 @@ h1 {
 }
 .stTextArea textarea {font-size: 16px !important;}
 
+/* Mantidas as classes de comparação, garantindo a visualização de 3 colunas */
 .comparison-grid {
     display: grid;
     gap: 20px;
@@ -111,7 +129,18 @@ h1 {
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 4. CARREGAMENTO DE DADOS E MODELO
+# RENDERIZAÇÃO DO NOVO HEADER
+# ===========================================================
+st.markdown("""
+<div class="page-header">
+  <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/process.png" alt="icon">
+  Job Match - Análise Semântica de Cargo
+</div>
+""", unsafe_allow_html=True)
+
+
+# ===========================================================
+# 4. CARREGAMENTO DE DADOS E MODELO (INALTERADO)
 # ===========================================================
 @st.cache_resource
 def load_model():
@@ -172,7 +201,7 @@ except Exception as e:
     st.stop()
 
 # ===========================================================
-# 5. LÓGICA DE MATCHING
+# 5. LÓGICA DE MATCHING (INALTERADO)
 # ===========================================================
 LEVEL_GG_MAPPING = {
     "W1": [1, 2, 3, 4, 5], "W2": [5, 6, 7, 8], "W3": [7, 8, 9, 10],
@@ -204,9 +233,9 @@ def detect_level_from_text(text, wtw_db):
     return best_band, best_level, best_level_key, matched_keywords
 
 # ===========================================================
-# 6. INTERFACE DO USUÁRIO
+# 6. INTERFACE DO USUÁRIO (AJUSTADO: REMOVIDA A CHAMADA SECTION)
 # ===========================================================
-section("🧩 Job Match")
+# section("🧩 Job Match") <-- REMOVIDO E SUBSTITUÍDO PELO .page-header
 st.markdown("Encontre o cargo ideal com base na descrição completa das responsabilidades.")
 
 c1, c2 = st.columns(2)
@@ -262,7 +291,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     top3 = results.sort_values("similarity", ascending=False).head(3)
 
     # ===========================================================
-    # 7. RENDERIZAÇÃO DINÂMICA DOS RESULTADOS
+    # 7. RENDERIZAÇÃO DINÂMICA DOS RESULTADOS (INALTERADO)
     # ===========================================================
     st.markdown("---")
     st.subheader("🏆 Cargos Mais Compatíveis")
@@ -274,6 +303,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     cards_data = []
     for _, row in top3.iterrows():
         score_val = row["similarity"] * 100
+        # Cores mantidas para refletir o nível de aderência
         score_bg = "#28a745" if score_val > 85 else "#1E56E0" if score_val > 75 else "#fd7e14" if score_val > 60 else "#dc3545"
         lvl_name = ""
         gg_val = str(row["Global Grade"]).strip()
@@ -300,6 +330,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     # 2. Metadados
     for card in cards_data:
         d = card['row']
+        # Metadados de comparação (idêntico à Pag 3)
         grid_html += f"""
         <div class="grid-cell meta-cell">
             <div class="meta-row"><strong>Família:</strong> {html.escape(str(d.get('Job Family','-')))}</div>
@@ -313,7 +344,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         ("🧭 Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
         ("🧠 Job Profile Description", "Job Profile Description", "#e91e63"),
         ("🏛️ Career Band Description", "Career Band Description", "#673ab7"),
-        ("🎯 Role Description", "Role Description", "#145efc"), # Azul SIG para Role Description
+        ("🎯 Role Description", "Role Description", "#145efc"), # Azul SIG
         ("🏅 Grade Differentiator", "Grade Differentiator", "#ff9800"),
         ("🎓 Qualifications", "Qualifications", "#009688")
     ]
@@ -322,6 +353,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         for card in cards_data:
             content = str(card['row'].get(field, '-'))
             if field == "Qualifications" and (len(content) < 2 or content.lower() == 'nan'):
+                    # Mantém o espaço na célula se o conteúdo estiver ausente, mas remove o estilo visual
                     grid_html += f'<div class="grid-cell section-cell" style="border-left-color: transparent; background: transparent; border: none;"></div>'
             else:
                 grid_html += f"""
