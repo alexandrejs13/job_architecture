@@ -1,7 +1,11 @@
 import streamlit as st
-from utils.ui import setup_sidebar, section
+from pathlib import Path
 
-st.set_page_config(page_title="Recuperado", layout="wide")
-setup_sidebar()
-section("🏠 Home Recuperada")
-st.write("O app voltou a funcionar!")
+# Aplica estilos SIG
+base_path = Path(__file__).parent / "assets"
+
+with open(base_path / "fonts.css") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+with open(base_path / "theme.css") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
