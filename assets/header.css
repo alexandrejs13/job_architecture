@@ -1,17 +1,17 @@
-/* ========== MENU LATERAL: APARÊNCIA E ÍCONES ========== */
+/* ========== MENU LATERAL COM ÍCONES CUSTOMIZADOS ========== */
 
-/* Esconde o primeiro item (App) se existir */
+/* Oculta o item inicial (App) */
 [data-testid="stSidebarNav"] ul li:first-child {
   display: none !important;
 }
 
-/* Link do item do menu com espaço para o ícone */
+/* Adiciona espaço para os ícones */
 [data-testid="stSidebarNav"] ul li a {
   position: relative;
   padding-left: 32px !important;
 }
 
-/* Ícone base (substituído pelos nth-child abaixo) */
+/* Ícone base */
 [data-testid="stSidebarNav"] ul li a::before {
   content: "";
   position: absolute;
@@ -25,42 +25,22 @@
   background-position: center;
 }
 
-/* --------- Mapeamento por posição no menu ----------
-   Como o primeiro item (App) foi ocultado:
-   2º LI -> 1ª página visível: Job Architecture
-   3º LI -> 2ª: Job Families
-   4º LI -> 3ª: Job Profile Description
-   5º LI -> 4ª: Job Maps
-   6º LI -> 5ª: Job Match
-   7º LI -> 6ª: Structure Level
------------------------------------------------------ */
-
-/* 1) Job Architecture */
+/* Mapeamento */
 [data-testid="stSidebarNav"] ul li:nth-child(2) a::before {
   background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png");
 }
-
-/* 2) Job Families */
 [data-testid="stSidebarNav"] ul li:nth-child(3) a::before {
   background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/people%20employees.png");
 }
-
-/* 3) Job Profile Description */
 [data-testid="stSidebarNav"] ul li:nth-child(4) a::before {
   background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/business%20review%20clipboard.png");
 }
-
-/* 4) Job Maps */
 [data-testid="stSidebarNav"] ul li:nth-child(5) a::before {
   background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/globe%20trade.png");
 }
-
-/* 5) Job Match */
 [data-testid="stSidebarNav"] ul li:nth-child(6) a::before {
   background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/checkmark%20success.png");
 }
-
-/* 6) Structure Level */
 [data-testid="stSidebarNav"] ul li:nth-child(7) a::before {
   background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/process.png");
 }
