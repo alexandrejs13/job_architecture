@@ -39,17 +39,17 @@ def load_level_data():
 
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA (REVERTIDO PARA CORRIGIR O MENU)
+# 1. CONFIGURAÇÃO DE PÁGINA (COM O ÍCONE COERENTE)
 # ===========================================================
 st.set_page_config(
     page_title="Structure Level", 
-    page_icon="⚙️", # Mantido o ícone de engrenagem para alinhamento da sidebar
+    page_icon="⚙️", # ÍCONE: Engrenagem para alinhamento da sidebar
     layout="wide", 
     initial_sidebar_state="expanded"
 )
 
 # ===========================================================
-# 2. APLICA VISUAL GLOBAL E SIDEBAR
+# 2. APLICA VISUAL GLOBAL E SIDEBAR (DEVE EXECUTAR APÓS set_page_config)
 # ===========================================================
 setup_sidebar() 
 
