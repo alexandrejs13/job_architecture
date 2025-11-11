@@ -57,14 +57,30 @@ st.markdown("""
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
 }
 
-/* ===== CARDS ===== */
+/* ===== PILARES ===== */
+.pillar-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 20px;
+    margin-top: 10px;
+}
 .pillar-card {
     background-color: #ffffff;
     border-left: 5px solid #145efc;
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 22px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    height: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 280px; /* altura uniforme */
+    transition: all 0.2s ease-in-out;
+}
+.pillar-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.08);
 }
 .pillar-title {
     font-weight: 700;
@@ -76,7 +92,10 @@ st.markdown("""
     color: #333333;
     font-size: 0.98rem;
     line-height: 1.6;
+    flex-grow: 1;
 }
+
+/* ===== SEÇÕES ===== */
 .section-title {
     font-weight: 700;
     font-size: 1.2rem;
@@ -137,9 +156,8 @@ Mais do que um catálogo de cargos, trata-se de uma <strong>infraestrutura de go
 # 5. PILARES DA ARQUITETURA
 # ===========================================================
 st.markdown('<div class="section-title">Pilares Estruturantes</div>', unsafe_allow_html=True)
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.markdown("""
+st.markdown("""
+<div class="pillar-row">
     <div class="pillar-card">
         <div class="pillar-title">Governança Global</div>
         <div class="pillar-text">
@@ -147,9 +165,7 @@ with col1:
         Essa governança assegura que toda posição seja avaliada de acordo com padrões globais e práticas de mercado reconhecidas.
         </div>
     </div>
-    """, unsafe_allow_html=True)
-with col2:
-    st.markdown("""
+
     <div class="pillar-card">
         <div class="pillar-title">Clareza de Carreira</div>
         <div class="pillar-text">
@@ -158,18 +174,16 @@ with col2:
         Essa estrutura fornece visibilidade sobre oportunidades de progressão, diferenciação de níveis e mobilidade lateral entre áreas.
         </div>
     </div>
-    """, unsafe_allow_html=True)
-with col3:
-    st.markdown("""
+
     <div class="pillar-card">
         <div class="pillar-title">Integração de Sistemas</div>
         <div class="pillar-text">
-        A Job Architecture serve como base única de referência para os principais processos de <strong>Remuneração, 
-        Performance Management, Talent Review e Benchmarking de Mercado</strong>.  
+        A Job Architecture serve como base única de referência para os principais processos de <strong>Remuneração, Performance Management, Talent Review</strong> e <strong>Benchmarking de Mercado</strong>.  
         Isso garante que as decisões de pessoas estejam ancoradas em um modelo técnico e sustentável.
         </div>
     </div>
-    """, unsafe_allow_html=True)
+</div>
+""", unsafe_allow_html=True)
 
 # ===========================================================
 # 6. ESTRUTURA CONCEITUAL
