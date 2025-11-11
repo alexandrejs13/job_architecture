@@ -4,7 +4,7 @@ from pathlib import Path
 from utils.ui import sidebar_logo_and_title
 
 # ===========================================================
-# 1. CONFIGURAÇÃO INICIAL
+# 1. CONFIGURAÇÃO DA PÁGINA
 # ===========================================================
 st.set_page_config(
     page_title="Job Profile Description",
@@ -44,16 +44,20 @@ st.markdown("""
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 .page-header img { width: 48px; height: 48px; }
+
 .block-container {
-    max-width: 950px !important;
+    max-width: 900px !important; /* largura máxima igual às outras páginas */
     padding-left: 40px !important;
     padding-right: 40px !important;
 }
+
 [data-testid="stAppViewContainer"] {
     background-color: #f5f3f0;
     color: #202020;
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
 }
+
+/* Cartões de perfil */
 .job-card {
     background:white;
     border-left:5px solid #145efc;
@@ -93,6 +97,7 @@ st.markdown("""
 # ===========================================================
 @st.cache_data(ttl="1h")
 def load_job_profiles():
+    """Lê o arquivo Excel de Job Profiles."""
     try:
         df = pd.read_excel("data/Job Profile.xlsx")
         for c in df.select_dtypes(include="object"):
@@ -133,14 +138,14 @@ if not df.empty:
     selected = st.multiselect("Selecione até 3 perfis:", profiles, max_selections=3)
 
     def format_desc(value):
-        """Preserva HTML e quebras de linha do Excel."""
+        """Mantém HTML e quebras de linha da descrição."""
         if pd.isna(value) or not str(value).strip():
             return "-"
         text = str(value).strip()
-        # Se contiver tags HTML, mantém; caso contrário, converte \n em <br>
-        if any(tag in text.lower() for tag in ["<p", "<br", "<ul", "<ol", "<li", "<b", "<i"]):
+        # se tiver tags HTML, mantém; caso contrário, converte \n em <br>
+        if any(tag in text.lower() for tag in ["<p", "<br", "<ul", "<ol", "<li", "<b", "<i", "<div>"]):
             return text
-        return text.replace("\n", "<br>")
+        return text.replace("\r\n", "<br>").replace("\n", "<br>")
 
     # =======================================================
     # 6. GRID DE COMPARAÇÃO
