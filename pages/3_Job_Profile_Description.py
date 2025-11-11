@@ -1,10 +1,8 @@
-# pages/3_Job_Profile_Description.py
 import streamlit as st
 import pandas as pd
 import re
 import html as html_lib
 from pathlib import Path
-import streamlit.components.v1 as components
 from utils.ui import sidebar_logo_and_title
 
 
@@ -27,7 +25,7 @@ sidebar_logo_and_title()
 
 
 # ===========================================================
-# 2. CSS LOCAL
+# 2. CSS LOCAL (mantendo visual anterior)
 # ===========================================================
 st.markdown("""
 <style>
@@ -56,18 +54,26 @@ st.markdown("""
     color: #202020;
     font-family: "Source Sans Pro","Helvetica",sans-serif;
 }
-.comparison-grid { display: grid; gap: 20px; margin-top: 20px; }
-.grid-cell { background: #fff; border: 1px solid #e0e0e0; padding: 15px; display: flex; flex-direction: column; }
-.header-cell { background: #f8f9fa; border-radius: 12px 12px 0 0; border-bottom: none; }
-.fjc-title { font-size: 18px; font-weight: 800; color: #2c3e50; margin-bottom: 10px; min-height: 50px; }
-.fjc-gg-row { display: flex; justify-content: space-between; align-items: center; }
-.fjc-gg { color: #145efc; font-weight: 700; }
-.meta-cell { border-top: 1px solid #eee; border-bottom: 1px solid #eee; font-size: 0.9rem; color: #555; min-height: 120px; }
-.meta-row { margin-bottom: 6px; }
-.section-cell { border-left-width: 5px; border-left-style: solid; border-top: none; background: #fdfdfd; }
-.section-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; color: #333; display: flex; align-items: center; gap: 6px; }
-.section-content { color: #444; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; }
-.footer-cell { height: 10px; border-top: none; border-radius: 0 0 12px 12px; background: #fff; }
+.section-box {
+    background-color: #ffffff;
+    border-left: 5px solid #145efc;
+    padding: 25px;
+    border-radius: 8px;
+    margin-top: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+.section-title {
+    font-weight: 700;
+    color: #145efc;
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+.section-content {
+    color: #333333;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
 </style>
 
 <div class="page-header">
@@ -80,13 +86,12 @@ st.markdown("""
 # ===========================================================
 # 3. FUNÇÕES AUXILIARES
 # ===========================================================
-def normalize_grade(val: object) -> str:
-    """Remove '.0' e trata NaN."""
+def normalize_grade(val):
+    """Remove '.0' e trata NaN"""
     s = str(val).strip()
     if s.lower() in ("nan", "none", "", "na"):
         return ""
-    s = re.sub(r"\.0$", "", s)
-    return s
+    return re.sub(r"\.0$", "", s)
 
 
 @st.cache_data
@@ -135,11 +140,9 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     fam = st.selectbox("Família:", ["Selecione..."] + families, index=0)
-
 with col2:
     subs = sorted(df[df["Job Family"] == fam]["Sub Job Family"].dropna().unique()) if fam != "Selecione..." else []
     sub = st.selectbox("Subfamília:", ["Selecione..."] + subs, index=0)
-
 with col3:
     paths = sorted(df[df["Sub Job Family"] == sub]["Career Path"].dropna().unique()) if sub != "Selecione..." else []
     path = st.selectbox("Trilha (Career Path):", ["Selecione..."] + paths, index=0)
@@ -165,83 +168,45 @@ if not selected:
 
 
 # ===========================================================
-# 6. RENDERIZAÇÃO GRID LADO A LADO
+# 6. VISUALIZAÇÃO (mantém formatação anterior e mostra GG)
 # ===========================================================
-cards = []
-for name in selected:
+cols = st.columns(len(selected))
+
+for idx, name in enumerate(selected):
     item = filtered[filtered["Job Profile"] == name]
     if item.empty:
         continue
+
     row = item.iloc[0].copy()
-
-    gg_val = normalize_grade(row.get("Global Grade", ""))
+    gg = normalize_grade(row.get("Global Grade", ""))
     lvl_name = ""
+
     if not df_levels.empty and {"Global Grade", "Level Name"}.issubset(df_levels.columns):
-        match = df_levels[df_levels["Global Grade"].astype(str).str.strip() == gg_val]
+        match = df_levels[df_levels["Global Grade"].astype(str).str.strip() == gg]
         if not match.empty:
-            lvl_name = f" • {match['Level Name'].iloc[0]}"
+            lvl_name = match["Level Name"].iloc[0]
 
-    gg_display = gg_val if gg_val else "-"
-    cards.append({"row": row, "lvl": lvl_name, "gg": gg_display})
+    with cols[idx]:
+        st.markdown(f"### {row.get('Job Profile', '-')}")
+        st.caption(f"GG {gg or '-'} • {lvl_name}")
+        st.divider()
 
-if not cards:
-    st.warning("Não foi possível montar a comparação para os itens selecionados.")
-    st.stop()
+        sections = [
+            ("🧭 Sub Job Family Description", "Sub Job Family Description"),
+            ("🧠 Job Profile Description", "Job Profile Description"),
+            ("🏛️ Career Band Description", "Career Band Description"),
+            ("🎯 Role Description", "Role Description"),
+            ("🏅 Grade Differentiator", "Grade Differentiator"),
+            ("🎓 Qualifications", "Qualifications")
+        ]
 
-cols = len(cards)
-html_parts = [f'<div class="comparison-grid" style="grid-template-columns:repeat({cols},1fr);">']
-
-# Cabeçalho
-for c in cards:
-    r = c["row"]
-    html_parts.append(f"""
-    <div class="grid-cell header-cell">
-      <div class="fjc-title">{html_lib.escape(str(r.get('Job Profile','-')))}</div>
-      <div class="fjc-gg-row">
-        <div class="fjc-gg">GG {html_lib.escape(c['gg'])}{html_lib.escape(c['lvl'])}</div>
-        <div style="font-weight:700; color:#145efc;">Comparação</div>
-      </div>
-    </div>
-    """)
-
-# Metadados
-for c in cards:
-    r = c["row"]
-    html_parts.append(f"""
-    <div class="grid-cell meta-cell">
-      <div class="meta-row"><strong>Família:</strong> {html_lib.escape(str(r.get('Job Family','-')))}</div>
-      <div class="meta-row"><strong>Subfamília:</strong> {html_lib.escape(str(r.get('Sub Job Family','-')))}</div>
-      <div class="meta-row"><strong>Carreira:</strong> {html_lib.escape(str(r.get('Career Path','-')))}</div>
-      <div class="meta-row"><strong>Cód:</strong> {html_lib.escape(str(r.get('Full Job Code','-')))}</div>
-    </div>
-    """)
-
-# Seções
-sections_config = [
-    ("🧭 Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
-    ("🧠 Job Profile Description",   "Job Profile Description",   "#e91e63"),
-    ("🏛️ Career Band Description",   "Career Band Description",   "#673ab7"),
-    ("🎯 Role Description",          "Role Description",          "#145efc"),
-    ("🏅 Grade Differentiator",      "Grade Differentiator",      "#ff9800"),
-    ("🎓 Qualifications",            "Qualifications",            "#009688"),
-]
-
-for title, field, color in sections_config:
-    for c in cards:
-        content = str(c["row"].get(field, "") or "").strip()
-        if field == "Qualifications" and len(content) < 2:
-            html_parts.append('<div class="grid-cell section-cell" style="border-left-color: transparent; background: transparent; border: none;"></div>')
-        else:
-            html_parts.append(f"""
-            <div class="grid-cell section-cell" style="border-left-color:{color};">
-              <div class="section-title" style="color:{color};">{title}</div>
-              <div class="section-content">{html_lib.escape(content)}</div>
+        for title, field in sections:
+            content = str(row.get(field, "") or "").strip()
+            if not content:
+                continue
+            st.markdown(f"""
+            <div class="section-box">
+                <div class="section-title">{title}</div>
+                <div class="section-content">{html_lib.escape(content)}</div>
             </div>
-            """)
-
-for _ in cards:
-    html_parts.append('<div class="grid-cell footer-cell"></div>')
-
-html_parts.append('</div>')
-
-components.html("\n".join(html_parts), height=1000, scrolling=True)
+            """, unsafe_allow_html=True)
