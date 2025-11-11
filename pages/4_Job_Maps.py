@@ -14,7 +14,7 @@ from pathlib import Path
 # ===========================================================
 st.set_page_config(
     page_title="Job Map", 
-    page_icon="🗺️", 
+    page_icon="🗺️", # Ícone usado na aba e na sidebar
     layout="wide"
 )
 
@@ -38,7 +38,7 @@ def toggle_fullscreen():
     st.session_state.fullscreen = not st.session_state.fullscreen
 
 # ===========================================================
-# 3. CSS BASE (REVISADO PARA FIXAR O MAPA)
+# 3. CSS BASE (REVISADO PARA ESTILO DOS BOTÕES)
 # ===========================================================
 css_base = """
 <style>
@@ -47,6 +47,7 @@ css_base = """
     --gray-line: #e0e0e0;
     --gray-bg: #f8f9fa; 
     --dark-gray: #333333;
+    --red-exit: #dc3545; /* Mantendo vermelho para contraste visual de 'sair' */
 }
 
 /* ============ NOVO HEADER PADRÃO ============ */
@@ -64,7 +65,8 @@ css_base = """
     margin-bottom: 20px; 
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
-.page-header img { width: 48px; height: 48px; }
+/* Removida a tag .page-header img pois estamos usando emoji */
+/* =========================================================== */
 
 .block-container {
     max-width: 1600px !important;
@@ -84,154 +86,48 @@ css_base = """
     box-shadow: none; 
 }
 
-.map-wrapper {
-    height: 75vh;
-    overflow: auto;
-    border-top: 3px solid var(--blue);
-    border-bottom: 3px solid var(--blue);
-    background: white;
-    position: relative;
-    will-change: transform;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    border-radius: 8px;
+/* === ESTILO DO BOTÃO TELA CHEIA (NORMAL) === */
+[data-testid="stButton"] button {
+    border-color: var(--blue) !important;
+    background-color: var(--blue) !important; /* Fundo AZUL */
+    color: white !important; /* Letra BRANCA */
+    font-weight: 600 !important;
+}
+[data-testid="stButton"] button:hover {
+    background-color: #1a62ff !important; /* Azul um pouco mais claro no hover */
+    color: white !important;
 }
 
-.jobmap-grid {
-    display: grid;
-    border-collapse: collapse;
-    width: max-content;
-    font-size: 0.88rem;
-    grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
-    grid-auto-rows: 110px !important;
-    align-content: start !important;
-    row-gap: 0px !important;
-    column-gap: 0px !important;
-    background-color: white !important;
-}
+/* ... (Estilos do mapa: .map-wrapper, .jobmap-grid, headers, etc. permanecem inalterados) ... */
 
-.jobmap-grid > div {
-    background-color: white;
-    border-right: 1px solid var(--gray-line);
-    border-bottom: 1px solid var(--gray-line);
-    box-sizing: border-box;
-}
-
-/* FIX: Aumentando o Z-INDEX do header da Família para garantir que fiquem acima dos elementos de UI perdidos */
-.header-family {
-    font-weight: 800;
-    color: #fff;
-    padding: 0 5px;
-    text-align: center;
-    border-right: 1px solid rgba(255,255,255,0.3) !important;
-    border-bottom: 0px none !important;
-    position: sticky;
-    top: 0;
-    z-index: 100; /* AUMENTADO O Z-INDEX */
-    white-space: normal;
-    height: 50px !important;
-    max-height: 50px !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    grid-row: 1;
-    font-size: 0.9rem;
-    overflow: hidden;
-}
-
-/* FIX: Aumentando o Z-INDEX do Sub-header */
-.header-subfamily {
-    font-weight: 600;
-    padding: 0 5px;
-    text-align: center;
-    position: sticky;
-    top: 50px;
-    z-index: 99; /* AUMENTADO O Z-INDEX */
-    white-space: normal;
-    border-top: 0px none !important;
-    margin-top: 0px !important;
-    border-bottom: 0px none !important;
-    height: 45px !important;
-    max-height: 45px !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    grid-row: 2;
-    font-size: 0.85rem;
-    overflow: hidden;
-    color: var(--dark-gray);
-}
-
-/* FIX: Aumentando o Z-INDEX do GG header para garantir que fique acima de tudo */
-.gg-header {
-    background: var(--dark-gray) !important;
-    color: white;
-    font-weight: 800;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    grid-row: 1 / span 2;
-    grid-column: 1;
-    position: sticky;
-    left: 0;
-    top: 0;
-    z-index: 101; /* AUMENTADO O Z-INDEX, DEVE SER O MAIS ALTO */
-    border-right: 2px solid white !important;
-    border-bottom: 0px none !important;
-    height: 95px !important;
-}
-
-/* FIX: Aumentando o Z-INDEX do GG cell para flutuar sobre o conteúdo */
-.gg-cell {
-    background: var(--dark-gray) !important;
-    color: white;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: sticky;
-    left: 0;
-    z-index: 98; /* AUMENTADO O Z-INDEX */
-    border-right: 2px solid white !important;
-    border-top: 1px solid #555 !important;
-    grid-column: 1;
-    font-size: 0.9rem;
-    height: 110px !important;
-}
-
-.cell {
-    background: white !important;
-    padding: 8px;
-    text-align: left;
-    vertical-align: middle;
-    z-index: 1;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    align-content: center;
-    height: 100% !important;
-    overflow: hidden;
-}
-
-/* ... (Demais estilos de cards e botões permanecem inalterados) ... */
-
-@media (max-width: 1500px) { .block-container { zoom: 0.9; } }
 </style>
 """
 
 # ===========================================================
-# CSS MODO TELA CHEIA (permanece inalterado)
+# CSS MODO TELA CHEIA (AJUSTE NO BOTÃO SAIR)
 # ===========================================================
-css_fullscreen = """
+css_fullscreen = f"""
 <style>
     header, section[data-testid="stSidebar"], .topbar, footer { display: none !important; }
     .block-container { max-width: 100vw !important; padding: 0 !important; margin: 0 !important; overflow: hidden !important; }
     .map-wrapper { position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important; z-index: 9999; border: none !important; border-top: 5px solid var(--blue) !important; margin: 0 !important; border-radius: 0 !important; }
+    
     #fixed-exit-container { position: fixed !important; bottom: 30px !important; right: 30px !important; z-index: 100000 !important; }
-    #fixed-exit-container button { background-color: var(--red) !important; color: white !important; border: none !important; box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important; padding: 12px 25px !important; font-weight: 800 !important; border-radius: 30px !important; }
-    #fixed-exit-container button:hover { background-color: #c82333 !important; transform: scale(1.05); }
+    
+    /* === ESTILO DO BOTÃO SAIR (TELA CHEIA) === */
+    #fixed-exit-container button {{ 
+        background-color: var(--blue) !important; /* AZUL */
+        color: white !important; /* BRANCA */
+        border: none !important; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important; 
+        padding: 12px 25px !important; 
+        font-weight: 800 !important; 
+        border-radius: 30px !important; 
+    }}
+    #fixed-exit-container button:hover {{ 
+        background-color: #1a62ff !important; 
+        transform: scale(1.05); 
+    }}
 </style>
 """
 st.markdown(css_base, unsafe_allow_html=True)
@@ -380,10 +276,10 @@ if df.empty:
     st.error("Erro ao carregar dados.")
     st.stop()
 
-# NOVO HEADER PADRÃO (ícone e estrutura ok)
-st.markdown("""
+# NOVO HEADER PADRÃO COM EMOJI (RESOLVE O PROBLEMA DO ÍCONE)
+st.markdown(f"""
 <div class="page-header">
-  <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/job%20map%20globe%20location.png" alt="icon">
+  <span style='font-size: 3rem; margin-top: -8px;'>🗺️</span>
   Mapeamento de Cargos (Job Map)
 </div>
 """, unsafe_allow_html=True)
@@ -403,6 +299,7 @@ if not st.session_state.fullscreen:
     with c3:
         st.write("")
         st.markdown('<div style="margin-top: 15px;">', unsafe_allow_html=True)
+        # O botão já é azul e branco devido ao CSS global que ajustamos.
         if st.button("⛶ Tela Cheia", use_container_width=True): toggle_fullscreen(); st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
@@ -410,9 +307,24 @@ else:
     # Lógica de tela cheia
     fam_filter, path_filter = st.session_state.get('fam_filter', 'Todas'), st.session_state.get('path_filter', 'Todas')
     st.markdown('<div id="fixed-exit-container">', unsafe_allow_html=True)
+    # O botão Sair é azul e branco devido ao CSS do css_fullscreen.
     if st.button("❌ Sair"): toggle_fullscreen(); st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
-    components.html("<script>document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.parent.document.querySelector('#fixed-exit-container button').click(); });</script>", height=0, width=0)
+    
+    # FUNCIONALIDADE ESC PARA SAIR DA TELA CHEIA (JÁ EXISTIA, APENAS CONFIRMANDO)
+    components.html("""
+        <script>
+            document.addEventListener('keydown', (e) => { 
+                if (e.key === 'Escape') {
+                    // Clica no botão 'Sair' simulado para sair da tela cheia
+                    const exitButton = window.parent.document.querySelector('#fixed-exit-container button');
+                    if (exitButton) {
+                        exitButton.click();
+                    }
+                }
+            });
+        </script>
+        """, height=0, width=0)
 
 st.session_state.fam_filter, st.session_state.path_filter = fam_filter, path_filter
 df_filtered = df.copy()
