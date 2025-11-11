@@ -1,17 +1,17 @@
-/* ========== MENU LATERAL: ÍCONES E AJUSTES ========== */
+/* ========== MENU LATERAL: APARÊNCIA E ÍCONES ========== */
 
-/* Esconde o primeiro item (App) */
+/* Esconde o primeiro item (App) se existir */
 [data-testid="stSidebarNav"] ul li:first-child {
   display: none !important;
 }
 
-/* Base dos itens do menu (link) */
+/* Link do item do menu com espaço para o ícone */
 [data-testid="stSidebarNav"] ul li a {
   position: relative;
-  padding-left: 32px !important; /* espaço pro ícone */
+  padding-left: 32px !important;
 }
 
-/* Ícone "genérico" (será sobrescrito por nth-child) */
+/* Ícone base (substituído pelos nth-child abaixo) */
 [data-testid="stSidebarNav"] ul li a::before {
   content: "";
   position: absolute;
@@ -23,18 +23,17 @@
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  filter: drop-shadow(0 0 0 rgba(0,0,0,0)); /* garante nitidez */
 }
 
-/* --------- Mapeamento por posição ---------
-   OBS: Como escondemos o 1º item, o 2º é a 1ª página visível.
-   2: Job Architecture
-   3: Job Families
-   4: Job Profile Description
-   5: Job Maps
-   6: Job Match
-   7: Structure Level
---------------------------------------------*/
+/* --------- Mapeamento por posição no menu ----------
+   Como o primeiro item (App) foi ocultado:
+   2º LI -> 1ª página visível: Job Architecture
+   3º LI -> 2ª: Job Families
+   4º LI -> 3ª: Job Profile Description
+   5º LI -> 4ª: Job Maps
+   6º LI -> 5ª: Job Match
+   7º LI -> 6ª: Structure Level
+----------------------------------------------------- */
 
 /* 1) Job Architecture */
 [data-testid="stSidebarNav"] ul li:nth-child(2) a::before {
@@ -64,9 +63,4 @@
 /* 6) Structure Level */
 [data-testid="stSidebarNav"] ul li:nth-child(7) a::before {
   background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/process.png");
-}
-
-/* Logo fixo e título no topo da sidebar (mantém espaço) */
-[data-testid="stSidebarNav"] {
-  padding-top: 150px !important;
 }
