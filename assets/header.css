@@ -1,0 +1,57 @@
+/* HEADER BAR PADRÃO SIG */
+.header-bar {
+    background-color: #145efc;
+    color: white;
+    padding: 1.2rem 1.8rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+}
+
+.header-icon {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+}
+
+.header-title {
+    font-family: "PP SIG Flow", "Helvetica Neue", Arial, sans-serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+/* AJUSTES DA SIDEBAR */
+[data-testid="stSidebarNav"] {
+    padding-top: 160px !important; /* empurra o menu para baixo do logo */
+}
+
+/* LOGO E TÍTULO CENTRALIZADOS ACIMA DO MENU */
+.sidebar-logo {
+    position: absolute;
+    top: 1.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    width: 100%;
+}
+
+.sidebar-logo img {
+    width: 120px;
+    opacity: 0.95;
+}
+
+.sidebar-logo h2 {
+    font-size: 1.1rem;
+    margin-top: 0.3rem;
+    color: #145efc;
+    font-family: "PP SIG Flow", "Helvetica Neue", Arial, sans-serif;
+    font-weight: 600;
+}
+
+/* OCULTA O ITEM 'APP' DO MENU */
+[data-testid="stSidebarNav"] ul li:first-child {
+    display: none !important;
+}
