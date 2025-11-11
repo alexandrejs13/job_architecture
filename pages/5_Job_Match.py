@@ -142,7 +142,7 @@ def infer_market_level(superior, lidera, subordinados, abrangencia, multiplas_ar
     return "P2"
 
 # ===========================================================
-# 7. BOTÃO DE ANÁLISE (RESTABELECIDO)
+# 7. BOTÃO DE ANÁLISE
 # ===========================================================
 st.divider()
 st.markdown("### 🔎 Executar análise")
@@ -190,7 +190,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     top3 = filtered.sort_values("similarity", ascending=False).head(3)
 
     # ===========================================================
-    # 8. RENDERIZAÇÃO VISUAL EM 3 COLUNAS
+    # 8. RENDERIZAÇÃO VISUAL — GRID DINÂMICO (1, 2 ou 3 COLUNAS)
     # ===========================================================
     st.markdown("---")
     st.subheader("🏆 Cargos Mais Compatíveis")
@@ -221,7 +221,8 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
             "lvl": lvl_name
         })
 
-    grid_style = "grid-template-columns: repeat(3, 1fr);"
+    num_results = len(cards_data)
+    grid_style = f"grid-template-columns: repeat({num_results}, 1fr);"
     grid_html = f'<div class="comparison-grid" style="{grid_style}">'
 
     # Cabeçalho
