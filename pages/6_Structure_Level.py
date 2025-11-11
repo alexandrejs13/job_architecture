@@ -1,5 +1,5 @@
 # ===========================================================
-# 6_STRUCTURE_LEVEL.PY — PADRONIZADO COM HEADER, TEXTO E GRÁFICO MINIMALISTA
+# 6_STRUCTURE_LEVEL.PY — VISÃO DE NÍVEIS E BANDAS DE CARREIRA
 # ===========================================================
 
 import streamlit as st
@@ -12,8 +12,8 @@ from utils.ui import sidebar_logo_and_title
 # 1. CONFIGURAÇÃO DA PÁGINA
 # ===========================================================
 st.set_page_config(
-    page_title="Structure Level",
-    page_icon="🏗️",
+    page_title="Career Levels & Structure",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -29,7 +29,7 @@ if css_path.exists():
 sidebar_logo_and_title()
 
 # ===========================================================
-# 3. CABEÇALHO PADRÃO
+# 3. CABEÇALHO AZUL PADRONIZADO
 # ===========================================================
 st.markdown("""
 <style>
@@ -62,123 +62,106 @@ st.markdown("""
     color: #202020;
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
 }
-hr {
-    border: none;
-    border-top: 1px solid #ddd;
-    margin: 30px 0;
-}
 </style>
 
 <div class="page-header">
-    <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/process.png" alt="icon">
-    Estrutura de Níveis (Structure Level)
+    <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/checkmark%20success.png" alt="icon">
+    Estrutura de Níveis e Bandas de Carreira
 </div>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 4. CARREGAMENTO DE DADOS
+# 4. CONTEÚDO INTRODUTÓRIO
+# ===========================================================
+st.markdown("""
+A **Estrutura de Níveis** define a progressão de carreira dentro da SIG, garantindo consistência e transparência
+em todas as áreas. Ela conecta os conceitos de **Job Architecture**, **Career Paths** e **Global Grades**, servindo como base
+para remuneração, movimentações internas e desenvolvimento de carreira.
+
+Cada nível representa um escopo de responsabilidade, complexidade e contribuição organizacional.  
+Essa padronização ajuda a comparar posições globalmente e a manter equilíbrio entre diferentes funções.
+""")
+
+st.divider()
+
+# ===========================================================
+# 5. CARREGAMENTO DOS DADOS
 # ===========================================================
 @st.cache_data(ttl="1h")
-def load_level_data():
-    path = Path("data/Level Structure.xlsx")
-    if not path.exists():
-        st.error("❌ Arquivo 'Level Structure.xlsx' não encontrado na pasta `data/`.")
-        return pd.DataFrame()
+def load_excel(path):
     try:
-        df = pd.read_excel(path)
-        df.columns = df.columns.str.strip()
-        return df
+        return pd.read_excel(path)
     except Exception as e:
-        st.error(f"Erro ao ler o arquivo Excel: {e}")
+        st.error(f"Erro ao carregar arquivo: {e}")
         return pd.DataFrame()
 
-df = load_level_data()
+df = load_excel("data/Level Structure.xlsx")
+
 if df.empty:
+    st.error("❌ Arquivo 'Level Structure.xlsx' não encontrado ou inválido.")
     st.stop()
 
-# ===========================================================
-# 5. CONTEÚDO TEXTUAL
-# ===========================================================
-st.markdown("""
-A **estrutura de níveis (Structure Level)** é o alicerce da **Job Architecture da SIG**.  
-Ela organiza os cargos em **faixas hierárquicas globais (Global Grades)** e **bandas de carreira (Career Bands)**, 
-garantindo coerência e comparabilidade entre funções em diferentes áreas e regiões.
+# Remove a primeira coluna (índice ou código)
+df = df.iloc[:, 1:] if len(df.columns) > 1 else df
 
-Cada nível reflete **escopo de responsabilidade**, **complexidade** e **impacto organizacional**.  
-Essa padronização é essencial para manter **equidade interna**, **governança global** e **clareza de progressão de carreira**.
+# ===========================================================
+# 6. VISUALIZAÇÃO DO DATAFRAME
+# ===========================================================
+st.subheader("Tabela de Estrutura de Níveis")
+st.markdown("""
+Abaixo, você pode visualizar os níveis de carreira definidos corporativamente,
+incluindo as **descrições de banda** e **níveis globais (Global Grades)** correspondentes.
 """)
+
+st.dataframe(df, use_container_width=True, hide_index=True)
 
 st.divider()
 
 # ===========================================================
-# 6. TABELA DE ESTRUTURA
+# 7. GRÁFICO MINIMALISTA — DISTRIBUIÇÃO POR BANDA
 # ===========================================================
-st.subheader("📘 Estrutura Detalhada de Níveis")
+st.subheader("Distribuição por Banda de Carreira")
 
-st.markdown("""
-Abaixo, a tabela apresenta a **descrição completa dos níveis globais (Global Grades)**, 
-com suas respectivas bandas de carreira e escopos.
-""")
+if "Career Path" in df.columns:
+    contagem = df["Career Path"].value_counts().sort_index()
 
-# Remove índice e exibe tabela limpa
-st.dataframe(df.reset_index(drop=True), use_container_width=True)
+    fig, ax = plt.subplots(figsize=(6, 3.5))
 
-st.divider()
-
-# ===========================================================
-# 7. VISUALIZAÇÃO MINIMALISTA
-# ===========================================================
-st.subheader("📊 Distribuição por Banda de Carreira")
-
-if "Career Band" in df.columns:
-    contagem = df["Career Band"].value_counts().reset_index()
-    contagem.columns = ["Career Band", "Quantidade"]
-
-    fig, ax = plt.subplots(figsize=(8, 4))
-    bars = ax.bar(
-        contagem["Career Band"],
-        contagem["Quantidade"],
+    # Barras azul SIG minimalistas
+    ax.bar(
+        contagem.index,
+        contagem.values,
         color="#145efc",
-        edgecolor="#0e46c2",
-        width=0.6
+        edgecolor="none",
+        width=0.5,
     )
 
-    ax.set_facecolor("#f5f3f0")
-    fig.patch.set_facecolor("#f5f3f0")
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.spines["left"].set_color("#cccccc")
-    ax.spines["bottom"].set_color("#cccccc")
-    ax.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.5)
-    ax.set_ylabel("Número de Níveis", fontsize=10, labelpad=10)
-    ax.set_xlabel("Career Band", fontsize=10, labelpad=6)
-    ax.set_title("Distribuição da Estrutura de Níveis", fontsize=13, fontweight="bold", pad=10)
+    # Remover molduras e grades excessivas
+    for spine in ax.spines.values():
+        spine.set_visible(False)
 
-    # Adiciona valores sobre as barras
-    for bar in bars:
-        yval = bar.get_height()
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            yval + 0.2,
-            int(yval),
-            ha="center",
-            va="bottom",
-            fontsize=9,
-            color="#333"
-        )
+    ax.grid(axis="y", linestyle="--", linewidth=0.5, color="#ddd", alpha=0.6)
 
-    st.pyplot(fig, use_container_width=True)
-else:
-    st.warning("Coluna 'Career Band' não encontrada no arquivo Excel.")
+    ax.set_xlabel("")
+    ax.set_ylabel("")
+    ax.tick_params(axis="x", labelrotation=0, colors="#222", labelsize=10)
+    ax.tick_params(axis="y", colors="#222", labelsize=9)
+    ax.set_facecolor("none")
+    fig.patch.set_facecolor("none")
+
+    st.pyplot(fig)
 
 st.divider()
 
 # ===========================================================
-# 8. CONCLUSÃO
+# 8. EXPLICAÇÃO FINAL
 # ===========================================================
 st.markdown("""
-### 💡 Interpretação
-- A **Career Band** representa o agrupamento macro de carreira (ex.: *Operational*, *Professional*, *Leadership*).  
-- O **Global Grade** indica o nível global, usado como referência para estrutura, remuneração e mobilidade.  
-- A combinação entre ambos define **consistência global** e **equidade entre funções** dentro da SIG.
+### Interpretação e Aplicação
+
+A estrutura de níveis permite que cada colaborador compreenda onde sua posição se encontra dentro da organização.
+Ela também facilita o **planejamento de sucessão**, **benchmarking salarial** e a **mobilidade de carreira** entre áreas distintas.
+
+Os níveis não são apenas títulos hierárquicos — representam **impacto organizacional**, **complexidade das entregas**
+e **autonomia esperada** em cada estágio da trajetória profissional.
 """)
