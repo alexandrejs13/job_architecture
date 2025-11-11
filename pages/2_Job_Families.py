@@ -1,7 +1,11 @@
+# ===========================================================
+# 2_JOB_FAMILIES.PY — PADRONIZADO COM HEADER E SIDEBAR GLOBAL
+# ===========================================================
+
 import streamlit as st
 import pandas as pd
 import os
-# Importa a função visual global
+from pathlib import Path
 from utils.ui import sidebar_logo_and_title
 
 # ===========================================================
@@ -15,16 +19,20 @@ st.set_page_config(
 )
 
 # ===========================================================
-# 2. APLICA O VISUAL GLOBAL (SIDEBAR, CORES ETC)
+# 2. CSS GLOBAL E SIDEBAR UNIFICADA
 # ===========================================================
+css_path = Path(__file__).parents[1] / "assets" / "header.css"
+if css_path.exists():
+    with open(css_path) as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
 sidebar_logo_and_title()
 
 # ===========================================================
-# 3. ESTILOS CSS (INCLUINDO CABEÇALHO AZUL)
+# 3. CABEÇALHO AZUL PADRONIZADO
 # ===========================================================
 st.markdown("""
 <style>
-/* ===== CABEÇALHO PADRONIZADO ===== */
 .page-header {
     background-color: #145efc;
     color: white;
@@ -44,19 +52,17 @@ st.markdown("""
     width: 54px;
     height: 54px;
 }
-/* Corpo centralizado */
 .block-container {
     max-width: 900px !important;
     padding-left: 40px !important;
     padding-right: 40px !important;
 }
-/* Fundo da aplicação */
 [data-testid="stAppViewContainer"] {
     background-color: #f5f3f0;
     color: #202020;
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
 }
-/* ===== ESTILOS ORIGINAIS DA PÁGINA ===== */
+/* Estilos específicos da página */
 .jf-description-card {
     background-color: #ffffff;
     border-left: 5px solid #145efc;
