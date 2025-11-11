@@ -54,11 +54,9 @@ st.markdown("""
     padding-right: 40px !important;
 }
 
-/* GRID DE COMPARAÇÃO */
-.comparison-container {
-    display: flex;
-    gap: 25px;
-    align-items: flex-start;
+/* ===== CORREÇÃO DE ESPAÇAMENTO ENTRE CARDS ===== */
+[data-testid="stHorizontalBlock"] > div {
+    gap: 30px !important;
 }
 .profile-card {
     background: #fff;
@@ -70,7 +68,10 @@ st.markdown("""
     flex-direction: column;
     box-shadow: 0 4px 8px rgba(0,0,0,0.06);
     min-height: 170px;
+    margin-bottom: 30px !important;
 }
+
+/* ===== TÍTULOS E METADADOS ===== */
 .profile-title {
     font-size: 1.25rem;
     font-weight: 800;
@@ -84,7 +85,7 @@ st.markdown("""
     line-height: 1.4;
 }
 
-/* SEÇÕES */
+/* ===== SEÇÕES ===== */
 .section-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
