@@ -121,14 +121,15 @@ st.markdown("""
 # ===========================================================
 st.markdown("""
 <div class="section-text">
-A <strong>Job Architecture (JA)</strong> é o sistema que organiza e estrutura todas as posições da SIG, 
-definindo como agrupamos funções, níveis de responsabilidade e critérios de progressão.  
-Seu propósito é garantir <strong>transparência, consistência e alinhamento global</strong> entre 
-remuneração, desenvolvimento e governança organizacional.
+A <strong>Job Architecture (JA)</strong> é o modelo corporativo que estrutura de forma integrada todas as posições da organização, 
+definindo a lógica de agrupamento de funções, níveis de responsabilidade, critérios de progressão e diferenciais de complexidade.  
 
-Mais do que um catálogo de cargos, a Job Architecture é uma <strong>estrutura viva</strong> que conecta 
-o desenho organizacional à estratégia de talentos, assegurando que decisões sobre estrutura e carreira 
-sejam tomadas com base em princípios comuns e comparáveis.
+Baseada na metodologia global da <strong>Willis Towers Watson (WTW)</strong>, a Job Architecture fornece um framework que garante 
+<strong>equidade interna, consistência organizacional e comparabilidade externa</strong>, sustentando decisões estratégicas sobre 
+estrutura, remuneração, carreira e sucessão.  
+
+Mais do que um catálogo de cargos, trata-se de uma <strong>infraestrutura de governança</strong> que conecta o desenho organizacional 
+à gestão de talentos, assegurando que as práticas de gestão de pessoas sejam <strong>claras, coerentes e orientadas por propósito.</strong>
 </div>
 """, unsafe_allow_html=True)
 
@@ -142,7 +143,8 @@ with col1:
     <div class="pillar-card">
         <div class="pillar-title">Governança Global</div>
         <div class="pillar-text">
-        Estrutura padronizada que garante coerência entre funções, níveis e critérios de decisão em toda a organização.
+        Define princípios, critérios e regras universais para a criação, atualização e manutenção dos cargos, garantindo comparabilidade entre países, funções e níveis organizacionais. 
+        Essa governança assegura que toda posição seja avaliada de acordo com padrões globais e práticas de mercado reconhecidas.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -151,7 +153,9 @@ with col2:
     <div class="pillar-card">
         <div class="pillar-title">Clareza de Carreira</div>
         <div class="pillar-text">
-        Cada posição está vinculada a um Career Band e Global Grade, oferecendo visibilidade, mobilidade e previsibilidade de crescimento.
+        Cada cargo é vinculado a um <strong>Career Band</strong> e <strong>Global Grade</strong>, refletindo o escopo de atuação, 
+        o grau de autonomia e a natureza da contribuição.  
+        Essa estrutura fornece visibilidade sobre oportunidades de progressão, diferenciação de níveis e mobilidade lateral entre áreas.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -160,7 +164,9 @@ with col3:
     <div class="pillar-card">
         <div class="pillar-title">Integração de Sistemas</div>
         <div class="pillar-text">
-        A Job Architecture é a base para processos de remuneração, descrição de cargos, avaliação e benchmarking externo.
+        A Job Architecture serve como base única de referência para os principais processos de <strong>Remuneração, 
+        Performance Management, Talent Review e Benchmarking de Mercado</strong>.  
+        Isso garante que as decisões de pessoas estejam ancoradas em um modelo técnico e sustentável.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -171,38 +177,39 @@ with col3:
 st.markdown("""
 <div class="section-title">Estrutura da Arquitetura</div>
 <div class="section-text">
-A arquitetura é composta por cinco elementos integrados, que estabelecem um modelo corporativo uniforme:
+A arquitetura é composta por cinco elementos integrados, que formam um modelo organizacional padronizado e comparável globalmente:
 </div>
 
 <table class="job-table">
     <tr>
         <th>Elemento</th>
-        <th>Objetivo</th>
-        <th>Exemplos</th>
+        <th>Propósito</th>
+        <th>Exemplo de Aplicação</th>
     </tr>
     <tr>
         <td>Job Family</td>
-        <td>Organiza grupos funcionais amplos, conectados por competências e propósito comum.</td>
+        <td>Agrupa funções com natureza de trabalho e competências similares, que contribuem para um mesmo domínio funcional ou objetivo estratégico.</td>
         <td>Finanças, Engenharia, Recursos Humanos</td>
     </tr>
     <tr>
         <td>Sub-Job Family</td>
-        <td>Subdivide as famílias em especializações específicas.</td>
+        <td>Distingue especializações técnicas ou áreas de foco dentro de uma Job Family, permitindo maior precisão na definição de responsabilidades.</td>
         <td>Contabilidade, Engenharia de Processo, Desenvolvimento Organizacional</td>
     </tr>
     <tr>
         <td>Career Band</td>
-        <td>Define o escopo e amplitude de impacto do papel, orientando expectativas de entrega e complexidade.</td>
+        <td>Representa o nível hierárquico e o escopo de influência — desde funções técnicas até posições de liderança executiva — 
+        orientando expectativas de entrega e amplitude de impacto.</td>
         <td>Profissional, Gerencial, Executivo</td>
     </tr>
     <tr>
         <td>Global Grade</td>
-        <td>Diferencia os níveis de responsabilidade e complexidade dentro de cada banda.</td>
+        <td>Reflete a diferenciação de complexidade e contribuição dentro de cada banda, suportando análises salariais e equidade interna.</td>
         <td>GG07, GG09, GG12</td>
     </tr>
     <tr>
         <td>Generic Profile</td>
-        <td>Estabelece descrições corporativas de referência que asseguram consistência global.</td>
+        <td>Fornece descrições corporativas de referência, que representam o propósito essencial e os principais resultados esperados de cada nível.</td>
         <td>“Finance Specialist”, “HR Manager”</td>
     </tr>
 </table>
@@ -214,13 +221,14 @@ A arquitetura é composta por cinco elementos integrados, que estabelecem um mod
 st.markdown("""
 <div class="section-title">Importância Estratégica</div>
 <div class="section-text">
-A <strong>Job Architecture</strong> da SIG é o alicerce das práticas de gestão de pessoas, 
-fornecendo uma linguagem comum e governança corporativa global.  
-Ela possibilita comparar, avaliar e planejar carreiras de forma equitativa, 
-integrando remuneração, desempenho e desenvolvimento em um mesmo modelo de referência.
+A <strong>Job Architecture</strong> é o alicerce das práticas de <strong>Gestão de Pessoas e Governança Corporativa</strong>.  
+Ela fornece uma linguagem comum para estruturar, comparar e avaliar cargos, promovendo decisões justas e sustentáveis.  
 
-Ao alinhar estrutura, cultura e estratégia, a Job Architecture fortalece a conexão entre 
-<strong>crescimento organizacional</strong> e <strong>evolução profissional</strong>, 
-sustentando a meritocracia e a coerência nas decisões de talento.
+Com base em critérios consistentes de complexidade e contribuição, o modelo da WTW permite <strong>análises de equidade interna, 
+benchmarking de mercado e mapeamento de carreiras</strong> de forma padronizada.  
+
+Ao integrar estrutura organizacional, remuneração e desenvolvimento, a Job Architecture fortalece a conexão entre 
+<strong>estratégia de negócios, desempenho organizacional e evolução profissional</strong>, 
+garantindo coerência global e meritocracia nas decisões de talento.
 </div>
 """, unsafe_allow_html=True)
