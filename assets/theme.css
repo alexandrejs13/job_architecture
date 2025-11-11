@@ -128,3 +128,7 @@ footer {
   letter-spacing: normal !important;
   text-align: left !important;
 }
+/* Oculta o item "App" do menu multipágina */
+[data-testid="stSidebarNav"] ul li:first-child {
+    display: none !important;
+}
