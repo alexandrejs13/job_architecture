@@ -5,7 +5,7 @@ import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
 from utils.data_loader import load_excel_data
-from utils.ui_components import section, lock_sidebar
+from utils.ui_components import section, lock_sidebar # Mantido, mas não usado para o header
 from utils.ui import setup_sidebar
 
 # ===========================================================
@@ -26,228 +26,247 @@ def toggle_fullscreen():
     st.session_state.fullscreen = not st.session_state.fullscreen
 
 # ===========================================================
-# 3. CSS BASE (ADAPTADO PARA O NOVO TEMA)
+# 3. CSS BASE (ADAPTADO PARA O NOVO TEMA E HEADER)
 # ===========================================================
 css_base = """
 <style>
 :root {
-  --blue: #145efc;    /* SIG Sky - Destaque principal */
-  --green: #28a745;   /* Professional (mantido para distinção funcional) */
-  --orange: #fd7e14;  /* Technical (mantido para distinção funcional) */
-  --purple: #6f42c1;  /* Outros */
-  --red: #dc3545;     /* Ações destrutivas/sair */
-  --gray-line: #e0e0e0;
-  --gray-bg: #f8f9fa;
-  --dark-gray: #333333;
+    --blue: #145efc;    /* SIG Sky - Destaque principal */
+    --green: #28a745;   /* Professional (mantido para distinção funcional) */
+    --orange: #fd7e14;  /* Technical (mantido para distinção funcional) */
+    --purple: #6f42c1;  /* Outros */
+    --red: #dc3545;     /* Ações destrutivas/sair */
+    --gray-line: #e0e0e0;
+    --gray-bg: #f8f9fa;
+    --dark-gray: #333333;
 }
 
+/* ============ NOVO HEADER PADRÃO (DA PAG 2/3) ============ */
+.page-header {
+    background-color: var(--blue);
+    color: white;
+    font-weight: 750;
+    font-size: 1.35rem;
+    border-radius: 12px;
+    padding: 22px 36px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.page-header img { width: 48px; height: 48px; }
+/* =========================================================== */
+
 .block-container {
-  max-width: 1600px !important;
-  margin: auto !important;
-  padding: 2rem 5rem !important;
+    max-width: 1600px !important;
+    margin: auto !important;
+    padding: 2rem 5rem !important;
 }
 
 /* Topbar ajustada para não conflitar com o novo cabeçalho global se houver */
 .topbar {
-  position: sticky;
-  top: 0;
-  z-index: 200;
-  background: var(--gray-bg);
-  padding: 15px 20px;
-  border-bottom: 2px solid var(--blue);
-  margin-bottom: 20px;
-  border-radius: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    background: var(--gray-bg);
+    padding: 15px 20px;
+    border-bottom: 2px solid var(--blue);
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* Adicionado sombra sutil */
 }
 
 /* h1 agora é controlado pelo utils/ui.py (preto e bold) */
 
 .map-wrapper {
-  height: 75vh;
-  overflow: auto;
-  border-top: 3px solid var(--blue);
-  border-bottom: 3px solid var(--blue);
-  background: white;
-  position: relative;
-  will-change: transform;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  border-radius: 8px;
+    height: 75vh;
+    overflow: auto;
+    border-top: 3px solid var(--blue);
+    border-bottom: 3px solid var(--blue);
+    background: white;
+    position: relative;
+    will-change: transform;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-radius: 8px;
 }
 
 .jobmap-grid {
-  display: grid;
-  border-collapse: collapse;
-  width: max-content;
-  font-size: 0.88rem;
-  grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
-  grid-auto-rows: 110px !important;
-  align-content: start !important;
-  row-gap: 0px !important;
-  column-gap: 0px !important;
-  background-color: white !important;
+    display: grid;
+    border-collapse: collapse;
+    width: max-content;
+    font-size: 0.88rem;
+    grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
+    grid-auto-rows: 110px !important;
+    align-content: start !important;
+    row-gap: 0px !important;
+    column-gap: 0px !important;
+    background-color: white !important;
 }
 
 .jobmap-grid > div {
-  background-color: white;
-  border-right: 1px solid var(--gray-line);
-  border-bottom: 1px solid var(--gray-line);
-  box-sizing: border-box;
+    background-color: white;
+    border-right: 1px solid var(--gray-line);
+    border-bottom: 1px solid var(--gray-line);
+    box-sizing: border-box;
 }
 
 .header-family {
-  font-weight: 800;
-  color: #fff;
-  padding: 0 5px;
-  text-align: center;
-  border-right: 1px solid rgba(255,255,255,0.3) !important;
-  border-bottom: 0px none !important;
-  outline: none !important;
-  margin-bottom: 0px !important;
-  position: sticky;
-  top: 0;
-  z-index: 57;
-  white-space: normal;
-  height: 50px !important;
-  max-height: 50px !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  grid-row: 1;
-  font-size: 0.9rem;
-  overflow: hidden;
+    font-weight: 800;
+    color: #fff;
+    padding: 0 5px;
+    text-align: center;
+    border-right: 1px solid rgba(255,255,255,0.3) !important;
+    border-bottom: 0px none !important;
+    outline: none !important;
+    margin-bottom: 0px !important;
+    position: sticky;
+    top: 0;
+    z-index: 57;
+    white-space: normal;
+    height: 50px !important;
+    max-height: 50px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    grid-row: 1;
+    font-size: 0.9rem;
+    overflow: hidden;
 }
 
 .header-subfamily {
-  font-weight: 600;
-  padding: 0 5px;
-  text-align: center;
-  position: sticky;
-  top: 50px;
-  z-index: 56;
-  white-space: normal;
-  border-top: 0px none !important;
-  margin-top: 0px !important;
-  border-bottom: 0px none !important;
-  outline: none !important;
-  height: 45px !important;
-  max-height: 45px !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  grid-row: 2;
-  font-size: 0.85rem;
-  overflow: hidden;
-  color: var(--dark-gray);
+    font-weight: 600;
+    padding: 0 5px;
+    text-align: center;
+    position: sticky;
+    top: 50px;
+    z-index: 56;
+    white-space: normal;
+    border-top: 0px none !important;
+    margin-top: 0px !important;
+    border-bottom: 0px none !important;
+    outline: none !important;
+    height: 45px !important;
+    max-height: 45px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    grid-row: 2;
+    font-size: 0.85rem;
+    overflow: hidden;
+    color: var(--dark-gray);
 }
 
 .gg-header {
-  background: var(--dark-gray) !important;
-  color: white;
-  font-weight: 800;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  grid-row: 1 / span 2;
-  grid-column: 1;
-  position: sticky;
-  left: 0;
-  top: 0;
-  z-index: 60;
-  border-right: 2px solid white !important;
-  border-bottom: 0px none !important;
-  height: 95px !important;
+    background: var(--dark-gray) !important;
+    color: white;
+    font-weight: 800;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    grid-row: 1 / span 2;
+    grid-column: 1;
+    position: sticky;
+    left: 0;
+    top: 0;
+    z-index: 60;
+    border-right: 2px solid white !important;
+    border-bottom: 0px none !important;
+    height: 95px !important;
 }
 
 .gg-cell {
-  background: var(--dark-gray) !important;
-  color: white;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: sticky;
-  left: 0;
-  z-index: 55;
-  border-right: 2px solid white !important;
-  border-top: 1px solid #555 !important;
-  grid-column: 1;
-  font-size: 0.9rem;
-  height: 110px !important;
+    background: var(--dark-gray) !important;
+    color: white;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: sticky;
+    left: 0;
+    z-index: 55;
+    border-right: 2px solid white !important;
+    border-top: 1px solid #555 !important;
+    grid-column: 1;
+    font-size: 0.9rem;
+    height: 110px !important;
 }
 
 .cell {
-  background: white !important;
-  padding: 8px;
-  text-align: left;
-  vertical-align: middle;
-  z-index: 1;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  align-content: center;
-  height: 100% !important;
-  overflow: hidden;
+    background: white !important;
+    padding: 8px;
+    text-align: left;
+    vertical-align: middle;
+    z-index: 1;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    align-content: center;
+    height: 100% !important;
+    overflow: hidden;
 }
 
 .job-card {
-  background: #ffffff;
-  border: 1px solid var(--gray-line);
-  border-left-width: 5px !important;
-  border-left-style: solid !important;
-  border-radius: 6px;
-  padding: 6px 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  font-size: 0.75rem;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  white-space: normal;
-  width: 135px;
-  height: 75px;
-  flex: 0 0 135px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  overflow: hidden;
-  transition: all 0.2s ease-in-out;
+    background: #ffffff;
+    border: 1px solid var(--gray-line);
+    border-left-width: 5px !important;
+    border-left-style: solid !important;
+    border-radius: 6px;
+    padding: 6px 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    font-size: 0.75rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    width: 135px;
+    height: 75px;
+    flex: 0 0 135px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
 }
 .job-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 12px rgba(0,0,0,0.1);
-  border-color: var(--blue);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 12px rgba(0,0,0,0.1);
+    border-color: var(--blue);
 }
 .job-card b {
-  display: block;
-  font-weight: 700;
-  margin-bottom: 3px;
-  line-height: 1.2;
-  color: #222;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+    display: block;
+    font-weight: 700;
+    margin-bottom: 3px;
+    line-height: 1.2;
+    color: #222;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 .job-card span {
-  display: block;
-  font-size: 0.7rem;
-  color: #666;
-  line-height: 1.1;
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    display: block;
+    font-size: 0.7rem;
+    color: #666;
+    line-height: 1.1;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .gg-header::after, .gg-cell::after {
-  content: "";
-  position: absolute;
-  right: -5px;
-  top: 0;
-  bottom: 0;
-  width: 5px;
-  background: linear-gradient(to right, rgba(0,0,0,0.1), transparent);
-  pointer-events: none;
+    content: "";
+    position: absolute;
+    right: -5px;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: linear-gradient(to right, rgba(0,0,0,0.1), transparent);
+    pointer-events: none;
 }
 [data-testid="stButton"] button {
     border-color: var(--blue) !important;
@@ -334,9 +353,9 @@ def generate_map_html(df_filtered, families_order):
             count = len(records)
             cards_count_map[(g, c_idx)] = count
             if count > 0:
-                 content_map[(g, c_idx)] = "|".join(sorted(set(r["Job Profile"] + r["Career Path"] for r in records)))
+                content_map[(g, c_idx)] = "|".join(sorted(set(r["Job Profile"] + r["Career Path"] for r in records)))
             else:
-                 content_map[(g, c_idx)] = None
+                content_map[(g, c_idx)] = None
 
     span_map = {}
     skip_set = set()
@@ -370,20 +389,20 @@ def generate_map_html(df_filtered, families_order):
             records = cards_data.get((f, sf, g), [])
             cards_html = []
             for row in records:
-                 path_color = get_path_color(row['Career Path'])
-                 tooltip = f"{row['Job Profile']} | {row['Career Path']} ({gg_label})"
-                 cards_html.append(
+                path_color = get_path_color(row['Career Path'])
+                tooltip = f"{row['Job Profile']} | {row['Career Path']} ({gg_label})"
+                cards_html.append(
                     f"<div class='job-card' style='border-left-color: {path_color} !important;' title='{tooltip}'>"
                     f"<b>{row['Job Profile']}</b><span>{row['Career Path']} - {gg_label}</span></div>"
-                 )
+                )
             cell_html_cache[(g, c_idx)] = "".join(cards_html)
 
     col_widths = ["100px"]
     for (_, sf), c_idx in subfamilias_map.items():
         max_cards = 0
         for g in grades:
-             if (g, c_idx) not in skip_set:
-                 max_cards = max(max_cards, cards_count_map.get((g, c_idx), 0))
+            if (g, c_idx) not in skip_set:
+                max_cards = max(max_cards, cards_count_map.get((g, c_idx), 0))
         width_cards = 135 + 25 if max_cards <= 1 else (min(max(1, max_cards), 6) * 135) + ((min(max(1, max_cards), 6) - 1) * 8) + 25
         col_widths.append(f"{max(len(str(sf)) * 5 + 30, width_cards)}px")
     grid_template = f"grid-template-columns: {' '.join(col_widths)};"
@@ -415,20 +434,28 @@ def generate_map_html(df_filtered, families_order):
     return "".join(html)
 
 # ===========================================================
-# 5. LÓGICA DA PÁGINA
+# 5. LÓGICA DA PÁGINA E RENDERIZAÇÃO DO NOVO HEADER
 # ===========================================================
 df = get_prepared_data()
 if df.empty:
     st.error("Erro ao carregar dados.")
     st.stop()
 
-section("🗺️ Job Map")
+# NOVO HEADER PADRÃO (Substitui section("🗺️ Job Map"))
+st.markdown("""
+<div class="page-header">
+  <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/job%20map%20globe%20location.png" alt="icon">
+  Mapeamento de Cargos (Job Map)
+</div>
+""", unsafe_allow_html=True)
+
 
 preferred_order = ["Top Executive/General Management", "Corporate Affairs/Communications", "Legal & Internal Audit", "Finance", "IT", "People & Culture", "Sales", "Marketing", "Technical Services", "Research & Development", "Technical Engineering", "Operations", "Supply Chain & Logistics", "Quality Management", "Facility & Administrative Services"]
 existing_families = set(df["Job Family"].unique())
 families_order = [f for f in preferred_order if f in existing_families] + sorted(list(existing_families - set(preferred_order)))
 
 if not st.session_state.fullscreen:
+    # A topbar é mantida, mas ajustada para o novo layout sem o 'section'
     st.markdown("<div class='topbar'>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([2, 2, 0.8])
     with c1: fam_filter = st.selectbox("Família", ["Todas"] + families_order)
@@ -436,11 +463,13 @@ if not st.session_state.fullscreen:
     with c2: path_filter = st.selectbox("Trilha", ["Todas"] + sorted([p for p in paths if pd.notna(p) and p != 'nan' and p != '']))
     with c3:
         st.write("")
-        st.markdown('<div style="margin-top: 15px;">', unsafe_allow_html=True)
+        # Ajustado o margin-top para alinhar o botão com o selectbox
+        st.markdown('<div style="margin-top: 5px;">', unsafe_allow_html=True) 
         if st.button("⛶ Tela Cheia", use_container_width=True): toggle_fullscreen(); st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 else:
+    # Lógica de tela cheia
     fam_filter, path_filter = st.session_state.get('fam_filter', 'Todas'), st.session_state.get('path_filter', 'Todas')
     st.markdown('<div id="fixed-exit-container">', unsafe_allow_html=True)
     if st.button("❌ Sair"): toggle_fullscreen(); st.rerun()
