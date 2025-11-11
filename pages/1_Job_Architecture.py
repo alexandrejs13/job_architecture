@@ -57,14 +57,6 @@ st.markdown("""
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
 }
 
-/* ===== CORREÇÃO PARA CARTÕES DE MESMA ALTURA ===== */
-/* Aplica Flexbox nas colunas do Streamlit para que os filhos (os cards) preencham 100% da altura */
-[data-testid="stColumn"] {
-    display: flex;
-    flex-direction: column;
-}
-/* ================================================ */
-
 /* ===== CARDS ===== */
 .pillar-card {
     background-color: #ffffff;
@@ -72,7 +64,7 @@ st.markdown("""
     border-radius: 8px;
     padding: 22px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    height: 100%; /* Mantido para garantir que o card preencha a altura da coluna */
+    height: 100%;
 }
 .pillar-title {
     font-weight: 700;
@@ -130,7 +122,7 @@ st.markdown("""
 st.markdown("""
 <div class="section-text">
 A <strong>Job Architecture (JA)</strong> é o sistema que organiza e estrutura todas as posições da SIG, 
-definindo como agrupamos funções, níveis de responsabilidade e critérios de progressão. 
+definindo como agrupamos funções, níveis de responsabilidade e critérios de progressão.  
 Seu propósito é garantir <strong>transparência, consistência e alinhamento global</strong> entre 
 remuneração, desenvolvimento e governança organizacional.
 
@@ -173,4 +165,62 @@ with col3:
     </div>
     """, unsafe_allow_html=True)
 
-# (Restante do seu código...)
+# ===========================================================
+# 6. ESTRUTURA CONCEITUAL
+# ===========================================================
+st.markdown("""
+<div class="section-title">Estrutura da Arquitetura</div>
+<div class="section-text">
+A arquitetura é composta por cinco elementos integrados, que estabelecem um modelo corporativo uniforme:
+</div>
+
+<table class="job-table">
+    <tr>
+        <th>Elemento</th>
+        <th>Objetivo</th>
+        <th>Exemplos</th>
+    </tr>
+    <tr>
+        <td>Job Family</td>
+        <td>Organiza grupos funcionais amplos, conectados por competências e propósito comum.</td>
+        <td>Finanças, Engenharia, Recursos Humanos</td>
+    </tr>
+    <tr>
+        <td>Sub-Job Family</td>
+        <td>Subdivide as famílias em especializações específicas.</td>
+        <td>Contabilidade, Engenharia de Processo, Desenvolvimento Organizacional</td>
+    </tr>
+    <tr>
+        <td>Career Band</td>
+        <td>Define o escopo e amplitude de impacto do papel, orientando expectativas de entrega e complexidade.</td>
+        <td>Profissional, Gerencial, Executivo</td>
+    </tr>
+    <tr>
+        <td>Global Grade</td>
+        <td>Diferencia os níveis de responsabilidade e complexidade dentro de cada banda.</td>
+        <td>GG07, GG09, GG12</td>
+    </tr>
+    <tr>
+        <td>Generic Profile</td>
+        <td>Estabelece descrições corporativas de referência que asseguram consistência global.</td>
+        <td>“Finance Specialist”, “HR Manager”</td>
+    </tr>
+</table>
+""", unsafe_allow_html=True)
+
+# ===========================================================
+# 7. IMPORTÂNCIA ESTRATÉGICA
+# ===========================================================
+st.markdown("""
+<div class="section-title">Importância Estratégica</div>
+<div class="section-text">
+A <strong>Job Architecture</strong> da SIG é o alicerce das práticas de gestão de pessoas, 
+fornecendo uma linguagem comum e governança corporativa global.  
+Ela possibilita comparar, avaliar e planejar carreiras de forma equitativa, 
+integrando remuneração, desempenho e desenvolvimento em um mesmo modelo de referência.
+
+Ao alinhar estrutura, cultura e estratégia, a Job Architecture fortalece a conexão entre 
+<strong>crescimento organizacional</strong> e <strong>evolução profissional</strong>, 
+sustentando a meritocracia e a coerência nas decisões de talento.
+</div>
+""", unsafe_allow_html=True)
