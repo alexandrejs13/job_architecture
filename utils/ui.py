@@ -1,29 +1,51 @@
 import streamlit as st
 
 # ===========================================================
-# SIDEBAR LIMPA — Apenas logo SIG centralizado e sem divisor inferior
+# SIDEBAR LIMPA — Logo centralizado e sem linha inferior
 # ===========================================================
 def sidebar_logo_and_title():
     logo_url = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
 
     st.sidebar.markdown("""
     <style>
-        /* === Remove qualquer linha, borda ou sombra da sidebar === */
+        /* Remove TODAS as bordas, sombras e pseudo-elementos da sidebar */
         section[data-testid="stSidebar"],
         [data-testid="stSidebarNav"],
-        [data-testid="stSidebarNav"]::after,
         [data-testid="stSidebarNav"]::before,
+        [data-testid="stSidebarNav"]::after,
+        section[data-testid="stSidebar"] div,
         section[data-testid="stSidebar"] > div:first-child,
-        section[data-testid="stSidebar"] div[data-testid="stVerticalBlockBorderWrapper"],
-        section[data-testid="stSidebar"] div[data-testid="stDecoration"],
-        section[data-testid="stSidebar"] div[data-testid="stSidebarContent"] {
+        section[data-testid="stSidebar"] [data-testid="stSidebarContent"],
+        section[data-testid="stSidebar"] [data-testid="stDecoration"],
+        section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] {
             border: none !important;
+            border-top: none !important;
+            border-bottom: none !important;
             box-shadow: none !important;
             outline: none !important;
-            background: #fff !important;
+            background: #ffffff !important;
         }
 
-        /* Bloqueia redimensionamento da sidebar */
+        /* Remoção de divisores internos (o problema principal!) */
+        [data-testid="stSidebar"] hr,
+        [data-testid="stSidebar"] div:has(hr),
+        [data-testid="stSidebar"] div[role="separator"],
+        [data-testid="stSidebar"]::after {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+        }
+
+        /* Impede o Streamlit de recriar o divisor por sombra */
+        [data-testid="stSidebar"]::before {
+            content: none !important;
+            display: none !important;
+        }
+
+        /* Bloqueia redimensionamento e garante alinhamento */
         section[data-testid="stSidebar"] {
             resize: none !important;
             overflow: hidden !important;
@@ -31,26 +53,24 @@ def sidebar_logo_and_title():
             max-width: 300px !important;
         }
 
-        /* Reposiciona menu e remove espaços */
+        /* Menu e espaçamento refinado */
         [data-testid="stSidebarNav"] {
             margin-top: 140px !important;
             padding-bottom: 0 !important;
         }
 
-        /* Header fixo com apenas o logo */
+        /* Header fixo com o logo centralizado */
         .sidebar-header {
             position: fixed;
-            top: 72px; /* alinhado ao container azul */
+            top: 72px; /* Alinhado ao container azul */
             left: 0;
             width: 300px;
             height: 100px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #ffffff;
+            background-color: #ffffff !important;
             z-index: 100;
-            border: none !important;
-            box-shadow: none !important;
         }
 
         .sidebar-header img {
