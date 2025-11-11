@@ -39,11 +39,11 @@ def load_level_data():
 
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA (GARANTINDO O ÍCONE)
+# 1. CONFIGURAÇÃO DE PÁGINA (ÍCONE AJUSTADO PARA COERÊNCIA)
 # ===========================================================
 st.set_page_config(
     page_title="Structure Level", 
-    page_icon="🪜", # ÍCONE DEFINIDO: 🪜
+    page_icon="⚙️", # AJUSTADO: Ícone de engrenagem para coerência com Structure Level/Processo
     layout="wide", 
     initial_sidebar_state="expanded"
 )
@@ -51,7 +51,7 @@ st.set_page_config(
 # ===========================================================
 # 2. APLICA VISUAL GLOBAL E SIDEBAR
 # ===========================================================
-setup_sidebar() # Esta função deve ser responsável por aplicar o CSS e ícones da sidebar
+setup_sidebar() 
 
 # ===========================================================
 # 3. CSS PADRÃO
@@ -96,10 +96,10 @@ h1 { display: none !important; }
 # 5. CONTEÚDO PRINCIPAL E TABELA
 # ===========================================================
 
-# Renderiza o header padrão
+# Renderiza o header padrão (ÍCONE AJUSTADO PARA process.png)
 st.markdown(f"""
 <div class="page-header">
-  <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png" alt="icon">
+  <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/process.png" alt="icon">
   Estrutura de Níveis (Levels)
 </div>
 """, unsafe_allow_html=True)
