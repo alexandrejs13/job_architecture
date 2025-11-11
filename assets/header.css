@@ -1,17 +1,17 @@
-/* ========== MENU LATERAL COM ÍCONES CUSTOMIZADOS ========== */
+/* ===== MENU LATERAL COM ÍCONES CUSTOMIZADOS ===== */
 
-/* Oculta o item inicial (App) */
+/* Esconde o primeiro item "App" */
 [data-testid="stSidebarNav"] ul li:first-child {
   display: none !important;
 }
 
-/* Adiciona espaço para os ícones */
+/* Links com espaçamento para ícone */
 [data-testid="stSidebarNav"] ul li a {
   position: relative;
   padding-left: 32px !important;
 }
 
-/* Ícone base */
+/* Ícones */
 [data-testid="stSidebarNav"] ul li a::before {
   content: "";
   position: absolute;
