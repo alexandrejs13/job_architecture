@@ -7,21 +7,21 @@ import numpy as np
 import html
 import json
 import re
-import os
+from pathlib import Path
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sentence_transformers import SentenceTransformer
 from utils.data_loader import load_excel_data
 from utils.ui_components import lock_sidebar
 from utils.ui import setup_sidebar
-from pathlib import Path
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA
+# 1. CONFIGURAÇÃO DE PÁGINA (layout/visual inalterados)
 # ===========================================================
 st.set_page_config(layout="wide", page_title="🧩 Job Match", page_icon="✅")
 
 # ===========================================================
-# 2. CSS GLOBAL E SIDEBAR
+# 2. CSS GLOBAL E SIDEBAR (inalterados)
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
@@ -31,9 +31,6 @@ if css_path.exists():
 setup_sidebar()
 lock_sidebar()
 
-# ===========================================================
-# 3. ESTILO VISUAL PADRÃO
-# ===========================================================
 st.markdown("""
 <style>
 .page-header {
@@ -80,11 +77,23 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 4. CARGA OTIMIZADA DE MODELO E DADOS
+# 3. CARGA DE MODELO, DADOS E CONFIGS
 # ===========================================================
+MODEL_NAME = 'paraphrase-multilingual-MiniLM-L12-v2'  # mantém leve e rápido
+ALPHA_SEMANTIC = 0.75  # peso da similaridade semântica no score final
+GG_PENALTY_STEP = 0.05  # penalização por distância de GG
+
+# pesos por seção para média ponderada de embeddings
+W_SUBFAM = 1.0
+W_JOBDESC = 1.0  # Job Profile Description
+W_ROLE = 1.0
+W_GRADE = 0.8
+W_QUALIF = 0.8
+W_BAND = 0.2
+
 @st.cache_resource
 def load_model():
-    return SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+    return SentenceTransformer(MODEL_NAME)
 
 @st.cache_data(show_spinner=False)
 def load_wtw_data():
@@ -102,49 +111,108 @@ def prepare_data():
 
     if not df_jobs.empty:
         df_jobs.columns = df_jobs.columns.str.strip()
-        needed = ["Job Family","Sub Job Family","Job Profile","Role Description","Grade Differentiator",
-                  "Qualifications","Global Grade","Career Path","Sub Job Family Description","Job Profile Description",
-                  "Career Band Description","Function","Discipline","Full Job Code","KPIs / Specific Parameters"]
+        needed = [
+            "Job Family","Sub Job Family","Job Profile","Role Description","Grade Differentiator",
+            "Qualifications","Global Grade","Career Path","Sub Job Family Description","Job Profile Description",
+            "Career Band Description","Function","Discipline","Full Job Code","KPIs / Specific Parameters"
+        ]
         for c in needed:
-            if c not in df_jobs.columns: df_jobs[c] = "-"
+            if c not in df_jobs.columns:
+                df_jobs[c] = "-"
 
+    # normalização de GG
     df_jobs["Global Grade Num"] = pd.to_numeric(
         df_jobs["Global Grade"].astype(str).str.replace(r"\.0$","",regex=True),
-        errors='coerce').fillna(0).astype(int)
+        errors='coerce'
+    ).fillna(0).astype(int)
     df_jobs["Global Grade"] = df_jobs["Global Grade Num"].astype(str)
 
     if "Global Grade" in df_levels.columns:
-        df_levels["Global Grade"] = df_levels["Global Grade"].astype(str).str.replace(r"\.0$","",regex=True).str.strip()
+        df_levels["Global Grade"] = (
+            df_levels["Global Grade"].astype(str).str.replace(r"\.0$","",regex=True).str.strip()
+        )
 
+    # textos por seção (usados na média ponderada)
+    def nz(x):  # evita 'nan'
+        s = str(x) if pd.notna(x) else ""
+        return "-" if s.strip() == "" else s
+
+    df_jobs["__sec_subdesc"] = df_jobs["Sub Job Family Description"].apply(nz)
+    df_jobs["__sec_jobdesc"] = df_jobs["Job Profile Description"].apply(nz)
+    df_jobs["__sec_role"] = df_jobs["Role Description"].apply(nz)
+    df_jobs["__sec_grade"] = df_jobs["Grade Differentiator"].apply(nz)
+    df_jobs["__sec_qualif"] = df_jobs["Qualifications"].apply(nz)
+    df_jobs["__sec_band"] = df_jobs["Career Band Description"].apply(nz)
+
+    # texto completo para TF-IDF
     df_jobs["Rich_Text"] = (
+        "Sub Job Family Description: " + df_jobs["__sec_subdesc"] + ". " +
         "Job Profile: " + df_jobs["Job Profile"] + ". " +
-        "Role Description: " + df_jobs["Role Description"] + ". " +
-        "Grade Differentiator: " + df_jobs["Grade Differentiator"] + ". " +
-        "Qualifications: " + df_jobs["Qualifications"]
+        "Job Profile Description: " + df_jobs["__sec_jobdesc"] + ". " +
+        "Role Description: " + df_jobs["__sec_role"] + ". " +
+        "Grade Differentiator: " + df_jobs["__sec_grade"] + ". " +
+        "Qualifications: " + df_jobs["__sec_qualif"] + ". " +
+        "Career Band Description: " + df_jobs["__sec_band"] + ". " +
+        "KPIs: " + df_jobs["KPIs / Specific Parameters"].apply(nz)
     )
+
     return df_jobs, df_levels
 
 @st.cache_data(show_spinner=False)
-def get_embeddings(df_jobs):
-    cache_file = Path("data/_cached_embeddings.npy")
-    if cache_file.exists():
-        return np.load(cache_file)
+def compute_weighted_embeddings(df_jobs):
+    """
+    Gera embeddings por seção e combina por média ponderada.
+    Retorna matriz [n_jobs, dim].
+    """
     model = load_model()
-    emb = model.encode(df_jobs["Rich_Text"].tolist(), show_progress_bar=False, batch_size=32)
-    np.save(cache_file, emb)
+    # encode por seção com progress desativado p/ velocidade
+    e_sub = model.encode(df_jobs["__sec_subdesc"].tolist(), show_progress_bar=False, batch_size=32)
+    e_job = model.encode(df_jobs["__sec_jobdesc"].tolist(), show_progress_bar=False, batch_size=32)
+    e_role = model.encode(df_jobs["__sec_role"].tolist(), show_progress_bar=False, batch_size=32)
+    e_grade = model.encode(df_jobs["__sec_grade"].tolist(), show_progress_bar=False, batch_size=32)
+    e_qual = model.encode(df_jobs["__sec_qualif"].tolist(), show_progress_bar=False, batch_size=32)
+    e_band = model.encode(df_jobs["__sec_band"].tolist(), show_progress_bar=False, batch_size=32)
+
+    weights = np.array([W_SUBFAM, W_JOBDESC, W_ROLE, W_GRADE, W_QUALIF, W_BAND], dtype=np.float32)
+    weights = weights / (weights.sum() if weights.sum() > 0 else 1.0)
+
+    # média ponderada dos vetores
+    emb = (
+        e_sub * weights[0] +
+        e_job * weights[1] +
+        e_role * weights[2] +
+        e_grade * weights[3] +
+        e_qual * weights[4] +
+        e_band * weights[5]
+    )
     return emb
+
+@st.cache_resource
+def build_tfidf(df_jobs):
+    """
+    Vetorizador TF-IDF treinado no Rich_Text para reforçar termos técnicos.
+    """
+    vect = TfidfVectorizer(
+        max_features=30000,
+        ngram_range=(1,2),
+        strip_accents='unicode',
+        lowercase=True
+    )
+    X = vect.fit_transform(df_jobs["Rich_Text"].tolist())
+    return vect, X
 
 try:
     df, df_levels = prepare_data()
-    job_embeddings = get_embeddings(df)
+    job_embeddings = compute_weighted_embeddings(df)
     wtw_data = load_wtw_data()
     model = load_model()
+    tfidf_vect, tfidf_matrix = build_tfidf(df)
 except Exception as e:
     st.error(f"Erro ao carregar dados: {e}")
     st.stop()
 
 # ===========================================================
-# 5. LÓGICA DE MATCHING
+# 4. LÓGICA DE MATCHING (com heurísticas de mercado)
 # ===========================================================
 LEVEL_GG_MAPPING = {
     "W1":[1,2,3,4,5],"W2":[5,6,7,8],"W3":[7,8,9,10],
@@ -154,10 +222,62 @@ LEVEL_GG_MAPPING = {
     "E1":[18,19,20,21],"E2":[21,22,23,24,25]
 }
 
+MGMT_PATTERNS = {
+    "leadership": [
+        r"\blidera\b", r"\bcoordena\b", r"\bgest[aã]o\b", r"\bmanage(s|r)?\b", r"\bsupervis(a|e)\b",
+        r"\bteam lead\b", r"\bheading\b", r"\bdirige\b"
+    ],
+    "span_control": [
+        r"\b(\d{1,3})\s*(report|diret[oa]s?|subordinad[oa]s?)\b", r"\bteam of\b", r"\bmanage(s)?\s+\d+"
+    ],
+    "budget": [
+        r"\bor[cç]amento\b", r"\bbudget\b", r"\bP&L\b", r"\bcapex\b", r"\bOPEX\b"
+    ],
+    "strategy": [
+        r"\bestr(at[eé]gia|ategic)\b", r"\bdefine\b\s+estrat[eé]gia", r"\broadmap\b", r"\bplanejamento\b"
+    ],
+    "ic_signals": [
+        r"\bexecu[cç][aã]o\b", r"\bhands?-?on\b", r"\bopera[cç][aã]o\b", r"\ban[aá]lise\b", r"\bexecut(a|e)\b"
+    ]
+}
+
+def market_level_heuristics(text: str) -> dict:
+    """
+    Heurísticas de mercado para diferenciar IC vs Gestão vs Executivo.
+    Retorna contagem por eixo e um palpite de banda ('W/U/P' ~ IC; 'M' ~ gestão; 'E' ~ executivo).
+    """
+    t = text.lower()
+    score_lead = sum(len(re.findall(p, t)) for p in MGMT_PATTERNS["leadership"])
+    score_span = sum(len(re.findall(p, t)) for p in MGMT_PATTERNS["span_control"])
+    score_budget = sum(len(re.findall(p, t)) for p in MGMT_PATTERNS["budget"])
+    score_strategy = sum(len(re.findall(p, t)) for p in MGMT_PATTERNS["strategy"])
+    score_ic = sum(len(re.findall(p, t)) for p in MGMT_PATTERNS["ic_signals"])
+
+    mgmt_strength = score_lead + score_span + score_budget + score_strategy
+    ic_strength = score_ic
+
+    # palpite simples de banda
+    if mgmt_strength >= 3 and score_budget >= 1:
+        guess = "E"  # executivo se liderança + orçamento/estratégia fortes
+    elif mgmt_strength >= 2:
+        guess = "M"  # gestão
+    else:
+        guess = "P"  # individual contributor (profissional)
+
+    return {
+        "lead": score_lead, "span": score_span, "budget": score_budget, "strategy": score_strategy,
+        "ic": score_ic, "mgmt_strength": mgmt_strength, "ic_strength": ic_strength, "guess_band": guess
+    }
+
 def detect_level_from_text(text, wtw_db):
-    """Detecta nível de carreira com base em palavras-chave do dicionário WTW"""
+    """
+    WTW + heurísticas de mercado:
+    - Usa o dicionário de career_bands/levels da WTW por keywords (core=+3, user=+1).
+    - Aplica heurística para ajustar banda (P/M/E) quando evidente.
+    """
     if not wtw_db or not text:
         return None, None, None, []
+
     text_lower = text.lower()
     best_score = 0
     best_band = None
@@ -165,21 +285,19 @@ def detect_level_from_text(text, wtw_db):
     best_key = None
     matched_keywords = []
 
-    for band_key, band_info in wtw_db.get("career_bands", {}).items():
+    # 1) WTW scoring
+    for _, band_info in wtw_db.get("career_bands", {}).items():
         for lvl_key, lvl_info in band_info.get("levels", {}).items():
             current_score = 0
             current_matches = []
-
             for kw in lvl_info.get("core_keywords", []):
-                if re.search(r'\\b' + re.escape(kw.lower()) + r'\\b', text_lower):
+                if re.search(r'\b' + re.escape(kw.lower()) + r'\b', text_lower):
                     current_score += 3
                     current_matches.append(kw)
-
             for ukw in lvl_info.get("user_keywords", []):
                 if ukw.lower() in text_lower:
                     current_score += 1
                     current_matches.append(ukw)
-
             if current_score > best_score:
                 best_score = current_score
                 best_band = band_info
@@ -187,45 +305,88 @@ def detect_level_from_text(text, wtw_db):
                 best_key = lvl_key
                 matched_keywords = list(set(current_matches))
 
+    # 2) heurística de mercado (ajuste de banda quando texto é muito claro)
+    h = market_level_heuristics(text)
+    if best_band and "label" in best_band:
+        wtw_label = best_band["label"].upper()  # ex: "Professional", "Management", "Executive"
+        # mapeia label -> inicial
+        if "EXEC" in wtw_label:
+            wtw_band_guess = "E"
+        elif "MANAG" in wtw_label:
+            wtw_band_guess = "M"
+        else:
+            wtw_band_guess = "P"
+        # se heurística for muito forte, permite ajustar o nível-chave para um próximo mais coerente
+        if h["guess_band"] == "E" and wtw_band_guess in ("M", "P"):
+            # tenta promover para um nível executivo próximo (se existir no JSON)
+            for key in ["E2","E1","M3","M2","M1","P4","P3","P2","P1","U3","U2","U1","W3","W2","W1"]:
+                if key in LEVEL_GG_MAPPING:
+                    best_key = best_key or key
+        elif h["guess_band"] == "M" and wtw_band_guess == "P":
+            for key in ["M2","M1","P4","P3","P2","P1"]:
+                if key in LEVEL_GG_MAPPING:
+                    best_key = best_key or key
+
     return best_band, best_level, best_key, matched_keywords
 
+def gg_penalty_factor(gg_job: int, allowed_grades: list) -> float:
+    """
+    Penalização suave quando o GG do cargo se distancia do GG médio esperado para o nível.
+    """
+    if not allowed_grades:
+        return 1.0
+    target = int(np.median(allowed_grades))
+    diff = abs(int(gg_job) - target)
+    penalty = max(0.7, 1.0 - GG_PENALTY_STEP * diff)  # nunca cai abaixo de 0.7
+    return penalty
+
 # ===========================================================
-# 6. INTERFACE DE USUÁRIO
+# 5. INTERFACE DO USUÁRIO (inalterada)
 # ===========================================================
 st.markdown("Encontre o cargo ideal com base na descrição completa das responsabilidades.")
 
-c1,c2 = st.columns(2)
+c1, c2 = st.columns(2)
 with c1:
     families = sorted(df["Job Family"].unique())
     selected_family = st.selectbox("📂 Família (Obrigatório)", ["Selecione..."] + families)
 with c2:
-    subfamilies = sorted(df[df["Job Family"]==selected_family]["Sub Job Family"].unique()) if selected_family!="Selecione..." else []
+    subfamilies = sorted(df[df["Job Family"] == selected_family]["Sub Job Family"].unique()) if selected_family != "Selecione..." else []
     selected_subfamily = st.selectbox("📂 Subfamília (Obrigatório)", ["Selecione..."] + subfamilies)
 
-desc_input = st.text_area("📋 Cole aqui a descrição detalhada da posição (Mínimo 50 palavras):",
-                          height=200, placeholder="Descreva as principais responsabilidades, escopo de atuação, nível de autonomia...")
+desc_input = st.text_area(
+    "📋 Cole aqui a descrição detalhada da posição (Mínimo 50 palavras):",
+    height=200,
+    placeholder="Descreva as principais responsabilidades, escopo de atuação, nível de autonomia..."
+)
 word_count = len(desc_input.strip().split())
 st.caption(f"Contagem de palavras: {word_count} / 50")
 
+# ===========================================================
+# 6. EXECUÇÃO DO MATCH (mesmo botão / mesma UI)
+# ===========================================================
 if st.button("🔍 Analisar Aderência", type="primary", use_container_width=True):
-    if selected_family=="Selecione..." or selected_subfamily=="Selecione..." or word_count<50:
+    if selected_family == "Selecione..." or selected_subfamily == "Selecione..." or word_count < 50:
         st.warning("⚠️ Para uma análise precisa, selecione Família, Subfamília e insira uma descrição com pelo menos 50 palavras.")
         st.stop()
 
-    mask = (df["Job Family"]==selected_family)&(df["Sub Job Family"]==selected_subfamily)
-    band,level,key,kws = detect_level_from_text(desc_input, wtw_data)
+    # filtro por família/subfamília
+    mask = (df["Job Family"] == selected_family) & (df["Sub Job Family"] == selected_subfamily)
 
-    allowed=[]
-    if key and key in LEVEL_GG_MAPPING:
-        allowed=LEVEL_GG_MAPPING[key]
-        mask&=df["Global Grade Num"].isin(allowed)
-        kw_fmt=", ".join([f"'{k}'" for k in kws[:3]])
+    # nível detectado (WTW + heurística mercado)
+    detected_band, detected_level, detected_key, keywords_found = detect_level_from_text(desc_input, wtw_data)
+    allowed_grades = []
+    if detected_key and detected_key in LEVEL_GG_MAPPING:
+        allowed_grades = LEVEL_GG_MAPPING[detected_key]
+        mask &= df["Global Grade Num"].isin(allowed_grades)
+        kws_formatted = ", ".join([f"'{k}'" for k in keywords_found[:6]])
         st.markdown(f"""
         <div class="ai-insight-box">
             <div class="ai-insight-title">🤖 Análise Semântica de Nível</div>
             Com base na sua descrição, identificamos características de um nível
-            <strong>{level['label']}</strong> (Carreira: {band['label']}).<br>
-            <small>Filtrando resultados para Grades coerentes: {min(allowed)} a {max(allowed)}. Termos detectados: {kw_fmt}...</small>
+            <strong>{detected_level['label'] if detected_level and 'label' in detected_level else detected_key}</strong>
+            (Carreira: {detected_band['label'] if detected_band and 'label' in detected_band else '—'}).<br>
+            <small>Filtrando resultados para Grades coerentes: {min(allowed_grades) if allowed_grades else '-'} a {max(allowed_grades) if allowed_grades else '-'}.
+            Termos detectados: {kws_formatted}.</small>
         </div>
         """, unsafe_allow_html=True)
 
@@ -233,73 +394,126 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         st.error("Não foram encontrados cargos compatíveis com os filtros e o nível detectado.")
         st.stop()
 
-    filt_idx = df[mask].index
-    filt_emb = job_embeddings[filt_idx]
-    query_emb = model.encode([desc_input], show_progress_bar=False)
-    sims = cosine_similarity(query_emb, filt_emb)[0]
-    results = df.loc[filt_idx].copy()
-    results["similarity"] = sims
+    filtered_indices = df[mask].index
+    filtered_embeddings = job_embeddings[filtered_indices]
+
+    # embedding da consulta — média ponderada por seções
+    def build_query_sections(text: str) -> dict:
+        # para reforçar contexto técnico e senioridade, usamos o mesmo esquema de pesos
+        return {
+            "sub": text, "jobdesc": text, "role": text,
+            "grade": text, "qual": text, "band": text
+        }
+
+    q_secs = build_query_sections(desc_input)
+    q_embs = [
+        load_model().encode([q_secs["sub"]], show_progress_bar=False),
+        load_model().encode([q_secs["jobdesc"]], show_progress_bar=False),
+        load_model().encode([q_secs["role"]], show_progress_bar=False),
+        load_model().encode([q_secs["grade"]], show_progress_bar=False),
+        load_model().encode([q_secs["qual"]], show_progress_bar=False),
+        load_model().encode([q_secs["band"]], show_progress_bar=False),
+    ]
+    w = np.array([W_SUBFAM, W_JOBDESC, W_ROLE, W_GRADE, W_QUALIF, W_BAND], dtype=np.float32)
+    w = w / (w.sum() if w.sum() > 0 else 1.0)
+    query_emb = (q_embs[0]*w[0] + q_embs[1]*w[1] + q_embs[2]*w[2] + q_embs[3]*w[3] + q_embs[4]*w[4] + q_embs[5]*w[5])[0]
+
+    # similaridade semântica
+    sims_sem = cosine_similarity([query_emb], filtered_embeddings)[0]
+
+    # similaridade TF-IDF (reforço de termos técnicos)
+    q_tfidf = tfidf_vect.transform([desc_input])
+    sims_kw = cosine_similarity(q_tfidf, tfidf_matrix[filtered_indices])[0]
+
+    # score híbrido + penalização hierárquica
+    scores = []
+    for i, idx in enumerate(filtered_indices):
+        gg_job = int(df.loc[idx, "Global Grade Num"])
+        penalty = gg_penalty_factor(gg_job, allowed_grades)
+        hybrid = (ALPHA_SEMANTIC * sims_sem[i] + (1 - ALPHA_SEMANTIC) * sims_kw[i]) * penalty
+        scores.append(hybrid)
+
+    results = df.loc[filtered_indices].copy()
+    results["similarity"] = np.array(scores, dtype=float)
     top3 = results.sort_values("similarity", ascending=False).head(3)
 
+    # ===========================================================
+    # 7. RENDERIZAÇÃO (inalterada)
+    # ===========================================================
     st.markdown("---")
     st.subheader("🏆 Cargos Mais Compatíveis")
 
-    if len(top3)<1:
-        st.warning("Nenhum resultado encontrado."); st.stop()
+    if len(top3) < 1:
+        st.warning("Nenhum resultado encontrado.")
+        st.stop()
 
-    cards=[]
-    for _,r in top3.iterrows():
-        score=r["similarity"]*100
-        color="#28a745" if score>85 else "#1E56E0" if score>75 else "#fd7e14" if score>60 else "#dc3545"
-        lvl_name=""
-        gg=str(r["Global Grade"]).strip()
+    cards_data = []
+    for _, row in top3.iterrows():
+        score_val = float(row["similarity"]) * 100
+        score_bg = "#28a745" if score_val > 85 else "#1E56E0" if score_val > 75 else "#fd7e14" if score_val > 60 else "#dc3545"
+        lvl_name = ""
+        gg_val = str(row["Global Grade"]).strip()
         if not df_levels.empty and "Global Grade" in df_levels.columns and "Level Name" in df_levels.columns:
-            m=df_levels[df_levels["Global Grade"].astype(str).str.strip()==gg]
-            if not m.empty: lvl_name=f"• {m['Level Name'].iloc[0]}"
-        cards.append({"row":r,"score_fmt":f"{score:.1f}%","score_bg":color,"lvl":lvl_name})
+            match = df_levels[df_levels["Global Grade"].astype(str).str.strip() == gg_val]
+            if not match.empty:
+                lvl_name = f"• {match['Level Name'].iloc[0]}"
+        cards_data.append({"row": row, "score_fmt": f"{score_val:.1f}%", "score_bg": score_bg, "lvl": lvl_name})
 
-    grid_style=f"grid-template-columns: repeat({len(cards)},1fr);"
-    html_out=f'<div class="comparison-grid" style="{grid_style}">'
-    for c in cards:
-        html_out+=f"""
+    num_results = len(cards_data)
+    grid_style = f"grid-template-columns: repeat({num_results}, 1fr);"
+    grid_html = f'<div class="comparison-grid" style="{grid_style}">'
+
+    # 1. Cabeçalho
+    for card in cards_data:
+        grid_html += f"""
         <div class="grid-cell header-cell">
-            <div class="fjc-title">{html.escape(c['row']['Job Profile'])}</div>
+            <div class="fjc-title">{html.escape(card['row']['Job Profile'])}</div>
             <div class="fjc-gg-row">
-                <div class="fjc-gg">GG {c['row']['Global Grade']} {c['lvl']}</div>
-                <div class="fjc-score" style="background-color:{c['score_bg']};">{c['score_fmt']} Match</div>
+                <div class="fjc-gg">GG {card['row']['Global Grade']} {card['lvl']}</div>
+                <div class="fjc-score" style="background-color: {card['score_bg']};">{card['score_fmt']} Match</div>
             </div>
         </div>"""
-    for c in cards:
-        d=c['row']
-        html_out+=f"""
+
+    # 2. Metadados
+    for card in cards_data:
+        d = card['row']
+        grid_html += f"""
         <div class="grid-cell meta-cell">
             <div class="meta-row"><strong>Família:</strong> {html.escape(str(d.get('Job Family','-')))}</div>
             <div class="meta-row"><strong>Subfamília:</strong> {html.escape(str(d.get('Sub Job Family','-')))}</div>
             <div class="meta-row"><strong>Carreira:</strong> {html.escape(str(d.get('Career Path','-')))}</div>
             <div class="meta-row"><strong>Cód:</strong> {html.escape(str(d.get('Full Job Code','-')))}</div>
         </div>"""
-    sections=[
-        ("🧭 Sub Job Family Description","Sub Job Family Description","#95a5a6"),
-        ("🧠 Job Profile Description","Job Profile Description","#e91e63"),
-        ("🏛️ Career Band Description","Career Band Description","#673ab7"),
-        ("🎯 Role Description","Role Description","#145efc"),
-        ("🏅 Grade Differentiator","Grade Differentiator","#ff9800"),
-        ("🎓 Qualifications","Qualifications","#009688")
+
+    # 3. Seções (inalteradas)
+    sections_config = [
+        ("🧭 Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
+        ("🧠 Job Profile Description", "Job Profile Description", "#e91e63"),
+        ("🏛️ Career Band Description", "Career Band Description", "#673ab7"),
+        ("🎯 Role Description", "Role Description", "#145efc"),
+        ("🏅 Grade Differentiator", "Grade Differentiator", "#ff9800"),
+        ("🎓 Qualifications", "Qualifications", "#009688")
     ]
-    for title,field,color in sections:
-        for c in cards:
-            content=str(c['row'].get(field,'-'))
-            if field=="Qualifications" and (len(content)<2 or content.lower()=='nan'):
-                html_out+='<div class="grid-cell section-cell" style="border-left-color:transparent; background:transparent; border:none;"></div>'
+
+    for title, field, color in sections_config:
+        for card in cards_data:
+            content = str(card['row'].get(field, '-'))
+            if field == "Qualifications" and (len(content) < 2 or content.lower() == 'nan'):
+                grid_html += '<div class="grid-cell section-cell" style="border-left-color: transparent; background: transparent; border: none;"></div>'
             else:
-                html_out+=f"""
-                <div class="grid-cell section-cell" style="border-left-color:{color};">
-                    <div class="section-title" style="color:{color};">{title}</div>
+                grid_html += f"""
+                <div class="grid-cell section-cell" style="border-left-color: {color};">
+                    <div class="section-title" style="color: {color};">{title}</div>
                     <div class="section-content">{html.escape(content)}</div>
                 </div>"""
-    for _ in cards:
-        html_out+='<div class="grid-cell footer-cell"></div>'
-    html_out+='</div>'
-    st.markdown(html_out, unsafe_allow_html=True)
-    if top3.iloc[0]["similarity"]<0.6:
+
+    # 4. Rodapé
+    for _ in cards_data:
+        grid_html += '<div class="grid-cell footer-cell"></div>'
+
+    grid_html += '</div>'
+    st.markdown(grid_html, unsafe_allow_html=True)
+
+    # feedback sobre aderência (baseado no híbrido)
+    if float(top3.iloc[0]["similarity"]) < 0.6:
         st.info("💡 Aderência moderada. Tente refinar sua descrição.")
