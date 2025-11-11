@@ -1,3 +1,8 @@
+import streamlit as st
+
+# ===========================================================
+# SIDEBAR: Logo + Título Centralizados
+# ===========================================================
 def sidebar_logo_and_title():
     logo_url = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
 
@@ -39,10 +44,44 @@ def sidebar_logo_and_title():
             font-weight: 800;
             margin: 0;
         }}
+
+        /* Remove divisor inferior da sidebar */
+        [data-testid="stSidebarNav"]::after {{
+            display: none !important;
+        }}
     </style>
 
     <div class="sidebar-header">
         <img src="{logo_url}" alt="SIG Logo">
         <h2>Job Architecture</h2>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ===========================================================
+# HEADER: Container Azul com Ícone e Título
+# ===========================================================
+def header(title, icon_path=None):
+    icon_html = f'<img src="{icon_path}" alt="icon" style="width:22px;height:22px;margin-right:10px;vertical-align:middle;">' if icon_path else ""
+    st.markdown(f"""
+    <style>
+        .page-header {{
+            background-color: #145efc;
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+            border-radius: 10px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+            width: fit-content;
+        }}
+    </style>
+
+    <div class="page-header">
+        {icon_html}
+        {title}
     </div>
     """, unsafe_allow_html=True)
