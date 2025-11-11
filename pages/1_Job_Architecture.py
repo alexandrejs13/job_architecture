@@ -1,6 +1,41 @@
+import streamlit as st
+from utils.ui import sidebar_logo_and_title
+from pathlib import Path
+
+# ===========================================================
+# 1. CONFIGURAÇÃO DA PÁGINA
+# ===========================================================
+st.set_page_config(
+    page_title="Job Architecture",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# ===========================================================
+# 2. ESTILOS E ESTRUTURA PADRÃO
+# ===========================================================
+css_path = Path(__file__).parents[1] / "assets" / "header.css"
+if css_path.exists():
+    with open(css_path) as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+# ===========================================================
+# 3. CABEÇALHO E SIDEBAR
+# ===========================================================
+sidebar_logo_and_title()
+
+st.markdown("""
+<div class="page-header">
+  <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png" alt="icon">
+  Job Architecture
+</div>
+""", unsafe_allow_html=True)
+
+# ===========================================================
+# 4. PILARES (AQUI VEM SEU BLOCO)
+# ===========================================================
 st.markdown("""
 <style>
-/* ====== CONTAINER DOS PILARES ====== */
 .pillar-container {
     display: flex;
     flex-wrap: wrap;
@@ -9,8 +44,6 @@ st.markdown("""
     align-items: stretch;
     margin-top: 20px;
 }
-
-/* ====== CARTÃO ====== */
 .pillar-card {
     background: #ffffff;
     border-radius: 14px;
@@ -23,23 +56,13 @@ st.markdown("""
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-
-.pillar-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-}
-
-/* ====== TÍTULO ====== */
 .pillar-title {
     font-weight: 800;
     font-size: 1.25rem;
     color: #145efc;
     margin-bottom: 12px;
 }
-
-/* ====== TEXTO ====== */
 .pillar-text {
     color: #333333;
     font-size: 1.05rem;
@@ -48,9 +71,7 @@ st.markdown("""
 }
 </style>
 
-<!-- ====== BLOCO DOS PILARES ====== -->
 <div class="pillar-container">
-
   <div class="pillar-card">
     <div class="pillar-title">Governança Global</div>
     <div class="pillar-text">
@@ -74,6 +95,5 @@ st.markdown("""
       assegurando que os dados fluam de forma integrada e suportem decisões estratégicas.
     </div>
   </div>
-
 </div>
 """, unsafe_allow_html=True)
