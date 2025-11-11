@@ -23,10 +23,35 @@ if css_path.exists():
 # 3. CABEÇALHO E SIDEBAR
 # ===========================================================
 sidebar_logo_and_title()
-header(
-    "Job Architecture",
-    "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png"
-)
+
+# Container azul do tamanho do texto e ícone ampliado
+st.markdown("""
+<style>
+    .page-header {
+        background-color: #145efc;
+        color: white;
+        font-weight: 700;
+        font-size: 1.2rem;
+        border-radius: 12px;
+        padding: 18px 36px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: fit-content; /* largura ajusta ao conteúdo */
+        margin-bottom: 35px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .page-header img {
+        width: 38px;  /* ícone maior */
+        height: 38px;
+    }
+</style>
+
+<div class="page-header">
+    <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png" alt="icon">
+    Job Architecture
+</div>
+""", unsafe_allow_html=True)
 
 # ===========================================================
 # 4. CONTEÚDO PRINCIPAL
@@ -57,31 +82,39 @@ A Job Architecture não substitui as descrições de cargo locais — ela fornec
 """)
 
 # ===========================================================
-# 5. AJUSTE VISUAL (suavização do corpo da página)
+# 5. AJUSTES VISUAIS GERAIS
 # ===========================================================
 st.markdown("""
 <style>
-    /* Fundo leve e tipografia refinada */
     [data-testid="stAppViewContainer"] {
         background-color: #f5f3f0;
         color: #202020;
         font-family: "Source Sans Pro", "Helvetica", sans-serif;
     }
 
-    /* Títulos */
-    h2, h3 {
-        font-weight: 800 !important;
+    /* Títulos menores e mais elegantes */
+    h2 {
+        font-weight: 700 !important;
         color: #000000 !important;
+        font-size: 1.4rem !important;
+        margin-top: 20px !important;
+        margin-bottom: 10px !important;
+    }
+    h3 {
+        font-weight: 700 !important;
+        color: #000000 !important;
+        font-size: 1.2rem !important;
     }
 
-    /* Informativo (box azul) */
+    /* Caixa informativa refinada */
     .stAlert {
         background-color: #eef3ff !important;
         border-left: 4px solid #145efc !important;
         color: #000 !important;
+        border-radius: 6px;
     }
 
-    /* Suaviza margens e alinhamento do conteúdo */
+    /* Ajuste de margens e alinhamento */
     section.main > div {
         padding-top: 10px !important;
         padding-left: 25px !important;
