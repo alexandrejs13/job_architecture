@@ -1,10 +1,9 @@
 import streamlit as st
 import pandas as pd
 import re
-import html as html_lib
+import html
 from pathlib import Path
 from utils.ui import sidebar_logo_and_title
-
 
 # ===========================================================
 # 1. CONFIGURAÇÃO GERAL
@@ -16,6 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Carrega o CSS global
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
     with open(css_path) as f:
@@ -23,9 +23,8 @@ if css_path.exists():
 
 sidebar_logo_and_title()
 
-
 # ===========================================================
-# 2. CSS LOCAL (mantendo visual anterior)
+# 2. ESTILO E HEADER
 # ===========================================================
 st.markdown("""
 <style>
@@ -44,34 +43,59 @@ st.markdown("""
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 .page-header img { width: 48px; height: 48px; }
-.block-container {
-    max-width: 950px !important;
-    padding-left: 40px !important;
-    padding-right: 40px !important;
-}
+
 [data-testid="stAppViewContainer"] {
     background-color: #f5f3f0;
     color: #202020;
     font-family: "Source Sans Pro","Helvetica",sans-serif;
 }
-.section-box {
-    background-color: #ffffff;
+
+.block-container {
+    max-width: 1300px !important;
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+}
+
+/* Blocos */
+.profile-card {
+    background: #fff;
+    border-radius: 12px;
     border-left: 5px solid #145efc;
-    padding: 25px;
+    padding: 22px 26px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+.profile-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #000;
+    margin-bottom: 6px;
+}
+.profile-meta {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 12px;
+}
+.section-box {
+    background: #fff;
+    border-left: 4px solid #145efc;
     border-radius: 8px;
-    margin-top: 20px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    padding: 18px 22px;
+    margin-top: 18px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.05);
 }
 .section-title {
     font-weight: 700;
     color: #145efc;
-    font-size: 1rem;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     margin-bottom: 8px;
 }
 .section-content {
-    color: #333333;
+    color: #333;
+    line-height: 1.55;
     font-size: 0.95rem;
-    line-height: 1.6;
     white-space: pre-wrap;
 }
 </style>
@@ -95,118 +119,27 @@ def normalize_grade(val):
 
 
 @st.cache_data
-def load_job_profiles():
+def load_excel(path):
     try:
-        df = pd.read_excel("data/Job Profile.xlsx")
+        df = pd.read_excel(path)
         for c in df.select_dtypes(include="object"):
             df[c] = df[c].astype(str).str.strip()
         return df
     except Exception as e:
-        st.error(f"Erro ao carregar Job Profile.xlsx: {e}")
-        return pd.DataFrame()
-
-
-@st.cache_data
-def load_levels():
-    try:
-        lv = pd.read_excel("data/Structure Level.xlsx")
-        for c in lv.select_dtypes(include="object"):
-            lv[c] = lv[c].astype(str).str.strip()
-        return lv
-    except Exception:
+        st.error(f"Erro ao carregar {path}: {e}")
         return pd.DataFrame()
 
 
 # ===========================================================
 # 4. DADOS
 # ===========================================================
-df = load_job_profiles()
-df_levels = load_levels()
+df = load_excel("data/Job Profile.xlsx")
+levels = load_excel("data/Structure Level.xlsx")
 
 if df.empty:
-    st.error("❌ Não foi possível carregar o arquivo Job Profile.xlsx.")
+    st.error("❌ Arquivo 'Job Profile.xlsx' não encontrado ou inválido.")
     st.stop()
 
 df["Global Grade"] = df["Global Grade"].apply(normalize_grade)
-if not df_levels.empty and "Global Grade" in df_levels.columns:
-    df_levels["Global Grade"] = df_levels["Global Grade"].apply(normalize_grade)
-
-
-# ===========================================================
-# 5. FILTROS
-# ===========================================================
-families = sorted(x for x in df["Job Family"].dropna().unique() if x)
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    fam = st.selectbox("Família:", ["Selecione..."] + families, index=0)
-with col2:
-    subs = sorted(df[df["Job Family"] == fam]["Sub Job Family"].dropna().unique()) if fam != "Selecione..." else []
-    sub = st.selectbox("Subfamília:", ["Selecione..."] + subs, index=0)
-with col3:
-    paths = sorted(df[df["Sub Job Family"] == sub]["Career Path"].dropna().unique()) if sub != "Selecione..." else []
-    path = st.selectbox("Trilha (Career Path):", ["Selecione..."] + paths, index=0)
-
-filtered = df.copy()
-if fam != "Selecione...":
-    filtered = filtered[filtered["Job Family"] == fam]
-if sub != "Selecione...":
-    filtered = filtered[filtered["Sub Job Family"] == sub]
-if path != "Selecione...":
-    filtered = filtered[filtered["Career Path"] == path]
-
-if filtered.empty:
-    st.info("Ajuste os filtros para visualizar os perfis.")
-    st.stop()
-
-profiles = sorted(filtered["Job Profile"].dropna().unique())
-selected = st.multiselect("Selecione até 3 perfis para comparar:", profiles, max_selections=3)
-
-if not selected:
-    st.info("Selecione até 3 cargos para comparar.")
-    st.stop()
-
-
-# ===========================================================
-# 6. VISUALIZAÇÃO (mantém formatação anterior e mostra GG)
-# ===========================================================
-cols = st.columns(len(selected))
-
-for idx, name in enumerate(selected):
-    item = filtered[filtered["Job Profile"] == name]
-    if item.empty:
-        continue
-
-    row = item.iloc[0].copy()
-    gg = normalize_grade(row.get("Global Grade", ""))
-    lvl_name = ""
-
-    if not df_levels.empty and {"Global Grade", "Level Name"}.issubset(df_levels.columns):
-        match = df_levels[df_levels["Global Grade"].astype(str).str.strip() == gg]
-        if not match.empty:
-            lvl_name = match["Level Name"].iloc[0]
-
-    with cols[idx]:
-        st.markdown(f"### {row.get('Job Profile', '-')}")
-        st.caption(f"GG {gg or '-'} • {lvl_name}")
-        st.divider()
-
-        sections = [
-            ("🧭 Sub Job Family Description", "Sub Job Family Description"),
-            ("🧠 Job Profile Description", "Job Profile Description"),
-            ("🏛️ Career Band Description", "Career Band Description"),
-            ("🎯 Role Description", "Role Description"),
-            ("🏅 Grade Differentiator", "Grade Differentiator"),
-            ("🎓 Qualifications", "Qualifications")
-        ]
-
-        for title, field in sections:
-            content = str(row.get(field, "") or "").strip()
-            if not content:
-                continue
-            st.markdown(f"""
-            <div class="section-box">
-                <div class="section-title">{title}</div>
-                <div class="section-content">{html_lib.escape(content)}</div>
-            </div>
-            """, unsafe_allow_html=True)
+if not levels.empty and "Global Grade" in levels.columns:
+    levels["Global Grade"] = levels["Global Grade"].apply(normal
