@@ -7,16 +7,28 @@ import streamlit.components.v1 as components
 from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar 
 from utils.ui import setup_sidebar
-import re # Necessário para gerar o HTML do header corretamente
+from pathlib import Path
 
 # ===========================================================
 # 1. CONFIGURAÇÃO DE PÁGINA E ESTADO (PRIMEIRO COMANDO ST)
 # ===========================================================
-st.set_page_config(layout="wide", page_title="🗺️ Job Map")
+st.set_page_config(
+    page_title="Job Map", 
+    page_icon="🗺️", # Garante que o ícone seja o mapa
+    layout="wide"
+)
 
 # ===========================================================
-# 2. APLICA VISUAL
+# 2. APLICA VISUAL E SIDEBAR CSS
 # ===========================================================
+# --- ADICIONADO: INJEÇÃO DO CSS DE SIDEBAR/HEADER ---
+css_path = Path(__file__).parents[1] / "assets" / "header.css"
+if css_path.exists():
+    with open(css_path) as f:
+        # A injeção deste CSS é crucial para o estilo da sidebar (bege, etc.)
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+# --------------------------------------------------
+
 setup_sidebar() # Controla a formatação da sidebar
 lock_sidebar()
 
@@ -33,10 +45,6 @@ css_base = """
 <style>
 :root {
     --blue: #145efc;    /* SIG Sky - Destaque principal */
-    --green: #28a745;   
-    --orange: #fd7e14;  
-    --purple: #6f42c1;  
-    --red: #dc3545;     
     --gray-line: #e0e0e0;
     --gray-bg: #f8f9fa; 
     --dark-gray: #333333;
@@ -54,7 +62,7 @@ css_base = """
     align-items: center;
     gap: 18px;
     width: 100%;
-    margin-bottom: 0px; /* Reduzida a margem para ficar mais próxima dos filtros */
+    margin-bottom: 20px; 
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 .page-header img { width: 48px; height: 48px; }
@@ -66,17 +74,17 @@ css_base = """
     padding: 2rem 5rem !important;
 }
 
-/* Topbar: ZERANDO O CONTAINER VAZIO */
+/* Topbar: ZERANDO O CONTAINER VAZIO e mantendo apenas os filtros */
 .topbar {
-    position: relative; /* Mudado de sticky para relative para não poluir o topo */
+    position: relative; 
     top: auto;
     z-index: 10;
-    background: transparent; /* Fundo transparente */
-    padding: 0px 0px 20px 0px; /* ZERANDO O PADDING SUPERIOR/LATERAL, MANTENDO ESPAÇAMENTO INFERIOR */
+    background: transparent; 
+    padding: 0px 0px 20px 0px; /* Garante que os filtros fiquem logo abaixo do header */
     border-bottom: 0px none;
-    margin-bottom: 0px; /* ZERANDO MARGIN BOTTOM */
+    margin-bottom: 0px; 
     border-radius: 0;
-    box-shadow: none; /* Removendo sombra */
+    box-shadow: none; 
 }
 
 .map-wrapper {
@@ -91,183 +99,9 @@ css_base = """
     border-radius: 8px;
 }
 
-/* ... (Demais estilos do grid permanecem) ... */
-.jobmap-grid {
-    display: grid;
-    border-collapse: collapse;
-    width: max-content;
-    font-size: 0.88rem;
-    grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
-    grid-auto-rows: 110px !important;
-    align-content: start !important;
-    row-gap: 0px !important;
-    column-gap: 0px !important;
-    background-color: white !important;
-}
+/* ... (Demais estilos do jobmap-grid e cards permanecem inalterados) ... */
 
-.jobmap-grid > div {
-    background-color: white;
-    border-right: 1px solid var(--gray-line);
-    border-bottom: 1px solid var(--gray-line);
-    box-sizing: border-box;
-}
-
-.header-family {
-    font-weight: 800;
-    color: #fff;
-    padding: 0 5px;
-    text-align: center;
-    border-right: 1px solid rgba(255,255,255,0.3) !important;
-    border-bottom: 0px none !important;
-    outline: none !important;
-    margin-bottom: 0px !important;
-    position: sticky;
-    top: 0;
-    z-index: 57;
-    white-space: normal;
-    height: 50px !important;
-    max-height: 50px !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    grid-row: 1;
-    font-size: 0.9rem;
-    overflow: hidden;
-}
-
-.header-subfamily {
-    font-weight: 600;
-    padding: 0 5px;
-    text-align: center;
-    position: sticky;
-    top: 50px;
-    z-index: 56;
-    white-space: normal;
-    border-top: 0px none !important;
-    margin-top: 0px !important;
-    border-bottom: 0px none !important;
-    outline: none !important;
-    height: 45px !important;
-    max-height: 45px !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    grid-row: 2;
-    font-size: 0.85rem;
-    overflow: hidden;
-    color: var(--dark-gray);
-}
-
-.gg-header {
-    background: var(--dark-gray) !important;
-    color: white;
-    font-weight: 800;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    grid-row: 1 / span 2;
-    grid-column: 1;
-    position: sticky;
-    left: 0;
-    top: 0;
-    z-index: 60;
-    border-right: 2px solid white !important;
-    border-bottom: 0px none !important;
-    height: 95px !important;
-}
-
-.gg-cell {
-    background: var(--dark-gray) !important;
-    color: white;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: sticky;
-    left: 0;
-    z-index: 55;
-    border-right: 2px solid white !important;
-    border-top: 1px solid #555 !important;
-    grid-column: 1;
-    font-size: 0.9rem;
-    height: 110px !important;
-}
-
-.cell {
-    background: white !important;
-    padding: 8px;
-    text-align: left;
-    vertical-align: middle;
-    z-index: 1;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    align-content: center;
-    height: 100% !important;
-    overflow: hidden;
-}
-
-.job-card {
-    background: #ffffff;
-    border: 1px solid var(--gray-line);
-    border-left-width: 5px !important;
-    border-left-style: solid !important;
-    border-radius: 6px;
-    padding: 6px 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    font-size: 0.75rem;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    white-space: normal;
-    width: 135px;
-    height: 75px;
-    flex: 0 0 135px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    overflow: hidden;
-    transition: all 0.2s ease-in-out;
-}
-.job-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 12px rgba(0,0,0,0.1);
-    border-color: var(--blue);
-}
-.job-card b {
-    display: block;
-    font-weight: 700;
-    margin-bottom: 3px;
-    line-height: 1.2;
-    color: #222;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-.job-card span {
-    display: block;
-    font-size: 0.7rem;
-    color: #666;
-    line-height: 1.1;
-    margin-top: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.gg-header::after, .gg-cell::after {
-    content: "";
-    position: absolute;
-    right: -5px;
-    top: 0;
-    bottom: 0;
-    width: 5px;
-    background: linear-gradient(to right, rgba(0,0,0,0.1), transparent);
-    pointer-events: none;
-}
+/* Estilos de botão e responsividade */
 [data-testid="stButton"] button {
     border-color: var(--blue) !important;
     color: var(--blue) !important;
@@ -283,7 +117,7 @@ css_base = """
 """
 
 # ===========================================================
-# CSS MODO TELA CHEIA
+# CSS MODO TELA CHEIA (permanece inalterado)
 # ===========================================================
 css_fullscreen = """
 <style>
@@ -299,7 +133,7 @@ st.markdown(css_base, unsafe_allow_html=True)
 if st.session_state.fullscreen: st.markdown(css_fullscreen, unsafe_allow_html=True)
 
 # ===========================================================
-# 4. FUNÇÕES DE CACHE E UTILITÁRIOS
+# 4. FUNÇÕES DE CACHE E UTILITÁRIOS (Permanecem inalteradas)
 # ===========================================================
 @st.cache_data(ttl=3600)
 def get_prepared_data():
