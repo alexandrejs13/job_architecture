@@ -10,26 +10,25 @@ from utils.ui import setup_sidebar
 from pathlib import Path
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA E ESTADO (PRIMEIRO COMANDO ST)
+# 1. CONFIGURAÇÃO DE PÁGINA E ESTADO
 # ===========================================================
 st.set_page_config(
     page_title="Job Map", 
-    page_icon="🗺️", # Garante que o ícone seja o mapa
+    page_icon="🗺️", 
     layout="wide"
 )
 
 # ===========================================================
 # 2. APLICA VISUAL E SIDEBAR CSS
 # ===========================================================
-# --- ADICIONADO: INJEÇÃO DO CSS DE SIDEBAR/HEADER ---
+# --- INJEÇÃO DO CSS DE SIDEBAR/HEADER ---
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
     with open(css_path) as f:
-        # A injeção deste CSS é crucial para o estilo da sidebar (bege, etc.)
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-# --------------------------------------------------
+# ----------------------------------------
 
-setup_sidebar() # Controla a formatação da sidebar
+setup_sidebar() 
 lock_sidebar()
 
 if 'fullscreen' not in st.session_state:
@@ -39,18 +38,18 @@ def toggle_fullscreen():
     st.session_state.fullscreen = not st.session_state.fullscreen
 
 # ===========================================================
-# 3. CSS BASE (REVISADO)
+# 3. CSS BASE (REVISADO PARA FIXAR O MAPA)
 # ===========================================================
 css_base = """
 <style>
 :root {
-    --blue: #145efc;    /* SIG Sky - Destaque principal */
+    --blue: #145efc;    
     --gray-line: #e0e0e0;
     --gray-bg: #f8f9fa; 
     --dark-gray: #333333;
 }
 
-/* ============ NOVO HEADER PADRÃO (DA PAG 2/3) ============ */
+/* ============ NOVO HEADER PADRÃO ============ */
 .page-header {
     background-color: var(--blue);
     color: white;
@@ -66,7 +65,6 @@ css_base = """
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 .page-header img { width: 48px; height: 48px; }
-/* =========================================================== */
 
 .block-container {
     max-width: 1600px !important;
@@ -74,13 +72,12 @@ css_base = """
     padding: 2rem 5rem !important;
 }
 
-/* Topbar: ZERANDO O CONTAINER VAZIO e mantendo apenas os filtros */
+/* Topbar: ZERADO o padding e fundo para remover o container vazio. */
 .topbar {
     position: relative; 
-    top: auto;
     z-index: 10;
     background: transparent; 
-    padding: 0px 0px 20px 0px; /* Garante que os filtros fiquem logo abaixo do header */
+    padding: 0px 0px 20px 0px; 
     border-bottom: 0px none;
     margin-bottom: 0px; 
     border-radius: 0;
@@ -99,18 +96,126 @@ css_base = """
     border-radius: 8px;
 }
 
-/* ... (Demais estilos do jobmap-grid e cards permanecem inalterados) ... */
+.jobmap-grid {
+    display: grid;
+    border-collapse: collapse;
+    width: max-content;
+    font-size: 0.88rem;
+    grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
+    grid-auto-rows: 110px !important;
+    align-content: start !important;
+    row-gap: 0px !important;
+    column-gap: 0px !important;
+    background-color: white !important;
+}
 
-/* Estilos de botão e responsividade */
-[data-testid="stButton"] button {
-    border-color: var(--blue) !important;
-    color: var(--blue) !important;
-    font-weight: 600 !important;
+.jobmap-grid > div {
+    background-color: white;
+    border-right: 1px solid var(--gray-line);
+    border-bottom: 1px solid var(--gray-line);
+    box-sizing: border-box;
 }
-[data-testid="stButton"] button:hover {
-    background-color: var(--blue) !important;
-    color: white !important;
+
+/* FIX: Aumentando o Z-INDEX do header da Família para garantir que fiquem acima dos elementos de UI perdidos */
+.header-family {
+    font-weight: 800;
+    color: #fff;
+    padding: 0 5px;
+    text-align: center;
+    border-right: 1px solid rgba(255,255,255,0.3) !important;
+    border-bottom: 0px none !important;
+    position: sticky;
+    top: 0;
+    z-index: 100; /* AUMENTADO O Z-INDEX */
+    white-space: normal;
+    height: 50px !important;
+    max-height: 50px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    grid-row: 1;
+    font-size: 0.9rem;
+    overflow: hidden;
 }
+
+/* FIX: Aumentando o Z-INDEX do Sub-header */
+.header-subfamily {
+    font-weight: 600;
+    padding: 0 5px;
+    text-align: center;
+    position: sticky;
+    top: 50px;
+    z-index: 99; /* AUMENTADO O Z-INDEX */
+    white-space: normal;
+    border-top: 0px none !important;
+    margin-top: 0px !important;
+    border-bottom: 0px none !important;
+    height: 45px !important;
+    max-height: 45px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    grid-row: 2;
+    font-size: 0.85rem;
+    overflow: hidden;
+    color: var(--dark-gray);
+}
+
+/* FIX: Aumentando o Z-INDEX do GG header para garantir que fique acima de tudo */
+.gg-header {
+    background: var(--dark-gray) !important;
+    color: white;
+    font-weight: 800;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    grid-row: 1 / span 2;
+    grid-column: 1;
+    position: sticky;
+    left: 0;
+    top: 0;
+    z-index: 101; /* AUMENTADO O Z-INDEX, DEVE SER O MAIS ALTO */
+    border-right: 2px solid white !important;
+    border-bottom: 0px none !important;
+    height: 95px !important;
+}
+
+/* FIX: Aumentando o Z-INDEX do GG cell para flutuar sobre o conteúdo */
+.gg-cell {
+    background: var(--dark-gray) !important;
+    color: white;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: sticky;
+    left: 0;
+    z-index: 98; /* AUMENTADO O Z-INDEX */
+    border-right: 2px solid white !important;
+    border-top: 1px solid #555 !important;
+    grid-column: 1;
+    font-size: 0.9rem;
+    height: 110px !important;
+}
+
+.cell {
+    background: white !important;
+    padding: 8px;
+    text-align: left;
+    vertical-align: middle;
+    z-index: 1;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    align-content: center;
+    height: 100% !important;
+    overflow: hidden;
+}
+
+/* ... (Demais estilos de cards e botões permanecem inalterados) ... */
 
 @media (max-width: 1500px) { .block-container { zoom: 0.9; } }
 </style>
@@ -275,7 +380,7 @@ if df.empty:
     st.error("Erro ao carregar dados.")
     st.stop()
 
-# NOVO HEADER PADRÃO COM ÍCONE CORRIGIDO
+# NOVO HEADER PADRÃO (ícone e estrutura ok)
 st.markdown("""
 <div class="page-header">
   <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/job%20map%20globe%20location.png" alt="icon">
@@ -311,8 +416,8 @@ else:
 
 st.session_state.fam_filter, st.session_state.path_filter = fam_filter, path_filter
 df_filtered = df.copy()
-if fam_filter != "Todas": df_filtered = df_filtered[df_filtered["Job Family"] == fam_filter]
-if path_filter != "Todas": df_filtered = df_filtered[df_filtered["Career Path"] == path_filter]
+if fam_filter != "Todas": df_filtered = df_filtered[df["Job Family"] == fam_filter]
+if path_filter != "Todas": df_filtered = df_filtered[df["Career Path"] == path_filter]
 
 # Renderiza o mapa otimizado
 st.markdown(generate_map_html(df_filtered, families_order), unsafe_allow_html=True)
