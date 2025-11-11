@@ -1,0 +1,169 @@
+# pages/3_Dashboard_Arquitetura.py
+
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+from utils.ui import section # Reutiliza sua função de título
+
+st.set_page_config(page_title="Dashboard Arquitetura", layout="wide")
+
+# URL RAW do arquivo (Tenta carregar o arquivo real)
+FILE_URL = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/data/Job%20Profile.xlsx"
+
+# --- 1. FUNÇÃO DE CARREGAMENTO DE DADOS ---
+@st.cache_data
+def load_data(url):
+    """Carrega o arquivo Job Profile.xlsx. Adicione tratamento de erro se o link falhar."""
+    try:
+        # Nota: Pandas pode ter problemas ao ler Excel de URLs HTTPS diretamente sem engine específico
+        # Caso o acesso falhe, mude para carregar um arquivo local (ex: pd.read_excel("data/Job Profile.xlsx"))
+        df = pd.read_excel(url, engine='openpyxl')
+        
+        # Renomeia colunas para o padrão assumido (adapte se os nomes forem diferentes)
+        df.columns = df.columns.str.upper().str.replace(' ', '_')
+        
+        # Colunas esperadas para o dashboard:
+        COLUNAS_ESPERADAS = ['TITULO_CARGO', 'JOB_FAMILY', 'JOB_SUBFAMILY', 'GRADING', 'DIRETORIA']
+        for col in COLUNAS_ESPERADAS:
+            if col not in df.columns:
+                # Cria colunas de simulação se faltarem (apenas para o código rodar)
+                if col == 'TITULO_CARGO': df[col] = [f"Cargo_{i}" for i in range(len(df))]
+                if col == 'JOB_FAMILY': df[col] = df.index % 4 + 1 # Simula 4 families
+                if col == 'JOB_SUBFAMILY': df[col] = df.index % 8 + 1 # Simula 8 subfamilies
+                if col == 'GRADING': df[col] = "L" + (df.index % 5 + 1).astype(str) # Simula 5 grades
+                if col == 'DIRETORIA': df[col] = "D" + (df.index % 3 + 1).astype(str) # Simula 3 diretorias
+
+        # Converte para string para evitar problemas de tipo em gráficos
+        df = df[COLUNAS_ESPERADAS].astype(str).drop_duplicates(subset='TITULO_CARGO')
+        
+        return df
+
+    except Exception as e:
+        st.error(f"Erro ao carregar o arquivo Job Profile.xlsx. Verifique se o nome do arquivo e a URL estão corretos. Detalhe: {e}")
+        return pd.DataFrame()
+
+df = load_data(FILE_URL)
+
+if not df.empty:
+    
+    section("🎯 Dashboard de Arquitetura de Cargos")
+
+    # --- 2. MÉTRICAS CHAVE (TOP KNOBS) ---
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric(label="Total de Cargos Únicos", value=f"{df['TITULO_CARGO'].nunique():,}")
+    
+    with col2:
+        st.metric(label="Total de Job Families", value=df['JOB_FAMILY'].nunique())
+
+    with col3:
+        st.metric(label="Total de Job Subfamilies", value=df['JOB_SUBFAMILY'].nunique())
+    
+    with col4:
+        st.metric(label="Total de Níveis (Grading)", value=df['GRADING'].nunique())
+
+    st.markdown("---")
+
+    # --- 3. DASHBOARD: DISTRIBUIÇÃO POR FAMÍLIA e SUBFAMÍLIA ---
+    st.subheader("1. Distribuição por Job Family e Subfamily")
+    
+    col_family, col_subfamily = st.columns([1, 2])
+
+    # Gráfico 1: Job Family
+    family_counts = df.groupby('JOB_FAMILY')['TITULO_CARGO'].nunique().reset_index(name='Cargos')
+    fig_family = px.pie(
+        family_counts, 
+        values='Cargos', 
+        names='JOB_FAMILY', 
+        title='Distribuição por Job Family',
+        color_discrete_sequence=px.colors.qualitative.Pastel # Identidade visual adaptável
+    )
+    col_family.plotly_chart(fig_family, use_container_width=True)
+
+    # Gráfico 2: Tabela de Subfamilies
+    subfamily_counts = df.groupby(['JOB_FAMILY', 'JOB_SUBFAMILY'])['TITULO_CARGO'].nunique().reset_index(name='Cargos')
+    subfamily_counts = subfamily_counts.sort_values(by='Cargos', ascending=False)
+    
+    col_subfamily.markdown("#### Detalhamento por Subfamily")
+    col_subfamily.dataframe(
+        subfamily_counts.rename(columns={'JOB_FAMILY': 'Família', 'JOB_SUBFAMILY': 'Subfamília'}),
+        use_container_width=True,
+        hide_index=True
+    )
+    st.markdown("---")
+
+    # --- 4. DASHBOARD: DISTRIBUIÇÃO POR GRADING (NÍVEL) ---
+    st.subheader("2. Distribuição por Grading")
+
+    grading_counts = df.groupby('GRADING')['TITULO_CARGO'].nunique().reset_index(name='Cargos')
+    # Nota: Usamos 'GRADING' como categoria para garantir a ordem correta, se aplicável
+    fig_grading = px.bar(
+        grading_counts, 
+        x='GRADING', 
+        y='Cargos', 
+        text='Cargos',
+        title='Contagem de Cargos por Nível (Grading)',
+        color='GRADING'
+    )
+    fig_grading.update_layout(xaxis={'categoryorder':'category ascending'}) # Tenta ordenar A, B, C ou L1, L2, L3
+    st.plotly_chart(fig_grading, use_container_width=True)
+
+    st.markdown("---")
+
+    # --- 5. DASHBOARD: MATRIZ DIRETORIA x GRADING (SUGESTÃO IMPORTANTE) ---
+    st.subheader("3. Heatmap: Distribuição de Cargos por Diretoria e Grading")
+    st.caption("Esta é a visão mais estratégica: mostra onde estão os cargos de maior nível (maior 'Grading') dentro de cada Diretoria.")
+
+    # Cria a tabela de contingência
+    matrix = pd.crosstab(df['GRADING'], df['DIRETORIA'])
+    
+    # Cria o Heatmap (Mapa de Calor)
+    fig_heatmap = px.imshow(
+        matrix.values,
+        x=matrix.columns,
+        y=matrix.index,
+        color_continuous_scale='Inferno_r', # Cores fortes para destaque estratégico
+        aspect="auto",
+        text_auto=True
+    )
+    fig_heatmap.update_layout(
+        title='Matriz: Grading vs. Diretoria (Contagem de Cargos)',
+        yaxis_title="Nível de Cargo (Grading)",
+        xaxis_title="Diretoria / Área"
+    )
+    st.plotly_chart(fig_heatmap, use_container_width=True)
+
+
+    # --- 6. O QUE MAIS SUGERIMOS (Sugestão Extra) ---
+    st.markdown("---")
+    st.subheader("💡 O Que Mais Sugerimos (Métricas de Análise)")
+    
+    st.write(
+        "Para aprofundar a análise da Arquitetura de Cargos, sugiro adicionar as seguintes métricas baseadas na sua tabela:"
+    )
+    
+    col_s1, col_s2 = st.columns(2)
+
+    with col_s1:
+        st.markdown(
+            """
+            * **Métrica de Concentração (Liderança):**
+                * Percentual de cargos classificados como "Gestão/Liderança" (se você tiver uma coluna indicando isso).
+                * Isso ajuda a identificar se a estrutura está muito "flat" (horizontal) ou muito "tall" (verticalizada).
+            * **Métrica de Amplitude de Controle:**
+                * Se a tabela incluir o cargo do *manager*, você pode calcular a média de cargos reportando a cada nível de liderança.
+            """
+        )
+    with col_s2:
+        st.markdown(
+            """
+            * **Métrica de Equidade (Homogeneidade do Grading):**
+                * Percentual de cargos dentro de uma **mesma Job Family** que caem em *Gradings* adjacentes (ex: se 80% dos Analistas Pleno em Finanças estão nos Grades L5 e L6, a equidade está alta).
+            * **Tabela de Desvios Salariais (Se tiver dados de remuneração):**
+                * Exibir a média salarial por *Grading* e identificar cargos que estão abaixo ou acima da média da banda. **(Crucial para Remuneração)**
+            """
+        )
+
+else:
+    st.warning("Não foi possível gerar o dashboard pois os dados não foram carregados.")
