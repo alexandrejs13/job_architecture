@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# pages/6_⚙️_Structure_Level.py <--- ASSUMINDO QUE ESTE É O NOVO NOME DO ARQUIVO
+# pages/6_Structure_Level.py
 
 import streamlit as st
 import pandas as pd
@@ -39,11 +39,11 @@ def load_level_data():
 
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA (COM O ÍCONE COERENTE)
+# 1. CONFIGURAÇÃO DE PÁGINA (ÍCONE DE ENGRENAGEM PARA ALINHAMENTO)
 # ===========================================================
 st.set_page_config(
     page_title="Structure Level", 
-    page_icon="⚙️", 
+    page_icon="⚙️", # ÍCONE: Engrenagem para alinhamento da sidebar
     layout="wide", 
     initial_sidebar_state="expanded"
 )
