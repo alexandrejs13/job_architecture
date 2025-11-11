@@ -146,3 +146,7 @@ h3 {
   font-size: 1.15rem;
   margin-bottom: 10px;
 }
+/* Ícone da página Dashboard */
+[data-testid="stSidebarNav"] ul li:nth-child(8) a::before {
+  background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/data%202%20perfromance.png");
+}
