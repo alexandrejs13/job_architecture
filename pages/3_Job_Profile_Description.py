@@ -55,6 +55,35 @@ st.markdown("""
     color: #202020;
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
 }
+.job-card {
+    background:white;
+    border-left:5px solid #145efc;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 4px 8px rgba(0,0,0,0.05);
+}
+.job-card h4 {
+    color:#145efc;
+    margin-bottom:8px;
+}
+.job-card p {
+    margin-bottom:6px;
+}
+.job-card .meta {
+    background:#fff;
+    border-top:1px solid #e0e0e0;
+    border-bottom:1px solid #e0e0e0;
+    font-size:.9rem;
+    color:#555;
+    padding:12px 16px;
+    margin-top:10px;
+}
+.job-card .desc {
+    margin-top:12px;
+    color:#333;
+    line-height:1.6;
+    font-size:.95rem;
+}
 </style>
 
 <div class="page-header">
@@ -107,24 +136,17 @@ if not df.empty:
     profiles = sorted(filtered["Job Profile"].dropna().unique())
     selected = st.multiselect("Selecione até 3 perfis:", profiles, max_selections=3)
 
-    # =======================================================
-    # 6. FUNÇÃO DE ESCAPE E FORMATAÇÃO DE TEXTO
-    # =======================================================
-    def safe_text(value: str) -> str:
-        """Escapa HTML e preserva quebras de linha."""
-        if value is None or str(value).strip() == "":
+    def safe_text(value):
+        if pd.isna(value) or not str(value).strip():
             return "-"
-        s = html.escape(str(value))
-        return s.replace("\n", "<br>")
+        return html.escape(str(value)).replace("\n", "<br>")
 
     # =======================================================
-    # 7. GRID DE COMPARAÇÃO
+    # 6. GRID DE COMPARAÇÃO
     # =======================================================
     if selected:
         cols = len(selected)
-        cards_html = [
-            f'<div style="display:grid;grid-template-columns:repeat({cols},1fr);gap:25px;">'
-        ]
+        grid_html = f'<div style="display:grid;grid-template-columns:repeat({cols},1fr);gap:25px;">'
 
         for s in selected:
             item = filtered[filtered["Job Profile"] == s]
@@ -136,50 +158,31 @@ if not df.empty:
             title = safe_text(row.get("Job Profile", "-"))
             gg = safe_text(row.get("Global Grade", "-"))
             desc = safe_text(row.get("Job Profile Description", "-"))
-
-            # Campos opcionais
             family = safe_text(row.get("Job Family", "-"))
             sub_family = safe_text(row.get("Sub Job Family", "-"))
             path_name = safe_text(row.get("Career Path", "-"))
             level = safe_text(row.get("Career Level", "-"))
 
-            meta_items = []
-            if family != "-": meta_items.append(f"<b>Família:</b> {family}")
-            if sub_family != "-": meta_items.append(f"<b>Subfamília:</b> {sub_family}")
-            if path_name != "-": meta_items.append(f"<b>Trilha:</b> {path_name}")
-            if level != "-": meta_items.append(f"<b>Nível:</b> {level}")
-
-            meta_html = ""
-            if meta_items:
-                meta_html = (
-                    '<div style="background:#fff;border-top:1px solid #e0e0e0;'
-                    'border-bottom:1px solid #e0e0e0;font-size:.9rem;color:#555;'
-                    'padding:12px 16px;margin-top:10px;">'
-                    + " &nbsp;•&nbsp; ".join(meta_items)
-                    + "</div>"
-                )
-
-            card_html = f"""
-            <div style="
-                background:white;
-                border-left:5px solid #145efc;
-                padding:20px;
-                border-radius:10px;
-                box-shadow:0 4px 8px rgba(0,0,0,0.05);
-            ">
-                <h4 style="color:#145efc;margin-bottom:8px;">{title}</h4>
-                <p style="margin-bottom:6px;"><b>Global Grade:</b> {gg}</p>
-                {meta_html}
-                <div style="margin-top:12px;color:#333;line-height:1.6;font-size:.95rem;">
-                    <b>Descrição:</b><br>{desc}
+            meta_html = f"""
+                <div class="meta">
+                    <b>Família:</b> {family} •
+                    <b>Subfamília:</b> {sub_family} •
+                    <b>Trilha:</b> {path_name} •
+                    <b>Nível:</b> {level}
                 </div>
+            """
+
+            grid_html += f"""
+            <div class="job-card">
+                <h4>{title}</h4>
+                <p><b>Global Grade:</b> {gg}</p>
+                {meta_html}
+                <div class="desc"><b>Descrição:</b><br>{desc}</div>
             </div>
             """
-            cards_html.append(card_html)
 
-        cards_html.append("</div>")
-        st.markdown("".join(cards_html), unsafe_allow_html=True)
-
+        grid_html += "</div>"
+        st.markdown(grid_html, unsafe_allow_html=True)
     else:
         st.info("👆 Selecione até 3 cargos para comparar.")
 else:
