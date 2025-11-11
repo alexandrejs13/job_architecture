@@ -7,31 +7,31 @@ from pathlib import Path
 # ===========================================================
 st.set_page_config(
     page_title="Job Architecture",
-    page_icon="📘",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ===========================================================
-# 2. CSS GLOBAL E SIDEBAR UNIFICADA
+# 2. ESTILOS E ESTRUTURA PADRÃO
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
     with open(css_path) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
+# ===========================================================
+# 3. CABEÇALHO E SIDEBAR
+# ===========================================================
 sidebar_logo_and_title()
 
-# ===========================================================
-# 3. CABEÇALHO AZUL PADRONIZADO
-# ===========================================================
+# Header azul padronizado
 st.markdown("""
 <style>
 .page-header {
     background-color: #145efc;
     color: white;
     font-weight: 750;
-    font-size: 1.45rem;
+    font-size: 1.4rem;
     border-radius: 12px;
     padding: 22px 36px;
     display: flex;
@@ -47,7 +47,7 @@ st.markdown("""
     height: 54px;
 }
 .block-container {
-    max-width: 1000px !important;
+    max-width: 950px !important;
     padding-left: 40px !important;
     padding-right: 40px !important;
 }
@@ -57,170 +57,125 @@ st.markdown("""
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
 }
 
-/* ===== CARDS ===== */
-.pillar-card {
-    background-color: #ffffff;
-    border-left: 5px solid #145efc;
-    border-radius: 8px;
-    padding: 22px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    height: 100%;
-}
-.pillar-title {
-    font-weight: 700;
-    color: #145efc;
-    font-size: 1.05rem;
-    margin-bottom: 6px;
-}
-.pillar-text {
-    color: #333333;
-    font-size: 0.98rem;
-    line-height: 1.6;
-}
-.section-title {
-    font-weight: 700;
-    font-size: 1.2rem;
-    color: #000000;
-    margin-top: 35px;
-    margin-bottom: 10px;
-}
-.section-text {
-    font-size: 1rem;
-    color: #202020;
-    line-height: 1.65;
-    text-align: justify;
-}
-.job-table {
-    width: 100%;
-    border-collapse: collapse;
+/* ===== CARDS DE PILARES ===== */
+.pillar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+    gap: 25px;
     margin-top: 20px;
 }
-.job-table th {
-    text-align: left;
-    padding: 10px;
-    border-bottom: 2px solid #145efc;
-    font-weight: 700;
-    color: #145efc;
+.pillar-card {
+    background-color: #ffffff;
+    border-left: 6px solid #145efc;
+    border-radius: 12px;
+    padding: 26px 28px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: 260px; /* altura fixa igual para todos */
 }
-.job-table td {
-    padding: 10px;
-    border-bottom: 1px solid #e6e6e6;
-    vertical-align: top;
-    color: #333;
+.pillar-title {
+    color: #145efc;
+    font-weight: 800;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+.pillar-text {
+    color: #2e2e2e;
+    font-size: 1rem;
+    line-height: 1.55;
+}
+
+/* Ajuste de espaçamento entre seções */
+section.main > div {
+    padding-top: 10px !important;
+    padding-left: 25px !important;
+    padding-right: 25px !important;
 }
 </style>
 
 <div class="page-header">
     <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png" alt="icon">
-    Job Architecture — Fundamentos e Governança
+    Job Architecture
 </div>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 4. CONCEITO CENTRAL
+# 4. CONTEÚDO PRINCIPAL
 # ===========================================================
 st.markdown("""
-<div class="section-text">
-A <strong>Job Architecture (JA)</strong> é o sistema que organiza e estrutura todas as posições da SIG, 
-definindo como agrupamos funções, níveis de responsabilidade e critérios de progressão.  
-Seu propósito é garantir <strong>transparência, consistência e alinhamento global</strong> entre 
-remuneração, desenvolvimento e governança organizacional.
+A **Job Architecture (JA)** é a estrutura corporativa que organiza, nivela e conecta os cargos de forma consistente em toda a organização.  
+Ela serve como base para decisões estratégicas de **remuneração, carreira, governança e mobilidade interna**, garantindo clareza e equidade global.
 
-Mais do que um catálogo de cargos, a Job Architecture é uma <strong>estrutura viva</strong> que conecta 
-o desenho organizacional à estratégia de talentos, assegurando que decisões sobre estrutura e carreira 
-sejam tomadas com base em princípios comuns e comparáveis.
-</div>
-""", unsafe_allow_html=True)
+A implementação de uma Job Architecture sólida oferece transparência sobre como cada função se relaciona com as demais, define responsabilidades com precisão e apoia a evolução profissional de forma estruturada.
+""")
+
+st.markdown("### Pilares Estruturantes da Arquitetura de Cargos")
 
 # ===========================================================
-# 5. PILARES DA ARQUITETURA
+# 5. PILARES EM CARDS
 # ===========================================================
-st.markdown('<div class="section-title">Pilares Estruturantes</div>', unsafe_allow_html=True)
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.markdown("""
+st.markdown("""
+<div class="pillar-grid">
     <div class="pillar-card">
         <div class="pillar-title">Governança Global</div>
         <div class="pillar-text">
-        Estrutura padronizada que garante coerência entre funções, níveis e critérios de decisão em toda a organização.
+            Define princípios corporativos e metodologias comuns para classificação, avaliação e manutenção de cargos.
+            Garante consistência e integridade das informações em todos os níveis da organização.
         </div>
     </div>
-    """, unsafe_allow_html=True)
-with col2:
-    st.markdown("""
+
     <div class="pillar-card">
         <div class="pillar-title">Clareza de Carreira</div>
         <div class="pillar-text">
-        Cada posição está vinculada a um Career Band e Global Grade, oferecendo visibilidade, mobilidade e previsibilidade de crescimento.
+            Proporciona visibilidade sobre caminhos de crescimento profissional, 
+            facilitando a mobilidade interna e o desenvolvimento de talentos com base em competências e níveis de responsabilidade.
         </div>
     </div>
-    """, unsafe_allow_html=True)
-with col3:
-    st.markdown("""
+
     <div class="pillar-card">
         <div class="pillar-title">Integração de Sistemas</div>
         <div class="pillar-text">
-        A Job Architecture é a base para processos de remuneração, descrição de cargos, avaliação e benchmarking externo.
+            Alinha a estrutura de cargos aos sistemas de RH, remuneração e performance, 
+            assegurando que os dados fluam de forma precisa e atualizada em toda a jornada do colaborador.
         </div>
     </div>
-    """, unsafe_allow_html=True)
-
-# ===========================================================
-# 6. ESTRUTURA CONCEITUAL
-# ===========================================================
-st.markdown("""
-<div class="section-title">Estrutura da Arquitetura</div>
-<div class="section-text">
-A arquitetura é composta por cinco elementos integrados, que estabelecem um modelo corporativo uniforme:
-</div>
-
-<table class="job-table">
-    <tr>
-        <th>Elemento</th>
-        <th>Objetivo</th>
-        <th>Exemplos</th>
-    </tr>
-    <tr>
-        <td>Job Family</td>
-        <td>Organiza grupos funcionais amplos, conectados por competências e propósito comum.</td>
-        <td>Finanças, Engenharia, Recursos Humanos</td>
-    </tr>
-    <tr>
-        <td>Sub-Job Family</td>
-        <td>Subdivide as famílias em especializações específicas.</td>
-        <td>Contabilidade, Engenharia de Processo, Desenvolvimento Organizacional</td>
-    </tr>
-    <tr>
-        <td>Career Band</td>
-        <td>Define o escopo e amplitude de impacto do papel, orientando expectativas de entrega e complexidade.</td>
-        <td>Profissional, Gerencial, Executivo</td>
-    </tr>
-    <tr>
-        <td>Global Grade</td>
-        <td>Diferencia os níveis de responsabilidade e complexidade dentro de cada banda.</td>
-        <td>GG07, GG09, GG12</td>
-    </tr>
-    <tr>
-        <td>Generic Profile</td>
-        <td>Estabelece descrições corporativas de referência que asseguram consistência global.</td>
-        <td>“Finance Specialist”, “HR Manager”</td>
-    </tr>
-</table>
-""", unsafe_allow_html=True)
-
-# ===========================================================
-# 7. IMPORTÂNCIA ESTRATÉGICA
-# ===========================================================
-st.markdown("""
-<div class="section-title">Importância Estratégica</div>
-<div class="section-text">
-A <strong>Job Architecture</strong> da SIG é o alicerce das práticas de gestão de pessoas, 
-fornecendo uma linguagem comum e governança corporativa global.  
-Ela possibilita comparar, avaliar e planejar carreiras de forma equitativa, 
-integrando remuneração, desempenho e desenvolvimento em um mesmo modelo de referência.
-
-Ao alinhar estrutura, cultura e estratégia, a Job Architecture fortalece a conexão entre 
-<strong>crescimento organizacional</strong> e <strong>evolução profissional</strong>, 
-sustentando a meritocracia e a coerência nas decisões de talento.
 </div>
 """, unsafe_allow_html=True)
+
+st.markdown("---")
+
+# ===========================================================
+# 6. SEÇÃO EXPLICATIVA
+# ===========================================================
+st.markdown("""
+### Estrutura da Job Architecture
+
+A arquitetura é composta por quatro elementos interdependentes, que permitem uma visão completa da organização de cargos:
+
+- **Job Families:** agrupam funções por áreas de especialização.
+- **Sub-Job Families:** detalham as diferentes vertentes dentro de cada família.
+- **Career Bands e Global Grades:** classificam níveis hierárquicos e complexidade das funções.
+- **Generic Profiles:** fornecem descrições padrão para referência global.
+
+Cada elemento contribui para a coerência e comparabilidade entre cargos, servindo de base para decisões estratégicas de remuneração, sucessão e mobilidade.
+""")
+
+st.markdown("""
+### Benefícios de uma Arquitetura Estruturada
+
+Uma Job Architecture robusta apoia o crescimento sustentável da organização, ao mesmo tempo em que promove:
+
+- **Transparência e Equidade:** assegura critérios claros para avaliação e progressão de cargos.  
+- **Alinhamento Estratégico:** conecta a estrutura de cargos aos objetivos do negócio.  
+- **Eficiência Operacional:** simplifica processos e elimina redundâncias nas estruturas de funções.  
+- **Engajamento e Retenção:** fornece um panorama de carreira claro e consistente para os colaboradores.
+""")
+
+st.markdown("""
+### Conclusão
+
+A Job Architecture é um instrumento essencial de governança organizacional.  
+Ela harmoniza a gestão de cargos em escala global, sustenta políticas de remuneração coerentes e fortalece a experiência do colaborador por meio da clareza e do reconhecimento das trajetórias profissionais.
+""")
