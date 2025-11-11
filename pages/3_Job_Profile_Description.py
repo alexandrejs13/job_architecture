@@ -3,7 +3,7 @@ import pandas as pd
 import re
 from pathlib import Path
 from utils.ui import sidebar_logo_and_title
-import html # Adicionado para escapar caracteres HTML no output
+import html 
 
 # ===========================================================
 # 1. CONFIGURAÇÃO GERAL
@@ -11,12 +11,12 @@ import html # Adicionado para escapar caracteres HTML no output
 st.set_page_config(
     page_title="Job Profile Description",
     page_icon="📋",
-    layout="wide", # Mantido 'wide' para a comparação
+    layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ===========================================================
-# 2. CSS GLOBAL, HEADER PADRÃO E ESTILO DE COMPARAÇÃO (REPLICADO DA PAG 5)
+# 2. CSS GLOBAL, HEADER PADRÃO E ESTILO DE COMPARAÇÃO
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
@@ -25,7 +25,7 @@ if css_path.exists():
 
 sidebar_logo_and_title()
 
-# Incluído o estilo do header padronizado (da Pag 2) e o estilo de comparação (da Pag 5)
+# Estilo unificado (Header Padronizado e Layout de Comparação da Pag 5)
 st.markdown("""
 <style>
 .page-header {
@@ -50,7 +50,6 @@ st.markdown("""
     font-family: "Source Sans Pro","Helvetica",sans-serif;
 }
 
-/* Ajuste o max-width para ser mais amplo, como na Pag 5 (95% ou valor fixo maior) */
 .block-container {
     max-width: 95% !important; 
     padding-left: 1rem !important; 
@@ -60,7 +59,6 @@ st.markdown("""
 /* ============ ESTILOS DE COMPARAÇÃO (REPLICADOS DA PAG 5) ============ */
 .comparison-grid {
     display: grid;
-    /* Colunas dinâmicas serão definidas no Python com style="grid-template-columns:..." */
     gap: 20px;
     margin-top: 20px;
 }
@@ -76,10 +74,15 @@ st.markdown("""
     border-radius: 12px 12px 0 0;
     border-bottom: none;
 }
-.fjc-title { font-size: 18px; font-weight: 800; color: #2c3e50; margin-bottom: 10px; min-height: 50px; }
+.fjc-title { 
+    font-size: 18px; 
+    font-weight: 800; 
+    color: #2c3e50; 
+    margin-bottom: 2px; /* AJUSTE: DIMINUI ESPAÇO ENTRE TÍTULO E GG */
+    min-height: 50px; 
+}
 .fjc-gg-row { display: flex; justify-content: space-between; align-items: center; }
-.fjc-gg { color: #145efc; /* Azul SIG */ font-weight: 700; }
-/* Removido fjc-score pois não é usado aqui, mas vou deixar um placeholder para cor */
+.fjc-gg { color: #145efc; font-weight: 700; }
 .fjc-score { color: #145efc; font-weight: 700; padding: 4px 10px; border-radius: 12px; font-size: 0.9rem; } 
 .meta-cell {
     border-top: 1px solid #eee;
@@ -103,7 +106,6 @@ st.markdown("""
     border-radius: 0 0 12px 12px;
     background: #fff;
 }
-/* ===================================================================== */
 </style>
 
 <div class="page-header">
@@ -117,7 +119,7 @@ st.markdown("""
 # ===========================================================
 def normalize_grade(val):
     s = str(val).strip()
-    if s.lower() in ("nan", "none", "", "na", "-"): # Adicionado "-"
+    if s.lower() in ("nan", "none", "", "na", "-"):
         return ""
     return re.sub(r"\.0$", "", s)
 
@@ -142,9 +144,8 @@ if df.empty:
     st.error("❌ Arquivo 'Job Profile.xlsx' não encontrado ou inválido.")
     st.stop()
 
-# Garantir que a coluna GG seja numérica e limpa para comparação
 df["Global Grade"] = df["Global Grade"].apply(normalize_grade)
-df["GG"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True) # GG limpo para exibição
+df["GG"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True) 
 df["Global Grade Num"] = pd.to_numeric(df["Global Grade"], errors='coerce').fillna(0).astype(int)
 
 if not levels.empty and "Global Grade" in levels.columns:
@@ -233,12 +234,12 @@ num_results = len(cards_data)
 grid_style = f"grid-template-columns: repeat({num_results}, 1fr);"
 grid_html = f'<div class="comparison-grid" style="{grid_style}">'
 
-# Configuração das seções com cores (usando as cores do Page 5 para consistência)
+# Configuração das seções com cores
 sections_config = [
     ("🧭 Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
     ("🧠 Job Profile Description", "Job Profile Description", "#e91e63"),
     ("🏛️ Career Band Description", "Career Band Description", "#673ab7"),
-    ("🎯 Role Description", "Role Description", "#145efc"), # Azul SIG para Role Description
+    ("🎯 Role Description", "Role Description", "#145efc"), 
     ("🏅 Grade Differentiator", "Grade Differentiator", "#ff9800"),
     ("🎓 Qualifications", "Qualifications", "#009688")
 ]
@@ -263,7 +264,7 @@ for card in cards_data:
         ("Família", "Job Family"), 
         ("Subfamília", "Sub Job Family"), 
         ("Carreira", "Career Path"), 
-        ("Cód", "Full Job Code") # <- CAMPO ADICIONADO
+        ("Cód", "Full Job Code") 
     ]:
         val = str(d.get(col, "") or "-").strip()
         meta.append(f'<div class="meta-row"><strong>{lbl}:</strong> {html.escape(val)}</div>')
@@ -277,7 +278,7 @@ for card in cards_data:
 for title, field, color in sections_config:
     for card in cards_data:
         content = str(card['row'].get(field, '-'))
-        # Condição para pular a seção se o conteúdo estiver vazio/nan
+        # Pula a célula se o conteúdo estiver vazio/nan
         if len(content.strip()) < 2 or content.lower() == 'nan':
             grid_html += f'<div class="grid-cell section-cell" style="border-left-color: transparent; background: transparent; border: none;"></div>'
         else:
