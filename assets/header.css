@@ -1,22 +1,24 @@
-/* ===== MENU LATERAL COM ÍCONES CUSTOMIZADOS ===== */
+/* ==========================================================
+   CSS GLOBAL — LAYOUT PADRONIZADO PARA TODAS AS PÁGINAS
+   ========================================================== */
 
 /* Remove divisor abaixo do menu lateral */
 [data-testid="stSidebarNav"] {
   border-bottom: none !important;
 }
 
-/* Remove o item "App" */
+/* Remove o item "App" da sidebar */
 [data-testid="stSidebarNav"] ul li:first-child {
   display: none !important;
 }
 
-/* Links com espaçamento para ícone */
+/* Links da barra lateral com ícones */
 [data-testid="stSidebarNav"] ul li a {
   position: relative;
   padding-left: 32px !important;
 }
 
-/* Ícones */
+/* Ícones laterais */
 [data-testid="stSidebarNav"] ul li a::before {
   content: "";
   position: absolute;
@@ -30,7 +32,7 @@
   background-position: center;
 }
 
-/* Ícones por página */
+/* Ícones por página (ordem fixa do menu) */
 [data-testid="stSidebarNav"] ul li:nth-child(2) a::before {
   background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png");
 }
@@ -48,4 +50,99 @@
 }
 [data-testid="stSidebarNav"] ul li:nth-child(7) a::before {
   background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/process.png");
+}
+
+/* ==========================================================
+   BLOCO PRINCIPAL — LIMITE DE LARGURA E CENTRALIZAÇÃO
+   ========================================================== */
+
+.block-container {
+  max-width: 950px !important;        /* Largura ideal do conteúdo */
+  padding-left: 40px !important;
+  padding-right: 40px !important;
+  margin: 0 auto !important;          /* Centraliza */
+  box-sizing: border-box;
+}
+
+/* Largura máxima para telas ultra-wide */
+@media (min-width: 1600px) {
+  .block-container {
+    max-width: 1050px !important;
+  }
+}
+
+/* Fundo e fonte padrão */
+[data-testid="stAppViewContainer"] {
+  background-color: #f5f3f0 !important;
+  color: #202020 !important;
+  font-family: "Source Sans Pro", "Helvetica", sans-serif !important;
+}
+
+/* ==========================================================
+   TÍTULOS E CABEÇALHOS PADRONIZADOS
+   ========================================================== */
+
+h2 {
+  font-weight: 700 !important;
+  color: #000000 !important;
+  font-size: 1.35rem !important;
+  margin-top: 25px !important;
+  margin-bottom: 12px !important;
+}
+
+h3 {
+  font-weight: 700 !important;
+  color: #000000 !important;
+  font-size: 1.15rem !important;
+}
+
+/* Cabeçalho azul principal */
+.page-header {
+  background-color: #145efc;
+  color: white;
+  font-weight: 750;
+  font-size: 1.35rem;
+  border-radius: 12px;
+  padding: 22px 36px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 40px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.page-header img {
+  width: 48px;
+  height: 48px;
+}
+
+/* ==========================================================
+   CARDS E CAIXAS DE DESTAQUE
+   ========================================================== */
+
+.stAlert {
+  background-color: #eef3ff !important;
+  border-left: 4px solid #145efc !important;
+  color: #000 !important;
+  border-radius: 6px;
+}
+
+/* Três cards alinhados na mesma altura */
+.equal-card {
+  min-height: 150px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: left;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+/* Ícones internos */
+.equal-card h3 {
+  font-size: 1.15rem;
+  margin-bottom: 10px;
 }
