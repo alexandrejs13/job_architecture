@@ -250,14 +250,21 @@ for card in cards_data:
         <div class="fjc-title">{html.escape(card['row'].get('Job Profile', '-'))}</div>
         <div class="fjc-gg-row">
             <div class="fjc-gg">GG {card['row'].get('Global Grade', '-')} {card['lvl']}</div>
-            </div>
+        </div>
     </div>"""
 
 # 2. Metadados
 for card in cards_data:
     d = card['row']
     meta = []
-    for lbl, col in [("Família", "Job Family"), ("Subfamília", "Sub Job Family"), ("Carreira", "Career Path")]:
+    
+    # Lista de metadados, incluindo Full Job Code
+    for lbl, col in [
+        ("Família", "Job Family"), 
+        ("Subfamília", "Sub Job Family"), 
+        ("Carreira", "Career Path"), 
+        ("Cód", "Full Job Code") # <- CAMPO ADICIONADO
+    ]:
         val = str(d.get(col, "") or "-").strip()
         meta.append(f'<div class="meta-row"><strong>{lbl}:</strong> {html.escape(val)}</div>')
     
