@@ -1,31 +1,27 @@
-# ===========================================================
-# 1_JOB_ARCHITECTURE.PY — VISÃO GERAL CORPORATIVA
-# ===========================================================
-
 import streamlit as st
-from utils.ui import sidebar_logo_and_title
+import pandas as pd
+import matplotlib.pyplot as plt
 from pathlib import Path
+from utils.ui import sidebar_logo_and_title
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DA PÁGINA
+# 1. CONFIGURAÇÃO GERAL
 # ===========================================================
 st.set_page_config(
-    page_title="Job Architecture Overview",
+    page_title="Job Architecture",
+    page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ===========================================================
-# 2. ESTILOS E ESTRUTURA PADRÃO
+# 2. CSS GLOBAL E HEADER
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
     with open(css_path) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# ===========================================================
-# 3. CABEÇALHO E SIDEBAR
-# ===========================================================
 sidebar_logo_and_title()
 
 st.markdown("""
@@ -34,171 +30,147 @@ st.markdown("""
     background-color: #145efc;
     color: white;
     font-weight: 750;
-    font-size: 1.45rem;
+    font-size: 1.4rem;
     border-radius: 12px;
     padding: 22px 36px;
     display: flex;
     align-items: center;
     gap: 18px;
     width: 100%;
-    box-sizing: border-box;
     margin-bottom: 40px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
-.page-header img {
-    width: 54px;
-    height: 54px;
-}
-.block-container {
-    max-width: 900px !important;
-    padding-left: 40px !important;
-    padding-right: 40px !important;
-}
+.page-header img { width: 52px; height: 52px; }
 [data-testid="stAppViewContainer"] {
     background-color: #f5f3f0;
     color: #202020;
-    font-family: "Source Sans Pro", "Helvetica", sans-serif;
+    font-family: "Source Sans Pro","Helvetica",sans-serif;
 }
-.section {
+.block-container {
+    max-width: 950px !important;
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+}
+.info-box {
     background-color: #ffffff;
     border-left: 5px solid #145efc;
-    border-radius: 10px;
-    padding: 24px 30px;
+    border-radius: 8px;
+    padding: 20px 26px;
     margin-bottom: 25px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
-.section h3 {
-    color: #145efc;
-    font-weight: 700;
-    font-size: 1.1rem;
-    margin-bottom: 10px;
+h2, h3 {
+    color: #000000 !important;
+    font-weight: 700 !important;
 }
-.section p {
-    font-size: 1.05rem;
-    line-height: 1.6;
-    color: #333333;
+.table-container {
+    margin-top: 15px;
+    margin-bottom: 35px;
 }
 </style>
 
 <div class="page-header">
-    <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png" alt="icon">
-    Estrutura Global de Cargos — Job Architecture
+  <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png" alt="icon">
+  Job Architecture
 </div>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 4. CONTEÚDO PRINCIPAL
+# 3. CONCEITO ESTRUTURADO
 # ===========================================================
 st.markdown("""
-A **Job Architecture (JA)** é o sistema estruturante que organiza todos os cargos e posições dentro da SIG, permitindo **clareza organizacional**, **equidade interna** e **padronização global** das funções.
-
-Essa arquitetura é a base de referência para remuneração, desenvolvimento de carreira e gestão de talentos — garantindo que cada posição esteja alinhada à sua **contribuição estratégica** e ao **nível de complexidade** correspondente.
+A **Job Architecture** é a estrutura corporativa que organiza e classifica todas as funções da empresa, 
+permitindo uma visão clara e comparável de cargos, níveis e trajetórias de carreira.  
+Ela é a base para a **governança de talentos**, **equidade interna** e **consistência global**, 
+alinhando a estrutura organizacional aos princípios corporativos definidos pela metodologia da **Willis Towers Watson (WTW)**.
 """)
 
 st.markdown("""
----
-""")
+### Propósito e Valor
+A arquitetura de cargos estabelece a coerência entre papéis, responsabilidades e recompensas, 
+servindo como referência para decisões estratégicas em:
 
-st.markdown("""
-<div class="section">
-<h3>1. Finalidade Estratégica</h3>
-<p>
-A Job Architecture visa construir uma estrutura corporativa coerente, que assegura que todas as posições da SIG sejam avaliadas e categorizadas de forma consistente em todas as regiões, negócios e funções.
-</p>
-<p>
-Ela atua como um **framework global de governança de cargos**, servindo de base para políticas de remuneração, movimentações internas, sucessão e benchmarking externo.  
-O objetivo central é garantir que o crescimento profissional esteja diretamente relacionado à complexidade e ao impacto organizacional das funções exercidas.
-</p>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<div class="section">
-<h3>2. Componentes da Arquitetura</h3>
-<p>
-A arquitetura é composta por quatro dimensões interconectadas que definem a estrutura organizacional da SIG:
-</p>
-<ul>
-<li><strong>Job Families:</strong> grandes áreas funcionais que agrupam conjuntos de cargos com propósito e competências semelhantes.</li>
-<li><strong>Sub-Job Families:</strong> subdivisões especializadas dentro de cada família, refletindo nichos de atuação e foco técnico.</li>
-<li><strong>Career Bands:</strong> agrupamentos que refletem amplitude de responsabilidades e escopo de contribuição, servindo como referência de progressão profissional.</li>
-<li><strong>Global Grades:</strong> níveis globais que asseguram comparabilidade entre funções e equidade interna na remuneração e no reconhecimento.</li>
-</ul>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<div class="section">
-<h3>3. Benefícios Organizacionais</h3>
-<p>
-A adoção de uma Job Architecture sólida proporciona uma série de benefícios estratégicos:
-</p>
-<ul>
-<li>Facilita a <strong>transparência</strong> e a <strong>mobilidade de carreira</strong> entre áreas e geografias.</li>
-<li>Promove <strong>equidade interna</strong> ao alinhar cargos com responsabilidades semelhantes em diferentes funções.</li>
-<li>Fornece uma base analítica para decisões de <strong>remuneração, classificação e sucessão.</strong></li>
-<li>Contribui para a <strong>eficiência organizacional</strong> e para o fortalecimento da cultura corporativa baseada em meritocracia e clareza de papéis.</li>
-</ul>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<div class="section">
-<h3>4. Aplicação Prática na SIG</h3>
-<p>
-Na prática, a Job Architecture é o ponto de partida para todas as iniciativas de gestão de pessoas na SIG.  
-Ela é utilizada para:
-</p>
-<ul>
-<li>Classificar cargos e alinhar responsabilidades a níveis corporativos padronizados;</li>
-<li>Estruturar faixas salariais e políticas de remuneração de forma justa e competitiva;</li>
-<li>Definir trilhas de carreira e planos de sucessão baseados em competências e performance;</li>
-<li>Garantir coerência global em avaliações de cargos e decisões organizacionais.</li>
-</ul>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<div class="section">
-<h3>5. Princípios de Governança</h3>
-<p>
-A governança da Job Architecture é sustentada por critérios objetivos e mensuráveis:
-</p>
-<ul>
-<li>Classificação de cargos baseada em <strong>escopo de responsabilidade, complexidade e impacto.</strong></li>
-<li>Aplicação uniforme dos princípios de <strong>equidade e comparabilidade global.</strong></li>
-<li>Revisões periódicas para assegurar <strong>alinhamento com a estratégia corporativa e o mercado.</strong></li>
-<li>Gestão integrada com os processos de <strong>Compensation &amp; Benefits, Talent Management</strong> e <strong>Organizational Design.</strong></li>
-</ul>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("""
----
-""")
-
-st.markdown("""
-### Síntese Executiva
-A Job Architecture é o pilar que garante que cada cargo na SIG tenha **propósito, proporção e reconhecimento adequados**.
-Ela consolida a base sobre a qual se constroem práticas justas e sustentáveis de **remuneração, carreira e governança** —  
-alinhando pessoas, estrutura e estratégia em uma visão global e integrada.
+- Estruturação de carreiras e trilhas de desenvolvimento  
+- Benchmarking de remuneração e comparabilidade global  
+- Planejamento de sucessão e mobilidade interna  
+- Padronização de perfis funcionais e critérios de avaliação
 """)
 
 # ===========================================================
-# 5. AJUSTES VISUAIS FINAIS
+# 4. ELEMENTOS ESTRUTURAIS
 # ===========================================================
 st.markdown("""
-<style>
-[data-testid="stAppViewContainer"] {
-    background-color: #f5f3f0;
+### Estrutura Conceitual da Job Architecture
+Os componentes principais se conectam para garantir a padronização global e a flexibilidade local.
+""")
+
+data = {
+    "Elemento": [
+        "Career Band",
+        "Global Grade",
+        "Job Family / Subfamily",
+        "Generic Profile"
+    ],
+    "Definição": [
+        "Agrupa papéis com similar escopo e impacto organizacional (e.g. Operational, Professional, Leadership).",
+        "Nível global padronizado que define a complexidade, escopo e contribuição relativa do papel.",
+        "Organiza as funções em áreas de especialização e subáreas específicas.",
+        "Descrição corporativa genérica usada globalmente como referência para descrições locais."
+    ],
+    "Aplicação": [
+        "Define amplitude de responsabilidade e influência.",
+        "Permite comparabilidade global e alinhamento com o mercado.",
+        "Orienta mobilidade e trilhas de desenvolvimento técnico e funcional.",
+        "Garante consistência nas práticas de gestão e avaliação de cargos."
+    ]
 }
-ul {
-    margin-left: 1.5rem;
-    line-height: 1.6;
-}
-hr {
-    margin-top: 30px;
-    margin-bottom: 30px;
-}
-</style>
-""", unsafe_allow_html=True)
+df = pd.DataFrame(data)
+
+st.dataframe(df, use_container_width=True, hide_index=True)
+
+# ===========================================================
+# 5. VISUALIZAÇÃO MINIMALISTA (CAREER BAND X GLOBAL GRADE)
+# ===========================================================
+st.markdown("""
+### Estrutura Visual Simplificada
+A relação entre **Career Bands** e **Global Grades** define a progressão da complexidade de papéis dentro da organização.
+""")
+
+career_bands = ["Operational", "Professional", "Managerial", "Executive"]
+grades = [range(1, 3), range(3, 6), range(6, 9), range(9, 12)]
+
+plt.figure(figsize=(9, 3.8))
+for i, (band, gr) in enumerate(zip(career_bands, grades)):
+    plt.plot(list(gr), [i]*len(gr), 'o-', linewidth=3, markersize=10, label=band)
+
+plt.yticks(range(len(career_bands)), career_bands)
+plt.xlabel("Global Grade", fontsize=11)
+plt.ylabel("")
+plt.title("Relação entre Career Bands e Global Grades", fontsize=13, weight='bold', pad=15)
+plt.legend(title="Career Band", bbox_to_anchor=(1.05, 1), loc="upper left")
+plt.grid(axis="y", color="#ddd", linestyle="-", linewidth=0.6)
+plt.grid(axis="x", linestyle="", linewidth=0)
+plt.tight_layout()
+st.pyplot(plt.gcf())
+
+# ===========================================================
+# 6. CONTEÚDO CONCEITUAL ADICIONAL
+# ===========================================================
+st.markdown("""
+### Interpretação
+Cada **Career Band** representa um conjunto de papéis com escopo e complexidade similares.  
+Os **Global Grades** permitem granularidade dentro de cada banda, assegurando que as funções sejam avaliadas de forma justa e comparável entre regiões e unidades de negócio.
+
+Essa estrutura é fundamental para:
+
+- Diferenciar responsabilidades sem sobreposição de níveis;  
+- Assegurar equidade e coerência entre funções equivalentes;  
+- Criar uma base sólida para gestão de remuneração, mobilidade e sucessão.
+""")
+
+st.markdown("""
+### Conclusão
+Uma arquitetura de cargos bem desenhada é o **alicerce da governança de talentos**.  
+Ela conecta estratégia organizacional, gestão de desempenho e políticas de remuneração, 
+permitindo decisões consistentes, transparentes e sustentáveis.
+""")
