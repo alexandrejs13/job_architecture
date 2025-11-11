@@ -129,18 +129,26 @@ def load_excel(path):
         return pd.DataFrame()
 
 # ===========================================================
-# 4. DADOS
+# 4. DADOS — CORRIGIDO E OTIMIZADO
 # ===========================================================
 df = load_excel("data/Job Profile.xlsx")
-levels = load_excel("data/Structure Level.xlsx")
+levels = load_excel("data/Level Structure.xlsx")  # ✅ Nome corrigido
 
+# Verificação básica de integridade
 if df.empty:
     st.error("❌ Arquivo 'Job Profile.xlsx' não encontrado ou inválido.")
     st.stop()
 
+# Normalização dos Global Grades
 df["Global Grade"] = df["Global Grade"].apply(normalize_grade)
-if not levels.empty and "Global Grade" in levels.columns:
-    levels["Global Grade"] = levels["Global Grade"].apply(normalize_grade)
+
+if not levels.empty:
+    if "Global Grade" in levels.columns:
+        levels["Global Grade"] = levels["Global Grade"].apply(normalize_grade)
+    else:
+        st.warning("⚠️ O arquivo 'Level Structure.xlsx' não contém a coluna 'Global Grade'.")
+else:
+    st.warning("⚠️ O arquivo 'Level Structure.xlsx' não foi carregado. Exibindo perfis sem níveis.")
 
 # ===========================================================
 # 5. FILTROS
