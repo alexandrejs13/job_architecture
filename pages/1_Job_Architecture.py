@@ -1,13 +1,18 @@
 import streamlit as st
-import pandas as pd
-import os
-from pathlib import Path
 from utils.ui import sidebar_logo_and_title
-
-st.set_page_config(page_title="Job Families", page_icon="📂", layout="wide", initial_sidebar_state="expanded")
+from pathlib import Path
 
 # ===========================================================
-# CSS GLOBAL + SIDEBAR
+# 1. CONFIGURAÇÃO DA PÁGINA
+# ===========================================================
+st.set_page_config(
+    page_title="Job Architecture",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# ===========================================================
+# 2. CSS GLOBAL E SIDEBAR
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
@@ -17,7 +22,7 @@ if css_path.exists():
 sidebar_logo_and_title()
 
 # ===========================================================
-# HEADER PADRÃO
+# 3. CABEÇALHO PADRÃO
 # ===========================================================
 st.markdown("""
 <style>
@@ -32,6 +37,7 @@ st.markdown("""
     align-items: center;
     gap: 18px;
     width: 100%;
+    box-sizing: border-box;
     margin-bottom: 40px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
@@ -49,91 +55,38 @@ st.markdown("""
     color: #202020;
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
 }
-.jf-card {
-    background: white;
-    border-left: 5px solid #145efc;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-}
-.card-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-}
-.card-row > div {
-    flex: 1;
-    background: #fff;
-    border-radius: 10px;
-    border-left: 4px solid #145efc;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-    padding: 20px;
-    min-height: 150px;
-}
 </style>
 
 <div class="page-header">
-    <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/people%20employees.png" alt="icon">
-    Famílias de Cargos (Job Families)
+    <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png" alt="icon">
+    Job Architecture
 </div>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# FUNÇÃO DE LEITURA
-# ===========================================================
-@st.cache_data(ttl="1h")
-def load_data():
-    path = "data/Job Family.xlsx"
-    if not os.path.exists(path):
-        return pd.DataFrame()
-    return pd.read_excel(path)
-
-df = load_data()
-
-# ===========================================================
-# CONTEÚDO PRINCIPAL
+# 4. CONTEÚDO PRINCIPAL
 # ===========================================================
 st.markdown("""
-As **Job Families** representam grandes agrupamentos de funções que compartilham propósitos, competências e caminhos de desenvolvimento similares.
-""")
-
-st.markdown("### O que é uma Job Family?")
-st.markdown("""
-Pense nas **Job Families** como grandes **bairros organizacionais**.  
-Dentro de cada bairro, existem casas diferentes (os cargos), mas todos compartilham o mesmo propósito e estrutura.
+## Introdução
+A **Job Architecture (JA)** é a base que estrutura e nivela cargos na SIG, promovendo clareza, consistência e equidade global.
 """)
 
 st.markdown("""
-### Por que dividimos assim?
+## Estrutura
+A arquitetura é composta por quatro elementos principais:
+
+1. **Job Families:** grandes grupos funcionais.  
+2. **Sub-Job Families:** especializações dentro das famílias.  
+3. **Career Levels:** níveis de senioridade e foco do papel.  
+4. **Generic Profiles:** descrições padronizadas usadas globalmente.
 """)
 
 st.markdown("""
-<div class="card-row">
-    <div><b>🛣️ Clareza de Carreira</b><br>Facilita entender para onde você pode crescer.</div>
-    <div><b>⚖️ Equidade</b><br>Garante tratamento justo entre funções similares.</div>
-    <div><b>🧠 Desenvolvimento</b><br>Permite trilhas de aprendizado mais focadas.</div>
-</div>
-""", unsafe_allow_html=True)
+## Objetivo
+Garantir que todas as posições SIG estejam classificadas de forma uniforme, servindo de base para remuneração, carreira e governança.
+""")
 
-st.divider()
-
-st.header("🔍 Explorador de Famílias")
-
-if not df.empty:
-    families = sorted(df["Job Family"].dropna().unique())
-    selected_family = st.selectbox("Selecione a Família:", families)
-
-    if selected_family:
-        sub_fams = sorted(df[df["Job Family"] == selected_family]["Sub Job Family"].dropna().unique())
-        selected_sub = st.selectbox("Selecione a Sub-Família:", sub_fams)
-        if selected_sub:
-            desc = df[(df["Job Family"] == selected_family) &
-                      (df["Sub Job Family"] == selected_sub)]["Sub Job Family Description"].values
-            if len(desc):
-                st.markdown(f"""
-                <div class="jf-card">
-                    <b>📘 Descrição da Sub-Família:</b><br>{desc[0]}
-                </div>
-                """, unsafe_allow_html=True)
-else:
-    st.warning("Arquivo de dados não encontrado.")
+st.info("""
+**Importante:**  
+A Job Architecture não substitui descrições locais — ela serve como referência corporativa para estrutura e avaliação.
+""")
