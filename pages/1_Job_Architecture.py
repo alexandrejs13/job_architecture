@@ -7,31 +7,30 @@ from pathlib import Path
 # ===========================================================
 st.set_page_config(
     page_title="Job Architecture",
-    page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ===========================================================
-# 2. CSS GLOBAL E SIDEBAR
+# 2. CSS GLOBAL E ESTRUTURA PADRÃO
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
     with open(css_path) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
+# ===========================================================
+# 3. CABEÇALHO E SIDEBAR
+# ===========================================================
 sidebar_logo_and_title()
 
-# ===========================================================
-# 3. CABEÇALHO AZUL PADRONIZADO
-# ===========================================================
 st.markdown("""
 <style>
 .page-header {
     background-color: #145efc;
     color: white;
     font-weight: 750;
-    font-size: 1.45rem;
+    font-size: 1.35rem;
     border-radius: 12px;
     padding: 22px 36px;
     display: flex;
@@ -43,20 +42,23 @@ st.markdown("""
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 .page-header img {
-    width: 54px;
-    height: 54px;
+    width: 48px;
+    height: 48px;
 }
 .block-container {
-    max-width: 1100px !important;
+    max-width: 900px !important;
     padding-left: 40px !important;
     padding-right: 40px !important;
 }
+
+/* ===== VISUAL GLOBAL ===== */
 [data-testid="stAppViewContainer"] {
     background-color: #f5f3f0;
     color: #202020;
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
 }
-/* ======== CARDS DE PILARES ======== */
+
+/* ===== CARDS DE PILARES - ALTURA UNIFORME ===== */
 .pillar-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
@@ -71,8 +73,8 @@ st.markdown("""
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    min-height: 230px;
+    justify-content: space-between;
+    height: 250px; /* altura fixa uniforme */
 }
 .pillar-title {
     color: #145efc;
@@ -85,11 +87,19 @@ st.markdown("""
     font-size: 1rem;
     line-height: 1.55;
 }
+
+/* ===== ESTILO DOS TÍTULOS ===== */
 h2 {
-    font-weight: 750 !important;
-    color: #000 !important;
-    margin-top: 40px !important;
-    margin-bottom: 10px !important;
+    font-weight: 700 !important;
+    color: #000000 !important;
+    font-size: 1.35rem !important;
+    margin-top: 25px !important;
+    margin-bottom: 12px !important;
+}
+h3 {
+    font-weight: 700 !important;
+    color: #000000 !important;
+    font-size: 1.15rem !important;
 }
 </style>
 
@@ -103,73 +113,62 @@ h2 {
 # 4. CONTEÚDO PRINCIPAL
 # ===========================================================
 st.markdown("""
-## Introdução  
-A **Job Architecture (JA)** é a base que estrutura e nivela cargos na SIG, garantindo **clareza, consistência e equidade global**.  
-Ela define a lógica que conecta funções, níveis, responsabilidades e remuneração em uma estrutura corporativa única.
+A **Job Architecture (JA)** é a estrutura que organiza todos os cargos e posições dentro da SIG, 
+definindo critérios consistentes para **classificação, progressão, remuneração e governança global**.
 
----
+Sua aplicação garante alinhamento entre funções similares, transparência nos critérios de carreira 
+e coerência na estrutura organizacional em todos os países onde atuamos.
+""")
 
+st.markdown("""
+## Estrutura da Arquitetura de Cargos
+
+A Job Architecture é composta por quatro elementos integrados que permitem a padronização global:
+1. **Job Families** – agrupamentos amplos de funções com propósito e expertise semelhantes.  
+2. **Sub Job Families** – especializações específicas dentro de cada família.  
+3. **Career Levels** – níveis que refletem o escopo de responsabilidade e maturidade do papel.  
+4. **Generic Profiles** – descrições corporativas de referência utilizadas globalmente.
+""")
+
+st.markdown("""
 ## Pilares Estruturantes
 """)
 
-# ===========================================================
-# 5. CARDS DOS PILARES
-# ===========================================================
 st.markdown("""
 <div class="pillar-grid">
-
     <div class="pillar-card">
         <div class="pillar-title">Governança Global</div>
         <div class="pillar-text">
-            Estrutura padronizada que garante coerência entre funções, níveis e critérios de decisão em toda a organização.
+            Define políticas, critérios e princípios que asseguram coerência e equidade na avaliação de cargos e níveis,
+            fortalecendo a consistência da estrutura corporativa em escala global.
         </div>
     </div>
-
     <div class="pillar-card">
         <div class="pillar-title">Clareza de Carreira</div>
         <div class="pillar-text">
-            Cada posição está vinculada a um Career Band e Global Grade, oferecendo visibilidade, mobilidade e previsibilidade de crescimento.
+            Oferece transparência sobre trajetórias, movimentações e expectativas de desenvolvimento, 
+            facilitando o entendimento sobre oportunidades e evolução profissional.
         </div>
     </div>
-
     <div class="pillar-card">
         <div class="pillar-title">Integração de Sistemas</div>
         <div class="pillar-text">
-            A Job Architecture é a base para processos de remuneração, descrição de cargos, avaliação e benchmarking externo.
+            Conecta os elementos de arquitetura a processos de remuneração, sucessão e desempenho, 
+            promovendo sinergia entre as ferramentas e práticas de gestão de pessoas.
         </div>
     </div>
-
 </div>
 """, unsafe_allow_html=True)
 
-# ===========================================================
-# 6. SEÇÃO DE ESTRUTURA
-# ===========================================================
 st.markdown("""
-## Estrutura da Arquitetura
-
-A arquitetura é composta por quatro elementos principais:
-
-1. **Job Families** — Grandes grupos funcionais que organizam áreas de conhecimento.  
-2. **Sub-Job Families** — Especializações dentro das famílias.  
-3. **Career Levels** — Diferenciação por senioridade, complexidade e escopo.  
-4. **Generic Profiles** — Modelos de referência para descrições de cargos.
-
----
-
-## Objetivo da Job Architecture
-Garantir que todas as posições da SIG estejam classificadas de forma uniforme, servindo como base para:
-
-- Estrutura e governança de cargos;  
-- Políticas de remuneração e mobilidade;  
-- Desenvolvimento e planejamento de carreira.  
-
+## Objetivo
+A Job Architecture serve como base corporativa para **remuneração, carreira e governança**.  
+Seu objetivo é garantir que todas as posições SIG estejam classificadas de forma uniforme, 
+promovendo decisões mais estratégicas, justas e sustentáveis.
 """)
-# ===========================================================
-# 7. NOTA FINAL
-# ===========================================================
+
 st.info("""
-**Importante:**  
-A Job Architecture não substitui as descrições de cargo locais — ela fornece a referência corporativa
-para estrutura, consistência e avaliação global.
+**Nota:**  
+A Job Architecture não substitui as descrições de cargo locais — 
+ela oferece uma referência global que orienta o design organizacional e a consistência entre funções.
 """)
