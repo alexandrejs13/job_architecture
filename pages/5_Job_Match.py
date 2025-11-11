@@ -70,7 +70,7 @@ model = load_model()
 wtw_data = load_wtw_data()
 
 # ===========================================================
-# 4. CAMPOS DE ENTRADA (WTW Hierarchy Criteria)
+# 4. CAMPOS DE ENTRADA HIERÁRQUICOS (WTW)
 # ===========================================================
 st.markdown("### 🔧 Parâmetros Hierárquicos e Organizacionais")
 
@@ -118,7 +118,7 @@ word_count = len(desc_input.strip().split())
 st.caption(f"Contagem de palavras: {word_count} / 50")
 
 # ===========================================================
-# 6. LÓGICA DE ANÁLISE
+# 6. MAPEAMENTO DE NÍVEIS E FUNÇÃO DE INFERÊNCIA
 # ===========================================================
 LEVEL_GG_MAPPING = {
     "W1": [1,2,3,4,5],"W2":[5,6,7,8],"W3":[7,8,9,10],
@@ -142,4 +142,136 @@ def infer_market_level(superior, lidera, subordinados, abrangencia, multiplas_ar
     return "P2"
 
 # ===========================================================
-# 7. BOTÃO DE
+# 7. BOTÃO DE ANÁLISE (RESTABELECIDO)
+# ===========================================================
+st.divider()
+st.markdown("### 🔎 Executar análise")
+
+if st.button("🔍 Analisar Aderência", type="primary", use_container_width=True):
+
+    if "Selecione..." in [superior,lidera,abrangencia,selected_family,selected_subfamily] or word_count < 50:
+        st.warning("⚠️ Todos os campos obrigatórios devem ser preenchidos corretamente.")
+        st.stop()
+
+    detected_key = infer_market_level(superior,lidera,subordinados,abrangencia,multiplas_areas)
+    allowed_grades = LEVEL_GG_MAPPING.get(detected_key, [])
+
+    st.markdown(f"""
+    <div class="ai-insight-box">
+        <div class="ai-insight-title">🤖 Contexto Hierárquico Detectado</div>
+        <strong>Banda sugerida:</strong> {detected_key} — conforme práticas WTW e parâmetros informados.<br>
+        <small>Baseado em: reporte a {superior.lower()}, liderança = {lidera.lower()}, abrangência = {abrangencia.lower()}.</small>
+    </div>
+    """, unsafe_allow_html=True)
+
+    mask = (df["Job Family"] == selected_family) & (df["Sub Job Family"] == selected_subfamily)
+    if allowed_grades:
+        mask &= df["Global Grade Num"].isin(allowed_grades)
+    if not mask.any():
+        st.error("Nenhum cargo encontrado dentro da família e subfamília informadas.")
+        st.stop()
+
+    filtered = df[mask].copy()
+    job_texts = (filtered["Job Profile"].fillna("") + ". " +
+                 filtered["Role Description"].fillna("") + ". " +
+                 filtered["Qualifications"].fillna("")).tolist()
+
+    job_emb = model.encode(job_texts, show_progress_bar=False)
+    query_emb = model.encode([desc_input], show_progress_bar=False)[0]
+    sims_sem = cosine_similarity([query_emb], job_emb)[0]
+
+    tfidf = TfidfVectorizer(max_features=10000, ngram_range=(1,2)).fit(job_texts)
+    job_tfidf = tfidf.transform(job_texts)
+    query_tfidf = tfidf.transform([desc_input])
+    sims_kw = cosine_similarity(query_tfidf, job_tfidf)[0]
+
+    sims = 0.75 * sims_sem + 0.25 * sims_kw
+    filtered["similarity"] = sims
+    top3 = filtered.sort_values("similarity", ascending=False).head(3)
+
+    # ===========================================================
+    # 8. RENDERIZAÇÃO VISUAL EM 3 COLUNAS
+    # ===========================================================
+    st.markdown("---")
+    st.subheader("🏆 Cargos Mais Compatíveis")
+
+    if len(top3) < 1:
+        st.warning("Nenhum resultado encontrado.")
+        st.stop()
+
+    cards_data = []
+    for _, row in top3.iterrows():
+        score_val = float(row["similarity"]) * 100
+        score_bg = (
+            "#28a745" if score_val > 85
+            else "#1E56E0" if score_val > 75
+            else "#fd7e14" if score_val > 60
+            else "#dc3545"
+        )
+        lvl_name = ""
+        gg_val = str(row["Global Grade"]).strip()
+        if not df_levels.empty and "Global Grade" in df_levels.columns and "Level Name" in df_levels.columns:
+            match = df_levels[df_levels["Global Grade"].astype(str).str.strip() == gg_val]
+            if not match.empty:
+                lvl_name = f"• {match['Level Name'].iloc[0]}"
+        cards_data.append({
+            "row": row,
+            "score_fmt": f"{score_val:.1f}%",
+            "score_bg": score_bg,
+            "lvl": lvl_name
+        })
+
+    grid_style = "grid-template-columns: repeat(3, 1fr);"
+    grid_html = f'<div class="comparison-grid" style="{grid_style}">'
+
+    # Cabeçalho
+    for card in cards_data:
+        grid_html += f"""
+        <div class="grid-cell header-cell">
+            <div class="fjc-title">{html.escape(card['row']['Job Profile'])}</div>
+            <div class="fjc-gg-row">
+                <div class="fjc-gg">GG {card['row']['Global Grade']} {card['lvl']}</div>
+                <div class="fjc-score" style="background-color:{card['score_bg']};">{card['score_fmt']} Match</div>
+            </div>
+        </div>"""
+
+    # Metadados
+    for card in cards_data:
+        d = card["row"]
+        grid_html += f"""
+        <div class="grid-cell meta-cell">
+            <div class="meta-row"><strong>Família:</strong> {html.escape(str(d.get('Job Family','-')))}</div>
+            <div class="meta-row"><strong>Subfamília:</strong> {html.escape(str(d.get('Sub Job Family','-')))}</div>
+            <div class="meta-row"><strong>Carreira:</strong> {html.escape(str(d.get('Career Path','-')))}</div>
+            <div class="meta-row"><strong>Cód:</strong> {html.escape(str(d.get('Full Job Code','-')))}</div>
+        </div>"""
+
+    # Seções coloridas
+    sections = [
+        ("🧭 Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
+        ("🧠 Job Profile Description", "Job Profile Description", "#e91e63"),
+        ("🏛️ Career Band Description", "Career Band Description", "#673ab7"),
+        ("🎯 Role Description", "Role Description", "#145efc"),
+        ("🏅 Grade Differentiator", "Grade Differentiator", "#ff9800"),
+        ("🎓 Qualifications", "Qualifications", "#009688")
+    ]
+    for title, field, color in sections:
+        for card in cards_data:
+            content = str(card["row"].get(field, "-"))
+            if field == "Qualifications" and (len(content) < 2 or content.lower() == "nan"):
+                grid_html += '<div class="grid-cell section-cell" style="border-left-color: transparent; background: transparent; border: none;"></div>'
+            else:
+                grid_html += f"""
+                <div class="grid-cell section-cell" style="border-left-color:{color};">
+                    <div class="section-title" style="color:{color};">{title}</div>
+                    <div class="section-content">{html.escape(content)}</div>
+                </div>"""
+
+    for _ in cards_data:
+        grid_html += '<div class="grid-cell footer-cell"></div>'
+
+    grid_html += "</div>"
+    st.markdown(grid_html, unsafe_allow_html=True)
+
+    if float(top3.iloc[0]["similarity"]) < 0.6:
+        st.info("💡 Aderência moderada. Tente refinar sua descrição.")
