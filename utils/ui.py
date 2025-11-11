@@ -1,41 +1,49 @@
 import streamlit as st
 
 # ===========================================================
-# SIDEBAR: Logo + Título Centralizados (sem borda ou sombra)
+# SIDEBAR: Logo + Título Centralizados (fixos, sem resize)
 # ===========================================================
 def sidebar_logo_and_title():
     logo_url = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
 
     st.sidebar.markdown(f"""
     <style>
+        /* === Bloqueia redimensionamento da sidebar === */
+        section[data-testid="stSidebar"] {{
+            resize: none !important;
+            overflow: hidden !important;
+            min-width: 300px !important;
+            max-width: 300px !important;
+        }}
+
         /* === Estrutura geral do menu lateral === */
         [data-testid="stSidebarNav"] {{
-            margin-top: 140px !important; /* espaço pro logo fixo */
+            margin-top: 200px !important; /* espaço abaixo do header fixo */
             border-top: none !important;
             padding-top: 1rem !important;
         }}
 
-        /* === Header fixo centralizado na sidebar === */
+        /* === Header fixo centralizado === */
         .sidebar-header {{
             position: fixed;
             top: 0;
             left: 0;
-            width: 300px; /* largura padrão da sidebar */
+            width: 300px;
+            height: 180px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
-            background-color: transparent; /* sem fundo */
-            padding: 25px 10px 10px 10px;
+            background-color: #ffffff;
             z-index: 100;
-            box-shadow: none !important; /* remove sombra */
-            border: none !important; /* remove borda */
+            border: none !important;
+            box-shadow: none !important;
         }}
 
         .sidebar-header img {{
-            width: 115px;
-            margin-bottom: 6px;
+            width: 120px;
+            margin-bottom: 8px;
         }}
 
         .sidebar-header h2 {{
@@ -64,7 +72,7 @@ def sidebar_logo_and_title():
 def header(title, icon_path=None):
     icon_html = ""
     if icon_path:
-        icon_html = f'<img src="{icon_path}" alt="icon" style="width:26px;height:26px;margin-right:12px;vertical-align:middle;">'
+        icon_html = f'<img src="{icon_path}" alt="icon" style="width:28px;height:28px;margin-right:12px;vertical-align:middle;">'
 
     st.markdown(f"""
     <style>
@@ -72,15 +80,14 @@ def header(title, icon_path=None):
             background-color: #145efc;
             color: white;
             font-weight: 700;
-            font-size: 1.35rem; /* tamanho original */
+            font-size: 1.4rem;
             border-radius: 12px;
-            padding: 12px 28px;
-            display: flex;
+            padding: 16px 36px;
+            display: inline-flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 32px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-            width: fit-content;
+            gap: 12px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }}
     </style>
 
