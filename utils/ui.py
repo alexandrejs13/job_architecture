@@ -1,7 +1,7 @@
 import streamlit as st
 
 # ===========================================================
-# SIDEBAR: Logo + Título Centralizados e Alinhados com o Conteúdo
+# SIDEBAR: Apenas logo SIG centralizado e alinhado com o conteúdo principal
 # ===========================================================
 def sidebar_logo_and_title():
     logo_url = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
@@ -16,25 +16,23 @@ def sidebar_logo_and_title():
             max-width: 300px !important;
         }}
 
-        /* === Estrutura geral === */
+        /* === Estrutura geral do menu === */
         [data-testid="stSidebarNav"] {{
-            margin-top: 165px !important; /* ajusta espaçamento para caber header fixo */
+            margin-top: 140px !important; /* ajusta espaçamento para o logo */
             border-top: none !important;
             border-bottom: none !important;
         }}
 
-        /* === Header fixo centralizado e alinhado === */
+        /* === Header fixo com apenas o logo === */
         .sidebar-header {{
             position: fixed;
-            top: 0;
+            top: 72px; /* ajusta altura vertical para alinhar com o container azul */
             left: 0;
             width: 300px;
-            height: 160px;
+            height: 100px;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            text-align: center;
             background-color: #ffffff;
             z-index: 100;
             border: none !important;
@@ -42,35 +40,12 @@ def sidebar_logo_and_title():
         }}
 
         .sidebar-header img {{
-            width: 95px;  /* logo ajustado */
-            margin-bottom: 5px; /* espaço menor entre logo e título */
+            width: 105px;  /* logo maior, proporcional ao novo layout */
+            height: auto;
+            display: block;
         }}
 
-        .sidebar-header h2 {{
-            color: #000000;
-            font-size: 1.35rem; /* ligeiramente maior para equilíbrio */
-            font-weight: 800;
-            margin: 0;
-            line-height: 1.1;
-            letter-spacing: -0.3px;
-        }}
-
-        /* === Alinhamento visual com container azul === */
-        [data-testid="stSidebar"] > div:first-child {{
-            border-bottom: none !important;
-            padding-left: 10px !important; /* ligeiro ajuste horizontal */
-        }}
-
-        /* === Linha sutil para refinamento visual === */
-        .sidebar-header::after {{
-            content: "";
-            width: 60%;
-            height: 1px;
-            background-color: #e2e2e2;
-            margin-top: 12px;
-        }}
-
-        /* Remove divisor inferior padrão do Streamlit */
+        /* Remove divisores padrão do Streamlit */
         [data-testid="stSidebarNav"]::after {{
             display: none !important;
         }}
@@ -78,6 +53,5 @@ def sidebar_logo_and_title():
 
     <div class="sidebar-header">
         <img src="{logo_url}" alt="SIG Logo">
-        <h2>Job Architecture</h2>
     </div>
     """, unsafe_allow_html=True)
