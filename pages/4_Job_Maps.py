@@ -16,7 +16,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 # ===========================================================
 # 2. APLICA VISUAL
 # ===========================================================
-setup_sidebar() # Controla a formatação da sidebar
+setup_sidebar() 
 lock_sidebar()
 
 if 'fullscreen' not in st.session_state:
@@ -26,7 +26,7 @@ def toggle_fullscreen():
     st.session_state.fullscreen = not st.session_state.fullscreen
 
 # ===========================================================
-# 3. CSS BASE (ADAPTADO PARA O NOVO TEMA E HEADER)
+# 3. CSS BASE (REVISADO)
 # ===========================================================
 css_base = """
 <style>
@@ -37,7 +37,7 @@ css_base = """
     --purple: #6f42c1;  
     --red: #dc3545;     
     --gray-line: #e0e0e0;
-    --gray-bg: #f5f3f0; /* Cor de fundo geral */
+    --gray-bg: #f8f9fa; /* Fundo cinza claro da topbar */
     --dark-gray: #333333;
 }
 
@@ -53,7 +53,7 @@ css_base = """
     align-items: center;
     gap: 18px;
     width: 100%;
-    margin-bottom: 20px; /* Reduzida a margem para ficar mais próxima dos filtros */
+    margin-bottom: 20px; 
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 .page-header img { width: 48px; height: 48px; }
@@ -63,11 +63,22 @@ css_base = """
     max-width: 1600px !important;
     margin: auto !important;
     padding: 2rem 5rem !important;
-    /* Ajuste de padding/margin para tela cheia será feito pelo css_fullscreen */
 }
 
-/* O .topbar original não será usado mais para evitar o container vazio */
-.topbar { display: none; } 
+/* RESTAURADO: Topbar para agrupar os filtros. Removida a borda inferior que causava a barra branca. */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    background: var(--gray-bg);
+    padding: 15px 20px;
+    border-bottom: 0px none; /* REMOVIDO PARA EVITAR A LINHA BRANCA */
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+}
+
+/* h1 foi removido e substituído pelo .page-header */
 
 .map-wrapper {
     height: 75vh;
@@ -81,14 +92,183 @@ css_base = """
     border-radius: 8px;
 }
 
-/* ... (demais estilos do jobmap-grid, gg-header, job-card, etc., permanecem inalterados) ... */
-
-/* Estilos para alinhar os filtros logo abaixo do header */
-[data-testid="stHorizontalBlock"] > div > [data-testid="stVerticalBlock"] > [data-testid="stSelectbox"] {
-    margin-bottom: 0 !important;
+.jobmap-grid {
+    display: grid;
+    border-collapse: collapse;
+    width: max-content;
+    font-size: 0.88rem;
+    grid-template-rows: 50px 45px repeat(auto-fill, 110px) !important;
+    grid-auto-rows: 110px !important;
+    align-content: start !important;
+    row-gap: 0px !important;
+    column-gap: 0px !important;
+    background-color: white !important;
 }
 
-/* Garante o estilo dos botões */
+/* ... (Demais estilos do grid permanecem) ... */
+.jobmap-grid > div {
+    background-color: white;
+    border-right: 1px solid var(--gray-line);
+    border-bottom: 1px solid var(--gray-line);
+    box-sizing: border-box;
+}
+
+.header-family {
+    font-weight: 800;
+    color: #fff;
+    padding: 0 5px;
+    text-align: center;
+    border-right: 1px solid rgba(255,255,255,0.3) !important;
+    border-bottom: 0px none !important;
+    outline: none !important;
+    margin-bottom: 0px !important;
+    position: sticky;
+    top: 0;
+    z-index: 57;
+    white-space: normal;
+    height: 50px !important;
+    max-height: 50px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    grid-row: 1;
+    font-size: 0.9rem;
+    overflow: hidden;
+}
+
+.header-subfamily {
+    font-weight: 600;
+    padding: 0 5px;
+    text-align: center;
+    position: sticky;
+    top: 50px;
+    z-index: 56;
+    white-space: normal;
+    border-top: 0px none !important;
+    margin-top: 0px !important;
+    border-bottom: 0px none !important;
+    outline: none !important;
+    height: 45px !important;
+    max-height: 45px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    grid-row: 2;
+    font-size: 0.85rem;
+    overflow: hidden;
+    color: var(--dark-gray);
+}
+
+.gg-header {
+    background: var(--dark-gray) !important;
+    color: white;
+    font-weight: 800;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    grid-row: 1 / span 2;
+    grid-column: 1;
+    position: sticky;
+    left: 0;
+    top: 0;
+    z-index: 60;
+    border-right: 2px solid white !important;
+    border-bottom: 0px none !important;
+    height: 95px !important;
+}
+
+.gg-cell {
+    background: var(--dark-gray) !important;
+    color: white;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: sticky;
+    left: 0;
+    z-index: 55;
+    border-right: 2px solid white !important;
+    border-top: 1px solid #555 !important;
+    grid-column: 1;
+    font-size: 0.9rem;
+    height: 110px !important;
+}
+
+.cell {
+    background: white !important;
+    padding: 8px;
+    text-align: left;
+    vertical-align: middle;
+    z-index: 1;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    align-content: center;
+    height: 100% !important;
+    overflow: hidden;
+}
+
+.job-card {
+    background: #ffffff;
+    border: 1px solid var(--gray-line);
+    border-left-width: 5px !important;
+    border-left-style: solid !important;
+    border-radius: 6px;
+    padding: 6px 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    font-size: 0.75rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    width: 135px;
+    height: 75px;
+    flex: 0 0 135px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+}
+.job-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 12px rgba(0,0,0,0.1);
+    border-color: var(--blue);
+}
+.job-card b {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 3px;
+    line-height: 1.2;
+    color: #222;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.job-card span {
+    display: block;
+    font-size: 0.7rem;
+    color: #666;
+    line-height: 1.1;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gg-header::after, .gg-cell::after {
+    content: "";
+    position: absolute;
+    right: -5px;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: linear-gradient(to right, rgba(0,0,0,0.1), transparent);
+    pointer-events: none;
+}
 [data-testid="stButton"] button {
     border-color: var(--blue) !important;
     color: var(--blue) !important;
@@ -108,8 +288,7 @@ css_base = """
 # ===========================================================
 css_fullscreen = """
 <style>
-    /* Remove todos os elementos de UI padrão, incluindo a sidebar (se não estiver lockada) */
-    header, section[data-testid="stSidebar"], footer { display: none !important; } 
+    header, section[data-testid="stSidebar"], .topbar, footer { display: none !important; }
     .block-container { max-width: 100vw !important; padding: 0 !important; margin: 0 !important; overflow: hidden !important; }
     .map-wrapper { position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important; z-index: 9999; border: none !important; border-top: 5px solid var(--blue) !important; margin: 0 !important; border-radius: 0 !important; }
     #fixed-exit-container { position: fixed !important; bottom: 30px !important; right: 30px !important; z-index: 100000 !important; }
@@ -123,7 +302,6 @@ if st.session_state.fullscreen: st.markdown(css_fullscreen, unsafe_allow_html=Tr
 # ===========================================================
 # 4. FUNÇÕES DE CACHE E UTILITÁRIOS
 # ===========================================================
-# ... (Funções get_prepared_data, get_path_color, generate_map_html permanecem inalteradas) ...
 @st.cache_data(ttl=3600)
 def get_prepared_data():
     data = load_excel_data()
@@ -264,7 +442,7 @@ if df.empty:
     st.error("Erro ao carregar dados.")
     st.stop()
 
-# NOVO HEADER PADRÃO COM O ÍCONE CORRIGIDO
+# NOVO HEADER PADRÃO (Ícone correto e estrutura padronizada)
 st.markdown("""
 <div class="page-header">
   <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/job%20map%20globe%20location.png" alt="icon">
@@ -277,19 +455,19 @@ preferred_order = ["Top Executive/General Management", "Corporate Affairs/Commun
 existing_families = set(df["Job Family"].unique())
 families_order = [f for f in preferred_order if f in existing_families] + sorted(list(existing_families - set(preferred_order)))
 
-# REMOVIDO: st.markdown("<div class='topbar'>", unsafe_allow_html=True)
-# Os filtros são colocados diretamente abaixo do header.
 if not st.session_state.fullscreen:
+    # RESTAURADO: topbar para dar o fundo cinza claro e o espaçamento correto
+    st.markdown("<div class='topbar'>", unsafe_allow_html=True) 
     c1, c2, c3 = st.columns([2, 2, 0.8])
     with c1: fam_filter = st.selectbox("Família", ["Todas"] + families_order)
     paths = df["Career Path"].unique().tolist() if fam_filter == "Todas" else df[df["Job Family"] == fam_filter]["Career Path"].unique().tolist()
     with c2: path_filter = st.selectbox("Trilha", ["Todas"] + sorted([p for p in paths if pd.notna(p) and p != 'nan' and p != '']))
     with c3:
-        # st.write("") foi removido para evitar espaço vertical
-        # O margin-top do botão foi ajustado no CSS e o padding vertical de colunas Streamlit lida com o alinhamento.
-        st.markdown('<div style="margin-top: 5px;">', unsafe_allow_html=True) 
+        st.write("")
+        st.markdown('<div style="margin-top: 15px;">', unsafe_allow_html=True) # Valor de margin-top ajustado para alinhamento
         if st.button("⛶ Tela Cheia", use_container_width=True): toggle_fullscreen(); st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True) # FECHA A TOPBAR
 else:
     # Lógica de tela cheia
     fam_filter, path_filter = st.session_state.get('fam_filter', 'Todas'), st.session_state.get('path_filter', 'Todas')
