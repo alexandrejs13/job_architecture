@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import html
 from pathlib import Path
 from utils.ui import sidebar_logo_and_title
 
@@ -66,9 +65,6 @@ st.markdown("""
     color:#145efc;
     margin-bottom:8px;
 }
-.job-card p {
-    margin-bottom:6px;
-}
 .job-card .meta {
     background:#fff;
     border-top:1px solid #e0e0e0;
@@ -126,7 +122,7 @@ if not df.empty:
         paths = sorted(df[df["Sub Job Family"] == sub]["Career Path"].dropna().unique())
         path = st.selectbox("Trilha:", paths)
 
-    # Filtra dados conforme seleções
+    # Filtra conforme seleção
     filtered = df[
         (df["Job Family"] == fam)
         & (df["Sub Job Family"] == sub)
@@ -136,10 +132,15 @@ if not df.empty:
     profiles = sorted(filtered["Job Profile"].dropna().unique())
     selected = st.multiselect("Selecione até 3 perfis:", profiles, max_selections=3)
 
-    def safe_text(value):
+    def format_desc(value):
+        """Preserva HTML e quebras de linha do Excel."""
         if pd.isna(value) or not str(value).strip():
             return "-"
-        return html.escape(str(value)).replace("\n", "<br>")
+        text = str(value).strip()
+        # Se contiver tags HTML, mantém; caso contrário, converte \n em <br>
+        if any(tag in text.lower() for tag in ["<p", "<br", "<ul", "<ol", "<li", "<b", "<i"]):
+            return text
+        return text.replace("\n", "<br>")
 
     # =======================================================
     # 6. GRID DE COMPARAÇÃO
@@ -152,16 +153,15 @@ if not df.empty:
             item = filtered[filtered["Job Profile"] == s]
             if item.empty:
                 continue
-
             row = item.iloc[0]
 
-            title = safe_text(row.get("Job Profile", "-"))
-            gg = safe_text(row.get("Global Grade", "-"))
-            desc = safe_text(row.get("Job Profile Description", "-"))
-            family = safe_text(row.get("Job Family", "-"))
-            sub_family = safe_text(row.get("Sub Job Family", "-"))
-            path_name = safe_text(row.get("Career Path", "-"))
-            level = safe_text(row.get("Career Level", "-"))
+            title = row.get("Job Profile", "-")
+            gg = row.get("Global Grade", "-")
+            desc = format_desc(row.get("Job Profile Description", "-"))
+            family = row.get("Job Family", "-")
+            sub_family = row.get("Sub Job Family", "-")
+            path_name = row.get("Career Path", "-")
+            level = row.get("Career Level", "-")
 
             meta_html = f"""
                 <div class="meta">
