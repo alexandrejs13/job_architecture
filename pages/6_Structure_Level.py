@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# pages/6_Structure_Level.py
+# pages/6_⚙️_Structure_Level.py <--- ASSUMINDO QUE ESTE É O NOVO NOME DO ARQUIVO
 
 import streamlit as st
 import pandas as pd
@@ -43,13 +43,13 @@ def load_level_data():
 # ===========================================================
 st.set_page_config(
     page_title="Structure Level", 
-    page_icon="⚙️", # ÍCONE: Engrenagem para alinhamento da sidebar
+    page_icon="⚙️", 
     layout="wide", 
     initial_sidebar_state="expanded"
 )
 
 # ===========================================================
-# 2. APLICA VISUAL GLOBAL E SIDEBAR (DEVE EXECUTAR APÓS set_page_config)
+# 2. APLICA VISUAL GLOBAL E SIDEBAR
 # ===========================================================
 setup_sidebar() 
 
