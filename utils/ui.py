@@ -1,23 +1,17 @@
 import streamlit as st
 
 # ===========================================================
-# 1️⃣ FUNÇÃO: LOGO E TÍTULO NA BARRA LATERAL
+# LOGO + TÍTULO NA BARRA LATERAL
 # ===========================================================
 def sidebar_logo_and_title():
     logo_url = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
     st.sidebar.markdown(f"""
     <style>
-        /* Oculta o item "app" do menu lateral */
-        [data-testid="stSidebarNav"] ul li:first-child {{
-            display: none !important;
-        }}
+        /* Remove o item 'app' e ajusta o topo do menu */
+        [data-testid="stSidebarNav"] ul li:first-child {{ display: none !important; }}
+        [data-testid="stSidebarNav"] {{ padding-top: 150px !important; }}
 
-        /* Espaçamento para exibir logo */
-        [data-testid="stSidebarNav"] {{
-            padding-top: 150px !important;
-        }}
-
-        /* Header do logo */
+        /* Logo fixo no topo */
         .sidebar-header {{
             position: absolute;
             top: 20px;
@@ -45,10 +39,10 @@ def sidebar_logo_and_title():
     """, unsafe_allow_html=True)
 
 # ===========================================================
-# 2️⃣ FUNÇÃO: CABEÇALHO AZUL COM ÍCONE
+# CABEÇALHO AZUL COM ÍCONE
 # ===========================================================
 def header(title: str, icon_filename: str):
-    """Cria o cabeçalho azul SIG com ícone"""
+    """Cabeçalho azul SIG com ícone"""
     icon_url = f"https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/{icon_filename}"
 
     st.markdown(f"""
