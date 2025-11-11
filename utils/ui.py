@@ -1,9 +1,10 @@
 import streamlit as st
 
 # ===========================================================
-# SIDEBAR LIMPA — Logo centralizado e sem linha inferior
+# 1. SIDEBAR LIMPA — Logo centralizado e sem linha inferior
 # ===========================================================
 def sidebar_logo_and_title():
+    """Renderiza o logotipo e limpa a sidebar padrão do Streamlit."""
     logo_url = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
 
     st.sidebar.markdown("""
@@ -26,7 +27,7 @@ def sidebar_logo_and_title():
             background: #ffffff !important;
         }
 
-        /* Remoção de divisores internos (o problema principal!) */
+        /* Remove divisores internos */
         [data-testid="stSidebar"] hr,
         [data-testid="stSidebar"] div:has(hr),
         [data-testid="stSidebar"] div[role="separator"],
@@ -39,7 +40,7 @@ def sidebar_logo_and_title():
             border: none !important;
         }
 
-        /* Impede o Streamlit de recriar o divisor por sombra */
+        /* Impede que o Streamlit recrie sombra divisória */
         [data-testid="stSidebar"]::before {
             content: none !important;
             display: none !important;
@@ -85,3 +86,39 @@ def sidebar_logo_and_title():
         f'<div class="sidebar-header"><img src="{logo_url}" alt="SIG Logo"></div>',
         unsafe_allow_html=True
     )
+
+# ===========================================================
+# 2. CONFIGURAÇÃO PADRÃO — Mantém compatibilidade
+# ===========================================================
+def setup_sidebar():
+    """Atalho que apenas chama a sidebar padrão com logotipo e estilo unificado."""
+    sidebar_logo_and_title()
+
+# ===========================================================
+# 3. SEÇÃO DE CABEÇALHO (AZUL PADRÃO)
+# ===========================================================
+def section(title: str, icon_url: str = None):
+    """
+    Cria o cabeçalho azul padronizado no topo das páginas.
+    :param title: Título da seção
+    :param icon_url: URL do ícone (padrão: governance)
+    """
+    icon = icon_url or "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png"
+    st.markdown(f"""
+    <div style='background-color:#145efc;
+                color:white;
+                font-weight:750;
+                font-size:1.35rem;
+                border-radius:12px;
+                padding:22px 36px;
+                display:flex;
+                align-items:center;
+                gap:18px;
+                width:100%;
+                box-sizing:border-box;
+                margin-bottom:40px;
+                box-shadow:0 4px 12px rgba(0, 0, 0, 0.15);'>
+        <img src="{icon}" width="48" height="48" style="flex-shrink:0;">
+        {title}
+    </div>
+    """, unsafe_allow_html=True)
