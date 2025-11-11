@@ -16,9 +16,9 @@ from utils.ui import setup_sidebar
 from pathlib import Path
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA (TEM QUE SER O PRIMEIRO COMANDO ST)
+# 1. CONFIGURAÇÃO DE PÁGINA (ÍCONE AJUSTADO PARA CHECKMARK)
 # ===========================================================
-st.set_page_config(layout="wide", page_title="🧩 Job Match", page_icon="🧩")
+st.set_page_config(layout="wide", page_title="🧩 Job Match", page_icon="✅")
 
 # ===========================================================
 # 2. APLICA O VISUAL GLOBAL E SIDEBAR
@@ -129,12 +129,12 @@ h1 { display: none !important; }
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# RENDERIZAÇÃO DO NOVO HEADER
+# RENDERIZAÇÃO DO NOVO HEADER (ÍCONE AJUSTADO PARA CHECKMARK)
 # ===========================================================
 st.markdown("""
 <div class="page-header">
-  <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/process.png" alt="icon">
-  Job Match - Análise Semântica de Cargo
+  <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/checkmark%20success.png" alt="icon">
+  Job Match - Análise Semântica de Cargo
 </div>
 """, unsafe_allow_html=True)
 
@@ -235,7 +235,6 @@ def detect_level_from_text(text, wtw_db):
 # ===========================================================
 # 6. INTERFACE DO USUÁRIO (AJUSTADO: REMOVIDA A CHAMADA SECTION)
 # ===========================================================
-# section("🧩 Job Match") <-- REMOVIDO E SUBSTITUÍDO PELO .page-header
 st.markdown("Encontre o cargo ideal com base na descrição completa das responsabilidades.")
 
 c1, c2 = st.columns(2)
