@@ -19,12 +19,11 @@ def load_level_data():
         df = load_level_structure_df()
         
         if not df.empty:
-            # Limpa nomes de colunas e preenche NaN
             df.columns = df.columns.str.strip()
             df = df.fillna('-')
             
-            # Formata a coluna Global Grade (GG) para ser um inteiro limpo
             if 'Global Grade' in df.columns:
+                # Remove o '.0' de Global Grade e converte para string
                 df['Global Grade'] = pd.to_numeric(
                     df['Global Grade'].astype(str).str.replace(r'\.0$', '', regex=True), 
                     errors='coerce'
@@ -40,11 +39,11 @@ def load_level_data():
 
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA
+# 1. CONFIGURAÇÃO DE PÁGINA (GARANTINDO O ÍCONE)
 # ===========================================================
 st.set_page_config(
     page_title="Structure Level", 
-    page_icon="🪜", 
+    page_icon="🪜", # ÍCONE DEFINIDO: 🪜
     layout="wide", 
     initial_sidebar_state="expanded"
 )
@@ -52,7 +51,7 @@ st.set_page_config(
 # ===========================================================
 # 2. APLICA VISUAL GLOBAL E SIDEBAR
 # ===========================================================
-setup_sidebar()
+setup_sidebar() # Esta função deve ser responsável por aplicar o CSS e ícones da sidebar
 
 # ===========================================================
 # 3. CSS PADRÃO
@@ -97,7 +96,7 @@ h1 { display: none !important; }
 # 5. CONTEÚDO PRINCIPAL E TABELA
 # ===========================================================
 
-# Renderiza o header padrão (Identidade Visual)
+# Renderiza o header padrão
 st.markdown(f"""
 <div class="page-header">
   <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png" alt="icon">
