@@ -1,16 +1,14 @@
 import streamlit as st
 
 def sidebar_logo_and_title():
-    """Logo SIG e título centralizados acima do menu"""
+    """Exibe logo SIG e título acima do menu lateral"""
     st.markdown(
         """
         <style>
-            /* Garante que o container lateral aceite posição absoluta */
             section[data-testid="stSidebar"] > div:first-child {
                 position: relative;
             }
         </style>
-
         <div class="sidebar-logo">
             <img src="https://github.com/alexandrejs13/job_architecture/raw/main/assets/SIG_Logo_RGB_Blue.png" alt="SIG Logo">
             <h2>Job Architecture</h2>
@@ -20,7 +18,7 @@ def sidebar_logo_and_title():
     )
 
 def header(title: str, icon_path: str):
-    """Cabeçalho azul SIG"""
+    """Cabeçalho azul padrão SIG com ícone"""
     st.markdown(f"""
     <div class="header-bar">
         <img src="{icon_path}" class="header-icon">
