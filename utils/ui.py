@@ -1,33 +1,39 @@
 import streamlit as st
 
-# ===========================================================
-# LOGO + TÍTULO NA BARRA LATERAL
-# ===========================================================
 def sidebar_logo_and_title():
     logo_url = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
+
     st.sidebar.markdown(f"""
     <style>
-        /* Remove o item 'app' e ajusta o topo do menu */
-        [data-testid="stSidebarNav"] ul li:first-child {{ display: none !important; }}
-        [data-testid="stSidebarNav"] {{ padding-top: 150px !important; }}
+        /* === Estrutura da barra lateral === */
+        [data-testid="stSidebarNav"] {{
+            margin-top: 180px !important; /* empurra o menu pra baixo */
+            border-top: 2px solid rgba(0,0,0,0.08);
+            padding-top: 1rem !important;
+        }}
 
-        /* Logo fixo no topo */
+        /* === Logo e título fixos acima do menu === */
         .sidebar-header {{
-            position: absolute;
-            top: 20px;
+            position: fixed;
+            top: 0;
             left: 0;
             width: 100%;
             text-align: center;
+            background-color: #ffffff;
+            padding-top: 25px;
+            padding-bottom: 12px;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }}
         .sidebar-header img {{
-            width: 110px;
+            width: 120px;
             opacity: 0.95;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }}
         .sidebar-header h2 {{
             color: #145efc;
-            font-size: 1rem;
-            font-weight: 700;
+            font-size: 1.2rem;
+            font-weight: 800;
             margin: 0;
         }}
     </style>
@@ -35,40 +41,5 @@ def sidebar_logo_and_title():
     <div class="sidebar-header">
         <img src="{logo_url}" alt="SIG Logo">
         <h2>Job Architecture</h2>
-    </div>
-    """, unsafe_allow_html=True)
-
-# ===========================================================
-# CABEÇALHO AZUL COM ÍCONE
-# ===========================================================
-def header(title: str, icon_filename: str):
-    """Cabeçalho azul SIG com ícone"""
-    icon_url = f"https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/{icon_filename}"
-
-    st.markdown(f"""
-    <style>
-        .header-bar {{
-            display: flex;
-            align-items: center;
-            background-color: #145efc;
-            padding: 0.8rem 1.2rem;
-            border-radius: 12px;
-            color: white;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }}
-        .header-bar img {{
-            width: 28px;
-            height: 28px;
-            margin-right: 10px;
-        }}
-        .header-title {{
-            font-size: 1.4rem;
-            font-weight: 700;
-        }}
-    </style>
-    <div class="header-bar">
-        <img src="{icon_url}" alt="icon">
-        <div class="header-title">{title}</div>
     </div>
     """, unsafe_allow_html=True)
