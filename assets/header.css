@@ -1,57 +1,31 @@
-/* HEADER BAR AZUL SIG */
-.header-bar {
-    background-color: #145efc;
-    color: white;
-    padding: 1.2rem 1.8rem;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+/* ÍCONES NAS OPÇÕES DO MENU */
+[data-testid="stSidebarNavLink"] span:first-child::before {
+    content: '';
+    display: inline-block;
+    vertical-align: middle;
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    background-size: contain;
+    background-repeat: no-repeat;
 }
 
-.header-icon {
-    width: 42px;
-    height: 42px;
-    object-fit: contain;
+/* Ícones por item */
+[data-testid="stSidebarNavLink"] span:has(span:contains("Job Architecture"))::before {
+    background-image: url("https://github.com/alexandrejs13/job_architecture/raw/main/assets/icons/governance.png");
 }
-
-.header-title {
-    font-family: "PP SIG Flow", "Helvetica Neue", Arial, sans-serif;
-    font-size: 1.8rem;
-    font-weight: 600;
+[data-testid="stSidebarNavLink"] span:has(span:contains("Job Families"))::before {
+    background-image: url("https://github.com/alexandrejs13/job_architecture/raw/main/assets/icons/people.png");
 }
-
-/* SIDEBAR LOGO E TÍTULO CENTRALIZADOS */
-.sidebar-logo {
-    position: absolute;
-    top: 1rem;
-    left: 50%;
-    transform: translateX(-50%);
-    text-align: center;
-    width: 100%;
+[data-testid="stSidebarNavLink"] span:has(span:contains("Job Profile Description"))::before {
+    background-image: url("https://github.com/alexandrejs13/job_architecture/raw/main/assets/icons/business.png");
 }
-
-.sidebar-logo img {
-    width: 110px;
-    opacity: 0.95;
+[data-testid="stSidebarNavLink"] span:has(span:contains("Job Maps"))::before {
+    background-image: url("https://github.com/alexandrejs13/job_architecture/raw/main/assets/icons/globe.png");
 }
-
-.sidebar-logo h2 {
-    font-size: 1.05rem;
-    margin-top: 0.3rem;
-    color: #145efc;
-    font-family: "PP SIG Flow", "Helvetica Neue", Arial, sans-serif;
-    font-weight: 600;
+[data-testid="stSidebarNavLink"] span:has(span:contains("Job Match"))::before {
+    background-image: url("https://github.com/alexandrejs13/job_architecture/raw/main/assets/icons/checkmark.png");
 }
-
-/* Aumenta o espaçamento para o menu não sobrepor o logo */
-[data-testid="stSidebarNav"] {
-    padding-top: 150px !important;
-}
-
-/* OCULTA O ITEM “APP” DO MENU */
-[data-testid="stSidebarNav"] ul li:first-child {
-    display: none !important;
+[data-testid="stSidebarNavLink"] span:has(span:contains("Structure Level"))::before {
+    background-image: url("https://github.com/alexandrejs13/job_architecture/raw/main/assets/icons/process.png");
 }
