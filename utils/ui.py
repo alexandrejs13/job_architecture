@@ -1,178 +1,124 @@
 import streamlit as st
-import pandas as pd
-from pathlib import Path
-from utils.ui import setup_sidebar, section
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DA PÁGINA
+# 1. SIDEBAR LIMPA — Logo centralizado e sem linha inferior
 # ===========================================================
-st.set_page_config(
-    page_title="Job Profile Description",
-    page_icon="📋",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+def sidebar_logo_and_title():
+    """Renderiza o logotipo e limpa a sidebar padrão do Streamlit."""
+    logo_url = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
 
-setup_sidebar()
-section("Job Profile Description", "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/business%20review%20clipboard.png")
+    st.sidebar.markdown("""
+    <style>
+        /* Remove TODAS as bordas, sombras e pseudo-elementos da sidebar */
+        section[data-testid="stSidebar"],
+        [data-testid="stSidebarNav"],
+        [data-testid="stSidebarNav"]::before,
+        [data-testid="stSidebarNav"]::after,
+        section[data-testid="stSidebar"] div,
+        section[data-testid="stSidebar"] > div:first-child,
+        section[data-testid="stSidebar"] [data-testid="stSidebarContent"],
+        section[data-testid="stSidebar"] [data-testid="stDecoration"],
+        section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] {
+            border: none !important;
+            border-top: none !important;
+            border-bottom: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+            background: #ffffff !important;
+        }
 
-# ===========================================================
-# 2. CSS GLOBAL
-# ===========================================================
-css_path = Path(__file__).parents[1] / "assets" / "header.css"
-if css_path.exists():
-    with open(css_path) as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+        /* Remove divisores internos */
+        [data-testid="stSidebar"] hr,
+        [data-testid="stSidebar"] div:has(hr),
+        [data-testid="stSidebar"] div[role="separator"],
+        [data-testid="stSidebar"]::after {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+        }
 
-st.markdown("""
-<style>
-[data-testid="stAppViewContainer"] {
-    background-color: #f5f3f0;
-    font-family: "Source Sans Pro", "Helvetica", sans-serif;
-    color: #202020;
-}
-.block-container {
-    max-width: 1100px !important;
-    padding-left: 40px !important;
-    padding-right: 40px !important;
-}
+        /* Impede que o Streamlit recrie sombra divisória */
+        [data-testid="stSidebar"]::before {
+            content: none !important;
+            display: none !important;
+        }
 
-/* GRID DE COMPARAÇÃO */
-.jp-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 25px;
-    margin-top: 25px;
-}
-.grid-cell {
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.05);
-}
-.section-cell {
-    border-left-width: 6px;
-    border-left-style: solid;
-    padding: 18px;
-    border-radius: 8px;
-    background: #fff;
-}
-.section-title {
-    font-weight: 700;
-    font-size: 1rem;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.section-content {
-    font-size: 0.95rem;
-    line-height: 1.6;
-}
-.jp-p {
-    margin-bottom: 6px;
-}
-.footer-cell {
-    height: 10px;
-}
-</style>
-""", unsafe_allow_html=True)
+        /* Bloqueia redimensionamento e garante alinhamento */
+        section[data-testid="stSidebar"] {
+            resize: none !important;
+            overflow: hidden !important;
+            min-width: 300px !important;
+            max-width: 300px !important;
+        }
 
-# ===========================================================
-# 3. FUNÇÕES E DADOS
-# ===========================================================
-@st.cache_data
-def load_job_profiles():
-    file_path = "data/Job Profile.xlsx"
-    try:
-        df = pd.read_excel(file_path)
-        df.columns = df.columns.str.strip()
-        for col in df.select_dtypes(include='object'):
-            df[col] = df[col].fillna("").astype(str).str.strip()
-        return df
-    except Exception as e:
-        st.error(f"Erro ao carregar dados: {e}")
-        return pd.DataFrame()
+        /* Menu e espaçamento refinado */
+        [data-testid="stSidebarNav"] {
+            margin-top: 140px !important;
+            padding-bottom: 0 !important;
+        }
 
-df = load_job_profiles()
+        /* Header fixo com o logo centralizado */
+        .sidebar-header {
+            position: fixed;
+            top: 72px; /* Alinhado ao container azul */
+            left: 0;
+            width: 300px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #ffffff !important;
+            z-index: 100;
+        }
+
+        .sidebar-header img {
+            width: 105px;
+            height: auto;
+            display: block;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.sidebar.markdown(
+        f'<div class="sidebar-header"><img src="{logo_url}" alt="SIG Logo"></div>',
+        unsafe_allow_html=True
+    )
 
 # ===========================================================
-# 4. INTERFACE DE FILTRO
+# 2. CONFIGURAÇÃO PADRÃO — Mantém compatibilidade
 # ===========================================================
-if not df.empty:
-    families = sorted(df["Job Family"].dropna().unique())
-    col1, col2, col3 = st.columns(3)
+def setup_sidebar():
+    """Atalho que apenas chama a sidebar padrão com logotipo e estilo unificado."""
+    sidebar_logo_and_title()
 
-    with col1:
-        fam = st.selectbox("1️⃣ Selecione a Família:", families, index=None, placeholder="Escolha...")
-
-    with col2:
-        subs = sorted(df[df["Job Family"] == fam]["Sub Job Family"].dropna().unique()) if fam else []
-        sub = st.selectbox("2️⃣ Sub-Família:", subs, index=None, placeholder="Escolha...")
-
-    with col3:
-        paths = sorted(df[df["Sub Job Family"] == sub]["Career Path"].dropna().unique()) if sub else []
-        path = st.selectbox("3️⃣ Trilha:", paths, index=None, placeholder="Escolha...")
-
-    # -------------------------------------------------------
-    # Seleção dos perfis
-    # -------------------------------------------------------
-    if fam and sub and path:
-        filtered = df[
-            (df["Job Family"] == fam) &
-            (df["Sub Job Family"] == sub) &
-            (df["Career Path"] == path)
-        ]
-
-        profiles = sorted(filtered["Job Profile"].unique())
-        selected = st.multiselect(
-            "Selecione até 3 perfis para comparar:",
-            profiles,
-            max_selections=3
-        )
-
-        # ===========================================================
-        # 5. EXIBIÇÃO DAS COMPARAÇÕES
-        # ===========================================================
-        if selected:
-            st.markdown('<div class="jp-grid">', unsafe_allow_html=True)
-
-            for s in selected:
-                item = filtered[filtered["Job Profile"] == s].iloc[0]
-
-                # Função auxiliar
-                def block(color, icon, title, content):
-                    return f"""
-                    <div class="grid-cell section-cell" style="border-left-color:{color};">
-                        <div class="section-title" style="color:{color};"><span>{icon}</span> {title}</div>
-                        <div class="section-content">{content}</div>
-                    </div>
-                    """
-
-                # Blocos
-                html_blocks = ""
-
-                html_blocks += block("#95a5a6", "🧭", "Sub Job Family Description", item.get("Sub Job Family Description", "-").replace("\n", "<p class='jp-p'>• "))
-                html_blocks += block("#e91e63", "🧠", "Job Profile Description", item.get("Job Profile Description", "-").replace("\n", "<p class='jp-p'>• "))
-                html_blocks += block("#673ab7", "🏛️", "Career Band Description", item.get("Career Band Description", "-").replace("\n", "<p class='jp-p'>• "))
-                html_blocks += block("#1E56E0", "🎯", "Role Description", item.get("Role Description", "-").replace("\n", "<p class='jp-p'>• "))
-                html_blocks += block("#ff9800", "🏅", "Grade Differentiator", item.get("Grade Differentiator", "-").replace("\n", "<p class='jp-p'>• "))
-                html_blocks += block("#009688", "🎓", "Qualifications", item.get("Qualifications", "-").replace("\n", "<p class='jp-p'>• "))
-
-                st.markdown(f"""
-                <div class="grid-cell" style="border-left:5px solid #145efc;">
-                    <h4 style="color:#145efc;">{item['Job Profile']}</h4>
-                    <p><b>Global Grade:</b> {item.get('Global Grade', '-')}</p>
-                    {html_blocks}
-                    <div class="footer-cell"></div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            st.markdown("</div>", unsafe_allow_html=True)
-        else:
-            st.info("👆 Selecione até 3 perfis para comparar.")
-    else:
-        st.info("Selecione os filtros acima para visualizar os perfis.")
-else:
-    st.warning("⚠️ Não foi possível carregar a base de dados `Job Profile.xlsx`.")
+# ===========================================================
+# 3. SEÇÃO DE CABEÇALHO (AZUL PADRÃO)
+# ===========================================================
+def section(title: str, icon_url: str = None):
+    """
+    Cria o cabeçalho azul padronizado no topo das páginas.
+    :param title: Título da seção
+    :param icon_url: URL do ícone (padrão: governance)
+    """
+    icon = icon_url or "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png"
+    st.markdown(f"""
+    <div style='background-color:#145efc;
+                color:white;
+                font-weight:750;
+                font-size:1.35rem;
+                border-radius:12px;
+                padding:22px 36px;
+                display:flex;
+                align-items:center;
+                gap:18px;
+                width:100%;
+                box-sizing:border-box;
+                margin-bottom:40px;
+                box-shadow:0 4px 12px rgba(0, 0, 0, 0.15);'>
+        <img src="{icon}" width="48" height="48" style="flex-shrink:0;">
+        {title}
+    </div>
+    """, unsafe_allow_html=True)
