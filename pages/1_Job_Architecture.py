@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.ui import sidebar_logo_and_title, header
+from utils.ui import sidebar_logo_and_title
 from pathlib import Path
 
 # ===========================================================
@@ -24,7 +24,7 @@ if css_path.exists():
 # ===========================================================
 sidebar_logo_and_title()
 
-# Container azul do tamanho do texto e ícone ampliado
+# Header azul ocupando a largura do conteúdo
 st.markdown("""
 <style>
     .page-header {
@@ -33,17 +33,26 @@ st.markdown("""
         font-weight: 700;
         font-size: 1.2rem;
         border-radius: 12px;
-        padding: 18px 36px;
+        padding: 20px 32px;
         display: flex;
         align-items: center;
         gap: 14px;
-        width: fit-content; /* largura ajusta ao conteúdo */
+        width: 100%; /* ocupa toda a largura do container de texto */
+        box-sizing: border-box;
         margin-bottom: 35px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
+
     .page-header img {
         width: 38px;  /* ícone maior */
         height: 38px;
+    }
+
+    /* Garante que a área de conteúdo tenha alinhamento controlado */
+    .block-container {
+        max-width: 900px !important;
+        padding-left: 40px !important;
+        padding-right: 40px !important;
     }
 </style>
 
@@ -96,14 +105,14 @@ st.markdown("""
     h2 {
         font-weight: 700 !important;
         color: #000000 !important;
-        font-size: 1.4rem !important;
-        margin-top: 20px !important;
-        margin-bottom: 10px !important;
+        font-size: 1.35rem !important;
+        margin-top: 25px !important;
+        margin-bottom: 12px !important;
     }
     h3 {
         font-weight: 700 !important;
         color: #000000 !important;
-        font-size: 1.2rem !important;
+        font-size: 1.15rem !important;
     }
 
     /* Caixa informativa refinada */
@@ -114,7 +123,7 @@ st.markdown("""
         border-radius: 6px;
     }
 
-    /* Ajuste de margens e alinhamento */
+    /* Suaviza espaçamento interno */
     section.main > div {
         padding-top: 10px !important;
         padding-left: 25px !important;
