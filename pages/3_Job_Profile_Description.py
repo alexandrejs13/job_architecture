@@ -4,7 +4,7 @@ from pathlib import Path
 from utils.ui import sidebar_logo_and_title
 
 # ===========================================================
-# 1. CONFIGURAÇÃO INICIAL
+# 1. CONFIGURAÇÃO DA PÁGINA
 # ===========================================================
 st.set_page_config(
     page_title="Job Profile Description",
@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # ===========================================================
-# 2. CSS GLOBAL E SIDEBAR UNIFICADA
+# 2. CSS GLOBAL E SIDEBAR
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
@@ -32,23 +32,22 @@ st.markdown("""
     background-color: #145efc;
     color: white;
     font-weight: 750;
-    font-size: 1.35rem;
+    font-size: 1.4rem;
     border-radius: 12px;
     padding: 22px 36px;
     display: flex;
     align-items: center;
     gap: 18px;
     width: 100%;
-    box-sizing: border-box;
     margin-bottom: 40px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 .page-header img {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
 }
 .block-container {
-    max-width: 950px !important;
+    max-width: 1100px !important;
     padding-left: 40px !important;
     padding-right: 40px !important;
 }
@@ -57,24 +56,50 @@ st.markdown("""
     color: #202020;
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
 }
-.job-card {
-    background: white;
-    border-left: 5px solid #145efc;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+/* GRID DE COMPARAÇÃO */
+.jp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 25px;
+    margin-top: 25px;
 }
-.job-card h4 {
+.jp-card {
+    background: #ffffff;
+    border-radius: 10px;
+    border-left: 6px solid #145efc;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    padding: 20px;
+}
+.jp-card h4 {
     color: #145efc;
+    font-weight: 750;
+    margin-bottom: 6px;
+}
+.jp-meta {
+    color: #333;
+    font-size: 0.95rem;
     margin-bottom: 10px;
 }
-.job-card p {
-    font-size: 0.95rem;
-    color: #333;
-    margin-bottom: 8px;
+.jp-section {
+    border-left: 5px solid var(--color);
+    background-color: #fafafa;
+    padding: 15px 18px;
+    border-radius: 8px;
+    margin-top: 14px;
 }
-.job-card strong {
-    color: #000;
+.jp-section-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--color);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.jp-section-content {
+    font-size: 0.94rem;
+    line-height: 1.55;
+    color: #333;
 }
 </style>
 
@@ -85,7 +110,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 4. FUNÇÕES AUXILIARES E CARREGAMENTO DE DADOS
+# 4. FUNÇÃO DE CARGA DE DADOS
 # ===========================================================
 @st.cache_data(ttl="1h")
 def load_job_profile_data():
@@ -94,7 +119,7 @@ def load_job_profile_data():
         df = pd.read_excel(file_path)
         df.columns = df.columns.str.strip()
         for col in df.select_dtypes(include="object"):
-            df[col] = df[col].astype(str).str.strip()
+            df[col] = df[col].astype(str).fillna("").str.strip()
         return df
     except Exception as e:
         st.error(f"❌ Erro ao carregar dados: {e}")
@@ -109,67 +134,67 @@ if df.empty:
     st.warning("⚠️ Base de dados não encontrada ou vazia.")
 else:
     st.markdown("""
-    Explore e compare até **3 perfis de cargo** simultaneamente para visualizar diferenças de descrição, carreira e qualificações.
+    Compare até **3 perfis de cargo** lado a lado.  
+    As seções abaixo mostram descrições completas, níveis de carreira e qualificações.
     """)
 
     families = sorted(df["Job Family"].dropna().unique())
     col1, col2, col3 = st.columns(3)
+
     with col1:
-        family = st.selectbox("1️⃣ Selecione a Família:", families)
+        family = st.selectbox("1️⃣ Família:", families, index=None, placeholder="Selecione...")
     with col2:
-        subfamilies = sorted(df[df["Job Family"] == family]["Sub Job Family"].dropna().unique())
-        sub_family = st.selectbox("2️⃣ Selecione a Sub-Família:", subfamilies)
+        subfamilies = sorted(df[df["Job Family"] == family]["Sub Job Family"].dropna().unique()) if family else []
+        sub_family = st.selectbox("2️⃣ Sub-Família:", subfamilies, index=None, placeholder="Selecione...")
     with col3:
-        paths = sorted(df[df["Sub Job Family"] == sub_family]["Career Path"].dropna().unique())
-        path = st.selectbox("3️⃣ Selecione a Trilha:", paths)
+        paths = sorted(df[df["Sub Job Family"] == sub_family]["Career Path"].dropna().unique()) if sub_family else []
+        path = st.selectbox("3️⃣ Trilha:", paths, index=None, placeholder="Selecione...")
 
-    # Filtro principal
-    filtered = df[
-        (df["Job Family"] == family)
-        & (df["Sub Job Family"] == sub_family)
-        & (df["Career Path"] == path)
-    ]
+    if family and sub_family and path:
+        filtered = df[
+            (df["Job Family"] == family)
+            & (df["Sub Job Family"] == sub_family)
+            & (df["Career Path"] == path)
+        ]
 
-    profiles = sorted(filtered["Job Profile"].dropna().unique())
-    selected_profiles = st.multiselect(
-        "Selecione até 3 perfis de cargo para comparar:",
-        options=profiles,
-        max_selections=3
-    )
+        profiles = sorted(filtered["Job Profile"].dropna().unique())
+        selected_profiles = st.multiselect(
+            "Selecione até 3 perfis de cargo para comparar:",
+            options=profiles,
+            max_selections=3
+        )
 
-    # ===========================================================
-    # 6. EXIBIÇÃO DOS RESULTADOS — COMPARAÇÃO
-    # ===========================================================
-    if selected_profiles:
-        st.divider()
-        st.subheader("📊 Comparação de Perfis")
+        if selected_profiles:
+            st.markdown('<div class="jp-grid">', unsafe_allow_html=True)
+            for profile in selected_profiles:
+                item = filtered[filtered["Job Profile"] == profile].iloc[0]
 
-        cols = len(selected_profiles)
-        st.markdown(f'<div style="display:grid;grid-template-columns:repeat({cols},1fr);gap:25px;">', unsafe_allow_html=True)
+                def section_html(color, icon, title, content):
+                    if not content or content.strip() == "":
+                        content = "-"
+                    content = content.replace("\n", "<br>")
+                    return f"""
+                    <div class="jp-section" style="--color:{color}">
+                        <div class="jp-section-title">{icon} {title}</div>
+                        <div class="jp-section-content">{content}</div>
+                    </div>
+                    """
 
-        for profile in selected_profiles:
-            item = filtered[filtered["Job Profile"] == profile].iloc[0]
-            st.markdown(f"""
-            <div class="job-card">
-                <h4>{item.get("Job Profile", "-")}</h4>
-                <p><strong>Global Grade:</strong> {item.get("Global Grade", "-")}</p>
-                <p><strong>Career Band:</strong> {item.get("Career Band", "-")}</p>
-                <p><strong>Job Family:</strong> {item.get("Job Family", "-")}</p>
-                <p><strong>Sub Job Family:</strong> {item.get("Sub Job Family", "-")}</p>
-                <hr style="border: none; border-top: 1px solid #eee; margin: 10px 0;">
-                <p><strong>Descrição do Perfil:</strong></p>
-                <p>{item.get("Job Profile Description", "-")}</p>
-                <p><strong>Career Band Description:</strong></p>
-                <p>{item.get("Career Band Description", "-")}</p>
-                <p><strong>Role Description:</strong></p>
-                <p>{item.get("Role Description", "-")}</p>
-                <p><strong>Grade Differentiator:</strong></p>
-                <p>{item.get("Grade Differentiator", "-")}</p>
-                <p><strong>Qualifications:</strong></p>
-                <p>{item.get("Qualifications", "-")}</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("</div>", unsafe_allow_html=True)
+                st.markdown(f"""
+                <div class="jp-card">
+                    <h4>{item.get('Job Profile', '-')}</h4>
+                    <div class="jp-meta"><b>Global Grade:</b> {item.get('Global Grade', '-')}</div>
+                    <div class="jp-meta"><b>Career Band:</b> {item.get('Career Band', '-')}</div>
+                    {section_html("#95a5a6", "🏘️", "Sub Job Family Description", item.get("Sub Job Family Description", "-"))}
+                    {section_html("#e91e63", "🧠", "Job Profile Description", item.get("Job Profile Description", "-"))}
+                    {section_html("#673ab7", "🏛️", "Career Band Description", item.get("Career Band Description", "-"))}
+                    {section_html("#1E56E0", "🎯", "Role Description", item.get("Role Description", "-"))}
+                    {section_html("#ff9800", "🏅", "Grade Differentiator", item.get("Grade Differentiator", "-"))}
+                    {section_html("#009688", "🎓", "Qualifications", item.get("Qualifications", "-"))}
+                </div>
+                """, unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            st.info("👆 Selecione até **3 perfis** para visualizar a comparação detalhada.")
     else:
-        st.info("👆 Selecione até **3 perfis** para exibir a comparação detalhada.")
+        st.info("Selecione as opções acima para exibir os perfis.")
