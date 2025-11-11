@@ -1,5 +1,5 @@
     # ===========================================================
-    # 7. RENDERIZAÇÃO VISUAL (formato original restaurado)
+    # 7. RENDERIZAÇÃO VISUAL (formato original restaurado e indentação corrigida)
     # ===========================================================
     st.markdown("---")
     st.subheader("🏆 Cargos Mais Compatíveis")
@@ -11,7 +11,12 @@
     cards_data = []
     for _, row in top3.iterrows():
         score_val = float(row["similarity"]) * 100
-        score_bg = "#28a745" if score_val > 85 else "#1E56E0" if score_val > 75 else "#fd7e14" if score_val > 60 else "#dc3545"
+        score_bg = (
+            "#28a745" if score_val > 85
+            else "#1E56E0" if score_val > 75
+            else "#fd7e14" if score_val > 60
+            else "#dc3545"
+        )
         lvl_name = ""
         gg_val = str(row["Global Grade"]).strip()
         if not df_levels.empty and "Global Grade" in df_levels.columns and "Level Name" in df_levels.columns:
@@ -60,6 +65,7 @@
         ("🏅 Grade Differentiator", "Grade Differentiator", "#ff9800"),
         ("🎓 Qualifications", "Qualifications", "#009688")
     ]
+
     for title, field, color in sections_config:
         for card in cards_data:
             content = str(card["row"].get(field, "-"))
