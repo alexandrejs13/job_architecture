@@ -60,7 +60,7 @@ st.markdown("""
     background: #fff;
     border-radius: 12px;
     border-left: 5px solid #145efc;
-    padding: 22px 26px;
+    padding: 20px 26px;
     margin-bottom: 25px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 }
@@ -74,6 +74,7 @@ st.markdown("""
     font-size: 0.9rem;
     color: #666;
     margin-bottom: 12px;
+    line-height: 1.4;
 }
 
 /* Seções descritivas */
@@ -129,26 +130,18 @@ def load_excel(path):
         return pd.DataFrame()
 
 # ===========================================================
-# 4. DADOS — CORRIGIDO E OTIMIZADO
+# 4. DADOS
 # ===========================================================
 df = load_excel("data/Job Profile.xlsx")
-levels = load_excel("data/Level Structure.xlsx")  # ✅ Nome corrigido
+levels = load_excel("data/Level Structure.xlsx")
 
-# Verificação básica de integridade
 if df.empty:
     st.error("❌ Arquivo 'Job Profile.xlsx' não encontrado ou inválido.")
     st.stop()
 
-# Normalização dos Global Grades
 df["Global Grade"] = df["Global Grade"].apply(normalize_grade)
-
-if not levels.empty:
-    if "Global Grade" in levels.columns:
-        levels["Global Grade"] = levels["Global Grade"].apply(normalize_grade)
-    else:
-        st.warning("⚠️ O arquivo 'Level Structure.xlsx' não contém a coluna 'Global Grade'.")
-else:
-    st.warning("⚠️ O arquivo 'Level Structure.xlsx' não foi carregado. Exibindo perfis sem níveis.")
+if not levels.empty and "Global Grade" in levels.columns:
+    levels["Global Grade"] = levels["Global Grade"].apply(normalize_grade)
 
 # ===========================================================
 # 5. FILTROS
@@ -177,15 +170,29 @@ if filtered.empty:
     st.info("Ajuste os filtros para visualizar os perfis.")
     st.stop()
 
-perfis = sorted(filtered["Job Profile"].dropna().unique())
-selecionados = st.multiselect("Selecione até 3 perfis para comparar:", perfis, max_selections=3)
+# ===========================================================
+# 6. PICKLIST (GG + CARGO)
+# ===========================================================
+filtered["__GG__"] = filtered["Global Grade"].apply(normalize_grade)
+filtered["__label__"] = filtered.apply(
+    lambda r: f'GG {r["__GG__"] or "-"} • {r["Job Profile"]}', axis=1
+)
+label_to_profile = dict(zip(filtered["__label__"], filtered["Job Profile"]))
 
-if not selecionados:
+selecionados_labels = st.multiselect(
+    "Selecione até 3 perfis para comparar:",
+    options=list(label_to_profile.keys()),
+    max_selections=3,
+)
+
+if not selecionados_labels:
     st.info("Selecione ao menos 1 perfil para exibir.")
     st.stop()
 
+selecionados = [label_to_profile[l] for l in selecionados_labels]
+
 # ===========================================================
-# 6. GRID DE COMPARAÇÃO
+# 7. GRID DE COMPARAÇÃO
 # ===========================================================
 cols = st.columns(len(selecionados))
 
@@ -197,20 +204,33 @@ for idx, nome in enumerate(selecionados):
     data = row.iloc[0].copy()
     gg = normalize_grade(data.get("Global Grade", ""))
     level_name = ""
-
     if not levels.empty and {"Global Grade", "Level Name"}.issubset(levels.columns):
         match = levels[levels["Global Grade"].astype(str).str.strip() == gg]
         if not match.empty:
             level_name = match["Level Name"].iloc[0]
+
+    # Meta do perfil
+    meta = []
+    for lbl, col in [
+        ("Família", "Job Family"),
+        ("Subfamília", "Sub Job Family"),
+        ("Carreira", "Career Path"),
+    ]:
+        val = str(data.get(col, "") or "").strip()
+        if val:
+            meta.append(f"<b>{lbl}:</b> {val}")
+    meta_html = "<br>".join(meta)
 
     with cols[idx]:
         st.markdown(f"""
         <div class="profile-card">
             <div class="profile-title">{data.get('Job Profile', '-')}</div>
             <div class="profile-meta">GG {gg or '-'} • {level_name}</div>
+            {f'<div class="profile-meta">{meta_html}</div>' if meta_html else ''}
         </div>
         """, unsafe_allow_html=True)
 
+        # Conteúdo das seções
         sections = [
             ("🧭 Sub Job Family Description", "Sub Job Family Description"),
             ("🧠 Job Profile Description", "Job Profile Description"),
@@ -219,7 +239,6 @@ for idx, nome in enumerate(selecionados):
             ("🏅 Grade Differentiator", "Grade Differentiator"),
             ("🎓 Qualifications", "Qualifications"),
         ]
-
         for title, field in sections:
             content = str(data.get(field, "") or "").strip()
             if not content:
