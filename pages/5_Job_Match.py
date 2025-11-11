@@ -32,7 +32,7 @@ setup_sidebar()
 lock_sidebar()
 
 # ===========================================================
-# 3. ESTILO VISUAL
+# 3. ESTILO VISUAL PADRÃO
 # ===========================================================
 st.markdown("""
 <style>
@@ -82,7 +82,7 @@ st.markdown("""
 # ===========================================================
 # 4. CARGA OTIMIZADA DE MODELO E DADOS
 # ===========================================================
-@st.cache_resource(hash_funcs={SentenceTransformer: id})
+@st.cache_resource
 def load_model():
     return SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 
@@ -155,21 +155,39 @@ LEVEL_GG_MAPPING = {
 }
 
 def detect_level_from_text(text, wtw_db):
-    if not wtw_db or not text: return None,None,None,[]
+    """Detecta nível de carreira com base em palavras-chave do dicionário WTW"""
+    if not wtw_db or not text:
+        return None, None, None, []
     text_lower = text.lower()
-    best_score,best_band,best_level,best_key,kw=[] ,None,None,None,[]
-    for band_key,band_info in wtw_db.get("career_bands",{}).items():
-        for lvl_key,lvl_info in band_info.get("levels",{}).items():
-            score=0; matches=[]
-            for kw_ in lvl_info.get("core_keywords",[]):
-                if re.search(r'\b'+re.escape(kw_.lower())+r'\b',text_lower):
-                    score+=3; matches.append(kw_)
-            for ukw in lvl_info.get("user_keywords",[]):
+    best_score = 0
+    best_band = None
+    best_level = None
+    best_key = None
+    matched_keywords = []
+
+    for band_key, band_info in wtw_db.get("career_bands", {}).items():
+        for lvl_key, lvl_info in band_info.get("levels", {}).items():
+            current_score = 0
+            current_matches = []
+
+            for kw in lvl_info.get("core_keywords", []):
+                if re.search(r'\\b' + re.escape(kw.lower()) + r'\\b', text_lower):
+                    current_score += 3
+                    current_matches.append(kw)
+
+            for ukw in lvl_info.get("user_keywords", []):
                 if ukw.lower() in text_lower:
-                    score+=1; matches.append(ukw)
-            if score>best_score:
-                best_score, best_band, best_level, best_key, kw = score, band_info, lvl_info, lvl_key, list(set(matches))
-    return best_band,best_level,best_key,kw
+                    current_score += 1
+                    current_matches.append(ukw)
+
+            if current_score > best_score:
+                best_score = current_score
+                best_band = band_info
+                best_level = lvl_info
+                best_key = lvl_key
+                matched_keywords = list(set(current_matches))
+
+    return best_band, best_level, best_key, matched_keywords
 
 # ===========================================================
 # 6. INTERFACE DE USUÁRIO
@@ -196,6 +214,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
 
     mask = (df["Job Family"]==selected_family)&(df["Sub Job Family"]==selected_subfamily)
     band,level,key,kws = detect_level_from_text(desc_input, wtw_data)
+
     allowed=[]
     if key and key in LEVEL_GG_MAPPING:
         allowed=LEVEL_GG_MAPPING[key]
