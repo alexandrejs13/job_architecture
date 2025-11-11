@@ -1,0 +1,130 @@
+/* ======================================================
+   SIG CORPORATE THEME
+   ====================================================== */
+
+/* ========== CORES PRINCIPAIS ========== */
+:root {
+  --sig-sky: #145efc;
+  --sig-spark: #dca0ff;
+  --sig-white: #ffffff;
+
+  --sig-black: #000000;
+  --sig-sand1: #f2efeb;
+  --sig-sand2: #e5dfd9;
+  --sig-sand3: #bfbab5;
+  --sig-sand4: #73706d;
+
+  --sig-forest1: #4fa593;
+  --sig-forest2: #167665;
+  --sig-forest3: #00493b;
+  --sig-moss1: #f5f073;
+  --sig-moss2: #c8b846;
+  --sig-moss3: #a09b05;
+
+  --radius: 12px;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  --transition: all 0.25s ease-in-out;
+}
+
+/* ========== BASE ========== */
+html, body {
+  font-family: 'PP SIG Flow', 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--sig-white);
+  color: var(--sig-black);
+  line-height: 1.6;
+  text-align: left;
+  margin: 0;
+  padding: 0;
+}
+
+/* Cabeçalhos */
+h1, h2, h3, h4, h5 {
+  font-weight: 600;
+  color: var(--sig-black);
+  margin-top: 1.2em;
+  margin-bottom: 0.6em;
+}
+
+h1 { font-size: 48px; line-height: 1.1; }
+h2 { font-size: 36px; }
+h3 { font-size: 28px; }
+
+/* Parágrafos */
+p {
+  font-size: 16px;
+  margin-bottom: 1rem;
+}
+
+/* Links */
+a {
+  color: var(--sig-sky);
+  text-decoration: underline;
+  transition: var(--transition);
+}
+a:hover {
+  color: #0e4ecf;
+  opacity: 0.9;
+}
+
+/* ========== BOTÕES ========== */
+button, .btn {
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-primary {
+  background-color: var(--sig-sky);
+  color: var(--sig-white);
+  padding: 0.8rem 1.5rem;
+}
+.btn-primary:hover {
+  background-color: #0e4ecf;
+}
+
+.btn-secondary {
+  background-color: var(--sig-forest1);
+  color: var(--sig-white);
+  padding: 0.8rem 1.5rem;
+}
+.btn-secondary:hover {
+  background-color: var(--sig-forest2);
+}
+
+/* ========== CARDS ========== */
+.card {
+  background-color: var(--sig-sand1);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* ========== LAYOUT ========== */
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 0 2rem;
+}
+
+.section {
+  padding: 4rem 0;
+}
+
+/* ========== FOOTER ========== */
+footer {
+  background-color: var(--sig-sand4);
+  color: var(--sig-sand1);
+  padding: 2rem 0;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* ========== REGRAS DO BRANDING ========== */
+* {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  text-align: left !important;
+}
