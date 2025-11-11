@@ -5,27 +5,34 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 # Importa a função de carregamento específica do usuário
-from utils.data_loader import load_level_structure_df, load_excel_data 
+from utils.data_loader import load_level_structure_df
 # Importa a nossa função de visual global
-from utils.ui import setup_sidebar, sidebar_logo_and_title
+from utils.ui import setup_sidebar
 import html
 
 # ===========================================================
 # 4. DADOS (FUNÇÕES DE CARREGAMENTO)
 # ===========================================================
-# Mantendo apenas o essencial para a tabela
 @st.cache_data 
 def load_level_data():
     try:
-        # Carrega a tabela de estrutura de níveis usando a função do usuário
         df = load_level_structure_df()
-        # Limpeza básica (opcional, mas seguro)
+        
         if not df.empty:
+            # Limpa nomes de colunas e preenche NaN
             df.columns = df.columns.str.strip()
             df = df.fillna('-')
+            
+            # Formata a coluna Global Grade (GG) para ser um inteiro limpo
+            if 'Global Grade' in df.columns:
+                df['Global Grade'] = pd.to_numeric(
+                    df['Global Grade'].astype(str).str.replace(r'\.0$', '', regex=True), 
+                    errors='coerce'
+                ).fillna('-').astype(str).str.replace(r'\.0$', '', regex=True)
+            
         return df
     except NameError:
-        st.error("Erro: A função `load_level_structure_df()` não foi encontrada. Verifique o arquivo `utils/data_loader.py`.")
+        st.error("Erro: A função `load_level_structure_df()` não foi encontrada.")
         return pd.DataFrame()
     except Exception as e:
         st.error(f"Erro ao carregar dados de nível: {e}")
@@ -48,7 +55,7 @@ st.set_page_config(
 setup_sidebar()
 
 # ===========================================================
-# 3. CSS PADRÃO (Apenas o necessário para o header)
+# 3. CSS PADRÃO
 # ===========================================================
 st.markdown("""
 <style>
@@ -76,6 +83,13 @@ st.markdown("""
 /* Neutraliza o h1 original */
 h1 { display: none !important; }
 
+/* Destaque para a tabela executiva */
+[data-testid="stDataFrame"] {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -83,7 +97,7 @@ h1 { display: none !important; }
 # 5. CONTEÚDO PRINCIPAL E TABELA
 # ===========================================================
 
-# Renderiza o header padrão
+# Renderiza o header padrão (Identidade Visual)
 st.markdown(f"""
 <div class="page-header">
   <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png" alt="icon">
@@ -91,7 +105,8 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("### 📋 Tabela de Níveis Estruturais")
+st.markdown("### 📋 Tabela Executiva de Níveis Estruturais")
+st.markdown("A tabela a seguir apresenta os níveis, faixas de carreira e Grades Globais (*Global Grades*) definidos na arquitetura.")
 
 # Carrega os dados
 df = load_level_data()
@@ -100,6 +115,6 @@ if df.empty:
     st.warning("Não foi possível carregar os dados de Nível.")
     st.stop()
 
-# Exibe a tabela simples (formato anterior)
+# Exibe a tabela simples
 st.dataframe(df, use_container_width=True, hide_index=True) 
-st.caption(f"Total de níveis estruturais carregados: {len(df)} | Total de colunas de dados: {len(df.columns)}")
+st.caption(f"Total de níveis estruturais carregados: **{len(df)}** | Total de colunas: **{len(df.columns)}**")
