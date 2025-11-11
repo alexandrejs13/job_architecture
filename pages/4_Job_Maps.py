@@ -38,7 +38,7 @@ def toggle_fullscreen():
     st.session_state.fullscreen = not st.session_state.fullscreen
 
 # ===========================================================
-# 3. CSS BASE (REVISADO PARA ESTILO DOS BOTÕES E Z-INDEX)
+# 3. CSS BASE (REVISADO PARA ESTILO DOS BOTÕES)
 # ===========================================================
 css_base = """
 <style>
@@ -411,7 +411,7 @@ def generate_map_html(df_filtered, families_order):
                 path_color = get_path_color(row['Career Path'])
                 tooltip = f"{row['Job Profile']} | {row['Career Path']} ({gg_label})"
                 
-                # SINTAXE CORRIGIDA: Garante que toda a f-string esteja bem definida
+                # SINTAXE CORRIGIDA
                 cards_html.append(
                     f"<div class='job-card' style='border-left-color: {path_color} !important;' title='{tooltip}'>"
                     f"<b>{row['Job Profile']}</b><span>{row['Career Path']} - {gg_label}</span></div>"
