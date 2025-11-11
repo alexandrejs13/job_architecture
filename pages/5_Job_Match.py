@@ -6,7 +6,6 @@ import pandas as pd
 import numpy as np
 import html
 import json
-import re
 from pathlib import Path
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -27,6 +26,60 @@ css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
     with open(css_path) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+# CSS adicional para restaurar o grid lindo
+st.markdown("""
+<style>
+.comparison-grid {
+    display: grid;
+    gap: 20px;
+    margin-top: 20px;
+    align-items: stretch;
+    justify-content: center;
+    grid-auto-flow: row;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+.grid-cell {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+.header-cell {
+    background: #f8f9fa;
+    border-radius: 12px 12px 0 0;
+    border-bottom: none;
+    text-align: left;
+}
+.fjc-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+.fjc-gg-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.fjc-gg {
+    color: #145efc;
+    font-weight: 700;
+}
+.fjc-score {
+    color: white;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+}
+.meta-cell, .section-cell, .footer-cell {
+    height: 100%;
+}
+</style>
+""", unsafe_allow_html=True)
 
 setup_sidebar()
 lock_sidebar()
@@ -118,7 +171,7 @@ word_count = len(desc_input.strip().split())
 st.caption(f"Contagem de palavras: {word_count} / 50")
 
 # ===========================================================
-# 6. MAPEAMENTO DE NÍVEIS E FUNÇÃO DE INFERÊNCIA
+# 6. LÓGICA DE NÍVEIS
 # ===========================================================
 LEVEL_GG_MAPPING = {
     "W1": [1,2,3,4,5],"W2":[5,6,7,8],"W3":[7,8,9,10],
@@ -190,7 +243,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     top3 = filtered.sort_values("similarity", ascending=False).head(3)
 
     # ===========================================================
-    # 8. RENDERIZAÇÃO VISUAL — GRID DINÂMICO (1, 2 ou 3 COLUNAS)
+    # 8. GRID RESTAURADO (1–3 COLUNAS)
     # ===========================================================
     st.markdown("---")
     st.subheader("🏆 Cargos Mais Compatíveis")
@@ -221,9 +274,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
             "lvl": lvl_name
         })
 
-    num_results = len(cards_data)
-    grid_style = f"grid-template-columns: repeat({num_results}, 1fr);"
-    grid_html = f'<div class="comparison-grid" style="{grid_style}">'
+    grid_html = '<div class="comparison-grid">'
 
     # Cabeçalho
     for card in cards_data:
