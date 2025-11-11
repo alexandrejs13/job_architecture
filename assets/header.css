@@ -25,7 +25,7 @@
   background-position: center;
 }
 
-/* Mapeamento */
+/* Ícones por página */
 [data-testid="stSidebarNav"] ul li:nth-child(2) a::before {
   background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png");
 }
