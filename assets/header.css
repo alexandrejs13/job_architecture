@@ -1,46 +1,72 @@
-/* ---------------------------
-   ÍCONES NO MENU LATERAL SIG
---------------------------- */
+/* ========== MENU LATERAL: ÍCONES E AJUSTES ========== */
 
-/* Remove qualquer emoji embutido no título */
-[data-testid="stSidebarNavLink"] span {
-    font-family: 'Source Sans Pro', sans-serif !important;
+/* Esconde o primeiro item (App) */
+[data-testid="stSidebarNav"] ul li:first-child {
+  display: none !important;
 }
 
-/* Ícone padrão */
-[data-testid="stSidebarNavLink"] span:first-child::before {
-    content: '';
-    display: inline-block;
-    vertical-align: middle;
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
+/* Base dos itens do menu (link) */
+[data-testid="stSidebarNav"] ul li a {
+  position: relative;
+  padding-left: 32px !important; /* espaço pro ícone */
 }
 
-/* Ícones específicos para cada página */
-[data-testid="stSidebarNavLink"] span:has(span:contains("Job Architecture"))::before {
-    background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png");
+/* Ícone "genérico" (será sobrescrito por nth-child) */
+[data-testid="stSidebarNav"] ul li a::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  filter: drop-shadow(0 0 0 rgba(0,0,0,0)); /* garante nitidez */
 }
 
-[data-testid="stSidebarNavLink"] span:has(span:contains("Job Families"))::before {
-    background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/people%20employees.png");
+/* --------- Mapeamento por posição ---------
+   OBS: Como escondemos o 1º item, o 2º é a 1ª página visível.
+   2: Job Architecture
+   3: Job Families
+   4: Job Profile Description
+   5: Job Maps
+   6: Job Match
+   7: Structure Level
+--------------------------------------------*/
+
+/* 1) Job Architecture */
+[data-testid="stSidebarNav"] ul li:nth-child(2) a::before {
+  background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png");
 }
 
-[data-testid="stSidebarNavLink"] span:has(span:contains("Job Profile Description"))::before {
-    background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/business%20review%20clipboard.png");
+/* 2) Job Families */
+[data-testid="stSidebarNav"] ul li:nth-child(3) a::before {
+  background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/people%20employees.png");
 }
 
-[data-testid="stSidebarNavLink"] span:has(span:contains("Job Maps"))::before {
-    background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/globe%20trade.png");
+/* 3) Job Profile Description */
+[data-testid="stSidebarNav"] ul li:nth-child(4) a::before {
+  background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/business%20review%20clipboard.png");
 }
 
-[data-testid="stSidebarNavLink"] span:has(span:contains("Job Match"))::before {
-    background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/checkmark%20success.png");
+/* 4) Job Maps */
+[data-testid="stSidebarNav"] ul li:nth-child(5) a::before {
+  background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/globe%20trade.png");
 }
 
-[data-testid="stSidebarNavLink"] span:has(span:contains("Structure Level"))::before {
-    background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/process.png");
+/* 5) Job Match */
+[data-testid="stSidebarNav"] ul li:nth-child(6) a::before {
+  background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/checkmark%20success.png");
+}
+
+/* 6) Structure Level */
+[data-testid="stSidebarNav"] ul li:nth-child(7) a::before {
+  background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/process.png");
+}
+
+/* Logo fixo e título no topo da sidebar (mantém espaço) */
+[data-testid="stSidebarNav"] {
+  padding-top: 150px !important;
 }
