@@ -1,6 +1,11 @@
 /* ===== MENU LATERAL COM ÍCONES CUSTOMIZADOS ===== */
 
-/* Esconde o primeiro item "App" */
+/* Remove divisor abaixo do menu lateral */
+[data-testid="stSidebarNav"] {
+  border-bottom: none !important;
+}
+
+/* Remove o item "App" */
 [data-testid="stSidebarNav"] ul li:first-child {
   display: none !important;
 }
