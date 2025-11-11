@@ -18,8 +18,9 @@ def sidebar_logo_and_title():
 
         /* === Estrutura geral do menu lateral === */
         [data-testid="stSidebarNav"] {{
-            margin-top: 200px !important; /* espaço abaixo do header fixo */
+            margin-top: 190px !important; /* espaço abaixo do header fixo */
             border-top: none !important;
+            border-bottom: none !important; /* remove linha inferior */
             padding-top: 1rem !important;
         }}
 
@@ -42,20 +43,26 @@ def sidebar_logo_and_title():
         }}
 
         .sidebar-header img {{
-            width: 120px;
-            margin-bottom: 8px;
+            width: 105px;  /* logo ligeiramente menor */
+            margin-bottom: 10px;
         }}
 
         .sidebar-header h2 {{
-            color: #145efc;
-            font-size: 1.2rem;
+            color: #000000; /* preto */
+            font-size: 1.35rem; /* ligeiramente maior */
             font-weight: 800;
             margin: 0;
         }}
 
-        /* Remove divisor inferior */
+        /* Remove divisor inferior do menu */
         [data-testid="stSidebarNav"]::after {{
             display: none !important;
+            border: none !important;
+        }}
+
+        /* Remove também o divisor invisível entre menu e rodapé */
+        div[data-testid="stSidebar"] > div:first-child {{
+            border-bottom: none !important;
         }}
     </style>
 
@@ -82,7 +89,7 @@ def header(title, icon_path=None):
             font-weight: 700;
             font-size: 1.4rem;
             border-radius: 12px;
-            padding: 16px 36px;
+            padding: 18px 40px; /* mais alto e largo */
             display: inline-flex;
             align-items: center;
             gap: 12px;
