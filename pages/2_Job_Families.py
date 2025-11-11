@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 # Importa a função visual global
-from utils.ui import setup_sidebar
+from utils.ui import sidebar_logo_and_title
 
 # ===========================================================
 # 1. CONFIGURAÇÃO DA PÁGINA
@@ -10,13 +10,14 @@ from utils.ui import setup_sidebar
 st.set_page_config(
     page_title="Job Families",
     page_icon="📂",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 # ===========================================================
 # 2. APLICA O VISUAL GLOBAL (SIDEBAR, CORES ETC)
 # ===========================================================
-setup_sidebar()
+sidebar_logo_and_title()
 
 # ===========================================================
 # 3. ESTILOS CSS (INCLUINDO CABEÇALHO AZUL)
@@ -55,7 +56,6 @@ st.markdown("""
     color: #202020;
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
 }
-
 /* ===== ESTILOS ORIGINAIS DA PÁGINA ===== */
 .jf-description-card {
     background-color: #ffffff;
@@ -96,6 +96,7 @@ st.markdown("""
 # ===========================================================
 @st.cache_data(ttl="1h")
 def load_job_family_data():
+    """Carrega os dados do Excel de Job Families."""
     file_path = "data/Job Family.xlsx"
     if not os.path.exists(file_path):
         st.error(f"❌ Arquivo não encontrado: `{file_path}`.")
@@ -113,15 +114,15 @@ required_columns = ["Job Family", "Sub Job Family", "Sub Job Family Description"
 data_loaded = not df.empty and all(col in df.columns for col in required_columns)
 
 if not data_loaded and not df.empty:
-     st.warning(f"⚠️ Colunas esperadas não encontradas. Disponíveis: {', '.join(df.columns)}")
+    st.warning(f"⚠️ Colunas esperadas não encontradas. Disponíveis: {', '.join(df.columns)}")
 
 # ===========================================================
 # 5. CONTEÚDO PRINCIPAL
 # ===========================================================
-st.markdown(
-    "Bem-vindo à nossa estrutura de Job Families. Aqui explicamos como organizamos as diferentes "
-    "áreas de especialização dentro da empresa, garantindo clareza sobre carreiras e desenvolvimentos."
-)
+st.markdown("""
+Bem-vindo à nossa estrutura de **Job Families**.  
+Aqui explicamos como organizamos as diferentes áreas de especialização dentro da empresa, garantindo clareza sobre **carreiras, mobilidade e desenvolvimento**.
+""")
 
 with st.container():
     col_analogy_icon, col_analogy_text = st.columns([1, 15])
@@ -131,8 +132,8 @@ with st.container():
         st.subheader("O que é uma \"Job Family\"?")
         st.markdown("""
         Imagine que nossa empresa é uma **grande cidade**.  
-        Uma Job Family é como um **bairro** dessa cidade.
-        Dentro de um bairro, você tem várias casas e prédios diferentes (os Cargos),
+        Uma Job Family é como um **bairro** dessa cidade.  
+        Dentro de um bairro, você tem várias casas e prédios diferentes (os Cargos),  
         mas todos compartilham a mesma região, infraestrutura e propósito geral.
         """)
 
@@ -143,7 +144,7 @@ with c1:
 with c2:
     st.info("**⚖️ Equidade**\n\nGarante que funções similares sejam tratadas de forma justa.")
 with c3:
-    st.warning("**🧠 Desenvolvimento**\n\nPermite treinamentos específicos para cada \"bairro\".")
+    st.warning("**🧠 Desenvolvimento**\n\nPermite treinamentos específicos para cada 'bairro'.")
 
 st.divider()
 
@@ -156,14 +157,29 @@ if data_loaded:
     col_sel1, col_sel2 = st.columns(2)
     with col_sel1:
         familias = sorted(df["Job Family"].dropna().unique())
-        selected_family = st.selectbox("1️⃣ Selecione a Família (Job Family):", options=familias, index=None, placeholder="Escolha uma opção...")
+        selected_family = st.selectbox(
+            "1️⃣ Selecione a Família (Job Family):",
+            options=familias,
+            index=None,
+            placeholder="Escolha uma opção..."
+        )
 
     with col_sel2:
         if selected_family:
             sub_familias = sorted(df[df["Job Family"] == selected_family]["Sub Job Family"].dropna().unique())
-            selected_sub_family = st.selectbox("2️⃣ Selecione a Sub-Família:", options=sub_familias, index=None, placeholder="Escolha uma opção...")
+            selected_sub_family = st.selectbox(
+                "2️⃣ Selecione a Sub-Família:",
+                options=sub_familias,
+                index=None,
+                placeholder="Escolha uma opção..."
+            )
         else:
-            selected_sub_family = st.selectbox("2️⃣ Selecione a Sub-Família:", options=[], disabled=True, placeholder="Aguardando seleção da Família...")
+            selected_sub_family = st.selectbox(
+                "2️⃣ Selecione a Sub-Família:",
+                options=[],
+                disabled=True,
+                placeholder="Aguardando seleção da Família..."
+            )
 
     if selected_family and selected_sub_family:
         item = df[(df["Job Family"] == selected_family) & (df["Sub Job Family"] == selected_sub_family)].iloc[0]
@@ -180,4 +196,4 @@ if data_loaded:
         st.info("👆 Selecione uma **Sub-Família** para ver os detalhes.")
 else:
     if df.empty:
-       st.warning("Não foi possível carregar os dados para exibir o explorador.")
+        st.warning("Não foi possível carregar os dados para exibir o explorador.")
