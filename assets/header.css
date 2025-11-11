@@ -1,31 +1,46 @@
-/* ÍCONES NAS OPÇÕES DO MENU */
+/* ---------------------------
+   ÍCONES NO MENU LATERAL SIG
+--------------------------- */
+
+/* Remove qualquer emoji embutido no título */
+[data-testid="stSidebarNavLink"] span {
+    font-family: 'Source Sans Pro', sans-serif !important;
+}
+
+/* Ícone padrão */
 [data-testid="stSidebarNavLink"] span:first-child::before {
     content: '';
     display: inline-block;
     vertical-align: middle;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     margin-right: 10px;
     background-size: contain;
     background-repeat: no-repeat;
+    background-position: center;
 }
 
-/* Ícones por item */
+/* Ícones específicos para cada página */
 [data-testid="stSidebarNavLink"] span:has(span:contains("Job Architecture"))::before {
-    background-image: url("https://github.com/alexandrejs13/job_architecture/raw/main/assets/icons/governance.png");
+    background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png");
 }
+
 [data-testid="stSidebarNavLink"] span:has(span:contains("Job Families"))::before {
-    background-image: url("https://github.com/alexandrejs13/job_architecture/raw/main/assets/icons/people.png");
+    background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/people%20employees.png");
 }
+
 [data-testid="stSidebarNavLink"] span:has(span:contains("Job Profile Description"))::before {
-    background-image: url("https://github.com/alexandrejs13/job_architecture/raw/main/assets/icons/business.png");
+    background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/business%20review%20clipboard.png");
 }
+
 [data-testid="stSidebarNavLink"] span:has(span:contains("Job Maps"))::before {
-    background-image: url("https://github.com/alexandrejs13/job_architecture/raw/main/assets/icons/globe.png");
+    background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/globe%20trade.png");
 }
+
 [data-testid="stSidebarNavLink"] span:has(span:contains("Job Match"))::before {
-    background-image: url("https://github.com/alexandrejs13/job_architecture/raw/main/assets/icons/checkmark.png");
+    background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/checkmark%20success.png");
 }
+
 [data-testid="stSidebarNavLink"] span:has(span:contains("Structure Level"))::before {
-    background-image: url("https://github.com/alexandrejs13/job_architecture/raw/main/assets/icons/process.png");
+    background-image: url("https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/process.png");
 }
