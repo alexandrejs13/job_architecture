@@ -1,23 +1,23 @@
 import streamlit as st
-from pathlib import Path
 
 # ===========================================================
-# 1. INSERE O LOGO E TÍTULO NA BARRA LATERAL
+# 1️⃣ FUNÇÃO: LOGO E TÍTULO NA BARRA LATERAL
 # ===========================================================
 def sidebar_logo_and_title():
-    logo_path = "https://github.com/alexandrejs13/job_architecture/raw/main/assets/SIG_Logo_RGB_Blue.png"
-
+    logo_url = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
     st.sidebar.markdown(f"""
     <style>
-        /* Remove o item "app" do menu lateral */
-        [data-testid="stSidebarNav"] ul li:first-child {{ display: none !important; }}
+        /* Oculta o item "app" do menu lateral */
+        [data-testid="stSidebarNav"] ul li:first-child {{
+            display: none !important;
+        }}
 
-        /* Ajusta a barra lateral para comportar o logo */
+        /* Espaçamento para exibir logo */
         [data-testid="stSidebarNav"] {{
             padding-top: 150px !important;
         }}
 
-        /* Contêiner do logo */
+        /* Header do logo */
         .sidebar-header {{
             position: absolute;
             top: 20px;
@@ -25,13 +25,11 @@ def sidebar_logo_and_title():
             width: 100%;
             text-align: center;
         }}
-
         .sidebar-header img {{
             width: 110px;
             opacity: 0.95;
             margin-bottom: 4px;
         }}
-
         .sidebar-header h2 {{
             color: #145efc;
             font-size: 1rem;
@@ -41,19 +39,17 @@ def sidebar_logo_and_title():
     </style>
 
     <div class="sidebar-header">
-        <img src="{logo_path}" alt="SIG Logo">
+        <img src="{logo_url}" alt="SIG Logo">
         <h2>Job Architecture</h2>
     </div>
     """, unsafe_allow_html=True)
 
 # ===========================================================
-# 2. CABEÇALHO AZUL PADRÃO
+# 2️⃣ FUNÇÃO: CABEÇALHO AZUL COM ÍCONE
 # ===========================================================
-def header(title: str, icon_path: str):
-    """Cria o cabeçalho azul SIG com ícone lateral"""
-    icon_full_path = Path(icon_path)
-    if not icon_full_path.exists():
-        icon_full_path = f"https://github.com/alexandrejs13/job_architecture/raw/main/{icon_path}"
+def header(title: str, icon_filename: str):
+    """Cria o cabeçalho azul SIG com ícone"""
+    icon_url = f"https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/{icon_filename}"
 
     st.markdown(f"""
     <style>
@@ -78,7 +74,7 @@ def header(title: str, icon_path: str):
         }}
     </style>
     <div class="header-bar">
-        <img src="{icon_full_path}" alt="icon">
+        <img src="{icon_url}" alt="icon">
         <div class="header-title">{title}</div>
     </div>
     """, unsafe_allow_html=True)
