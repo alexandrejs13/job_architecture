@@ -1,5 +1,6 @@
 import streamlit as st
 from utils.ui import sidebar_logo_and_title, header
+from pathlib import Path
 
 # ===========================================================
 # 1. CONFIGURAÇÃO DA PÁGINA
@@ -9,8 +10,12 @@ st.set_page_config(page_title="Job Architecture", layout="wide")
 # ===========================================================
 # 2. APLICA ESTILOS GLOBAIS E HEADER PADRÃO
 # ===========================================================
-with open("assets/header.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+css_path = Path(__file__).parents[1] / "assets" / "header.css"
+if css_path.exists():
+    with open(css_path) as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+else:
+    st.warning(f"Arquivo de estilo não encontrado: {css_path}")
 
 sidebar_logo_and_title()
 header("Job Architecture", "assets/icons/governance.png")
