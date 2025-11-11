@@ -4,9 +4,7 @@
 import streamlit as st
 import pandas as pd
 from pathlib import Path
-# Importa a função de carregamento específica do usuário
 from utils.data_loader import load_level_structure_df
-# Importa a nossa função de visual global
 from utils.ui import setup_sidebar
 import html
 
@@ -23,7 +21,6 @@ def load_level_data():
             df = df.fillna('-')
             
             if 'Global Grade' in df.columns:
-                # Remove o '.0' de Global Grade e converte para string
                 df['Global Grade'] = pd.to_numeric(
                     df['Global Grade'].astype(str).str.replace(r'\.0$', '', regex=True), 
                     errors='coerce'
@@ -39,11 +36,11 @@ def load_level_data():
 
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA (ÍCONE DE ENGRENAGEM PARA ALINHAMENTO)
+# 1. CONFIGURAÇÃO DE PÁGINA
 # ===========================================================
 st.set_page_config(
     page_title="Structure Level", 
-    page_icon="⚙️", # ÍCONE: Engrenagem para alinhamento da sidebar
+    page_icon="⚙️", 
     layout="wide", 
     initial_sidebar_state="expanded"
 )
@@ -54,7 +51,7 @@ st.set_page_config(
 setup_sidebar() 
 
 # ===========================================================
-# 3. CSS PADRÃO
+# 3. CSS PADRÃO E INJEÇÃO DE ÍCONE NA SIDEBAR
 # ===========================================================
 st.markdown("""
 <style>
@@ -87,6 +84,17 @@ h1 { display: none !important; }
     border: 1px solid #ddd;
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* ============ CORREÇÃO: INJEÇÃO FORÇADA DO ÍCONE NA SIDEBAR ============ */
+/* Seleciona o item da sidebar com o texto 'Structure Level' */
+[data-testid="stSidebarNav"] li a[href*="Structure_Level"]::before {
+    /* O ícone já existe aqui (ex: Job Maps), mas está fora de ordem. 
+       Vamos forçar um novo ícone para garantir a visualização correta. */
+    content: "⚙️ ";
+    margin-right: 6px; 
+    font-size: 1.2em;
+    vertical-align: middle;
 }
 
 </style>
