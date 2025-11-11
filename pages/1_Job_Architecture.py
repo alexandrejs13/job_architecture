@@ -24,31 +24,31 @@ if css_path.exists():
 # ===========================================================
 sidebar_logo_and_title()
 
-# Header azul ocupando a largura do conteúdo
+# Header azul com largura total do conteúdo, ícone maior e tipografia refinada
 st.markdown("""
 <style>
     .page-header {
         background-color: #145efc;
         color: white;
-        font-weight: 700;
-        font-size: 1.2rem;
+        font-weight: 750;
+        font-size: 1.35rem; /* título ligeiramente maior */
         border-radius: 12px;
-        padding: 20px 32px;
+        padding: 22px 36px;
         display: flex;
         align-items: center;
-        gap: 14px;
+        gap: 18px;
         width: 100%; /* ocupa toda a largura do container de texto */
         box-sizing: border-box;
-        margin-bottom: 35px;
+        margin-bottom: 40px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .page-header img {
-        width: 38px;  /* ícone maior */
-        height: 38px;
+        width: 48px;  /* ícone maior e mais equilibrado */
+        height: 48px;
     }
 
-    /* Garante que a área de conteúdo tenha alinhamento controlado */
+    /* Mantém o corpo centralizado e proporcional */
     .block-container {
         max-width: 900px !important;
         padding-left: 40px !important;
@@ -109,6 +109,7 @@ st.markdown("""
         margin-top: 25px !important;
         margin-bottom: 12px !important;
     }
+
     h3 {
         font-weight: 700 !important;
         color: #000000 !important;
