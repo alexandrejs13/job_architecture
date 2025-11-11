@@ -1,5 +1,5 @@
 # ===========================================================
-# 6_STRUCTURE_LEVEL.PY — VISUALIZAÇÃO DE ESTRUTURA DE NÍVEIS
+# 6_STRUCTURE_LEVEL.PY — PADRONIZADO COM HEADER, TEXTO E GRÁFICO MINIMALISTA
 # ===========================================================
 
 import streamlit as st
@@ -19,7 +19,7 @@ st.set_page_config(
 )
 
 # ===========================================================
-# 2. CSS GLOBAL E SIDEBAR UNIFICADA
+# 2. CSS GLOBAL E SIDEBAR
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
@@ -53,7 +53,7 @@ st.markdown("""
     height: 54px;
 }
 .block-container {
-    max-width: 1300px !important;
+    max-width: 900px !important;
     padding-left: 40px !important;
     padding-right: 40px !important;
 }
@@ -61,6 +61,11 @@ st.markdown("""
     background-color: #f5f3f0;
     color: #202020;
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
+}
+hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 30px 0;
 }
 </style>
 
@@ -71,13 +76,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 4. FUNÇÃO PARA CARREGAR OS DADOS
+# 4. CARREGAMENTO DE DADOS
 # ===========================================================
 @st.cache_data(ttl="1h")
-def load_data():
+def load_level_data():
     path = Path("data/Level Structure.xlsx")
     if not path.exists():
-        st.error("❌ Arquivo 'Level Structure.xlsx' não encontrado na pasta data/.")
+        st.error("❌ Arquivo 'Level Structure.xlsx' não encontrado na pasta `data/`.")
         return pd.DataFrame()
     try:
         df = pd.read_excel(path)
@@ -87,39 +92,81 @@ def load_data():
         st.error(f"Erro ao ler o arquivo Excel: {e}")
         return pd.DataFrame()
 
-df = load_data()
-
+df = load_level_data()
 if df.empty:
     st.stop()
 
 # ===========================================================
-# 5. CONTEÚDO PRINCIPAL — TABELA
+# 5. CONTEÚDO TEXTUAL
 # ===========================================================
 st.markdown("""
-Abaixo você pode visualizar a **estrutura de níveis corporativa (Global Grades e Career Bands)**, 
-utilizada para padronizar a arquitetura de cargos da SIG.
+A **estrutura de níveis (Structure Level)** é o alicerce da **Job Architecture da SIG**.  
+Ela organiza os cargos em **faixas hierárquicas globais (Global Grades)** e **bandas de carreira (Career Bands)**, 
+garantindo coerência e comparabilidade entre funções em diferentes áreas e regiões.
+
+Cada nível reflete **escopo de responsabilidade**, **complexidade** e **impacto organizacional**.  
+Essa padronização é essencial para manter **equidade interna**, **governança global** e **clareza de progressão de carreira**.
 """)
 
-# Remove o índice numérico (coluna à esquerda)
+st.divider()
+
+# ===========================================================
+# 6. TABELA DE ESTRUTURA
+# ===========================================================
+st.subheader("📘 Estrutura Detalhada de Níveis")
+
+st.markdown("""
+Abaixo, a tabela apresenta a **descrição completa dos níveis globais (Global Grades)**, 
+com suas respectivas bandas de carreira e escopos.
+""")
+
+# Remove índice e exibe tabela limpa
 st.dataframe(df.reset_index(drop=True), use_container_width=True)
 
 st.divider()
 
 # ===========================================================
-# 6. VISUALIZAÇÃO GRÁFICA — DISTRIBUIÇÃO DE NÍVEIS
+# 7. VISUALIZAÇÃO MINIMALISTA
 # ===========================================================
-st.markdown("### 📊 Distribuição de Níveis por Career Band")
+st.subheader("📊 Distribuição por Banda de Carreira")
 
 if "Career Band" in df.columns:
     contagem = df["Career Band"].value_counts().reset_index()
     contagem.columns = ["Career Band", "Quantidade"]
 
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.bar(contagem["Career Band"], contagem["Quantidade"], color="#145efc")
-    ax.set_xlabel("Career Band", fontsize=11)
-    ax.set_ylabel("Quantidade de Níveis", fontsize=11)
-    ax.set_title("Distribuição de Estrutura de Níveis", fontsize=14, fontweight="bold")
-    ax.grid(axis="y", linestyle="--", alpha=0.5)
+    fig, ax = plt.subplots(figsize=(8, 4))
+    bars = ax.bar(
+        contagem["Career Band"],
+        contagem["Quantidade"],
+        color="#145efc",
+        edgecolor="#0e46c2",
+        width=0.6
+    )
+
+    ax.set_facecolor("#f5f3f0")
+    fig.patch.set_facecolor("#f5f3f0")
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_color("#cccccc")
+    ax.spines["bottom"].set_color("#cccccc")
+    ax.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.5)
+    ax.set_ylabel("Número de Níveis", fontsize=10, labelpad=10)
+    ax.set_xlabel("Career Band", fontsize=10, labelpad=6)
+    ax.set_title("Distribuição da Estrutura de Níveis", fontsize=13, fontweight="bold", pad=10)
+
+    # Adiciona valores sobre as barras
+    for bar in bars:
+        yval = bar.get_height()
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            yval + 0.2,
+            int(yval),
+            ha="center",
+            va="bottom",
+            fontsize=9,
+            color="#333"
+        )
+
     st.pyplot(fig, use_container_width=True)
 else:
     st.warning("Coluna 'Career Band' não encontrada no arquivo Excel.")
@@ -127,11 +174,11 @@ else:
 st.divider()
 
 # ===========================================================
-# 7. INSIGHTS ADICIONAIS
+# 8. CONCLUSÃO
 # ===========================================================
 st.markdown("""
 ### 💡 Interpretação
-- **Career Band** representa o agrupamento hierárquico principal (ex.: Operational, Professional, Leadership).  
-- **Global Grade** é o código numérico do nível global, usado para alinhamento interno.  
-- Essa estrutura facilita análises comparativas de cargos, transições de carreira e políticas de remuneração.
+- A **Career Band** representa o agrupamento macro de carreira (ex.: *Operational*, *Professional*, *Leadership*).  
+- O **Global Grade** indica o nível global, usado como referência para estrutura, remuneração e mobilidade.  
+- A combinação entre ambos define **consistência global** e **equidade entre funções** dentro da SIG.
 """)
