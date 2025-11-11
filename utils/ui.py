@@ -6,7 +6,6 @@ import streamlit as st
 def sidebar_logo_and_title():
     logo_url = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
 
-    # usamos triple quotes normais sem f-string, e depois concatenamos manualmente o logo_url
     st.sidebar.markdown("""
     <style>
         /* === Bloqueia redimensionamento da sidebar === */
@@ -15,13 +14,27 @@ def sidebar_logo_and_title():
             overflow: hidden !important;
             min-width: 300px !important;
             max-width: 300px !important;
+            border: none !important;
+            box-shadow: none !important;
         }
 
         /* === Estrutura geral do menu === */
         [data-testid="stSidebarNav"] {
-            margin-top: 140px !important; /* ajusta espaçamento para o logo */
+            margin-top: 140px !important;
             border-top: none !important;
             border-bottom: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Remove qualquer divisor abaixo do menu */
+        [data-testid="stSidebarNav"]::after {
+            display: none !important;
+        }
+
+        /* Remove divisores adicionais do container */
+        section[data-testid="stSidebar"] > div:first-child {
+            border-bottom: none !important;
+            box-shadow: none !important;
         }
 
         /* === Header fixo com apenas o logo === */
@@ -41,14 +54,9 @@ def sidebar_logo_and_title():
         }
 
         .sidebar-header img {
-            width: 105px;  /* logo maior, proporcional ao novo layout */
+            width: 105px;
             height: auto;
             display: block;
-        }
-
-        /* Remove divisores padrão do Streamlit */
-        [data-testid="stSidebarNav"]::after {
-            display: none !important;
         }
     </style>
     """, unsafe_allow_html=True)
