@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
+import re
 from pathlib import Path
 from utils.ui import sidebar_logo_and_title
 
@@ -22,9 +24,6 @@ if css_path.exists():
 
 sidebar_logo_and_title()
 
-# ===========================================================
-# 3. CABEÇALHO AZUL PADRÃO
-# ===========================================================
 st.markdown("""
 <style>
 .page-header {
@@ -40,14 +39,14 @@ st.markdown("""
     width: 100%;
     box-sizing: border-box;
     margin-bottom: 40px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 .page-header img {
     width: 48px;
     height: 48px;
 }
 .block-container {
-    max-width: 1100px !important;
+    max-width: 1000px !important;
     padding-left: 40px !important;
     padding-right: 40px !important;
 }
@@ -55,6 +54,24 @@ st.markdown("""
     background-color: #f5f3f0;
     color: #202020;
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
+}
+h2 {
+    font-weight: 700 !important;
+    color: #000 !important;
+    font-size: 1.35rem !important;
+    margin-top: 25px !important;
+    margin-bottom: 12px !important;
+}
+h3 {
+    font-weight: 700 !important;
+    color: #000 !important;
+    font-size: 1.15rem !important;
+}
+.stAlert {
+    background-color: #eef3ff !important;
+    border-left: 4px solid #145efc !important;
+    color: #000 !important;
+    border-radius: 6px;
 }
 </style>
 
@@ -65,73 +82,70 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 4. CONCEITO E ABORDAGEM METODOLÓGICA
+# 3. CONCEITO E EXPLICAÇÃO PROFISSIONAL
 # ===========================================================
 st.markdown("""
-## Conceito
+## Conceito  
+Os **Structure Levels** fazem parte da metodologia de **Job Architecture** proposta pela **Willis Towers Watson (WTW)**, 
+servindo como uma estrutura padronizada para alinhar **níveis de complexidade, escopo e responsabilidade** em toda a organização.
 
-A **estrutura de níveis (Structure Level)** é um dos componentes centrais da metodologia de **Job Architecture** e está alinhada aos princípios da **Willis Towers Watson (WTW)**.  
-Seu objetivo é estabelecer uma estrutura hierárquica consistente, que permita comparar funções de forma transversal e assegurar equidade interna e competitividade externa.
+## Estrutura Hierárquica  
+Cada posição é classificada dentro de uma hierarquia global de níveis — também chamada de **Career Framework** — 
+que garante coerência entre diferentes áreas, subsidiárias e regiões.  
+Os níveis são definidos com base em critérios como:
+- Impacto e escopo das decisões tomadas.  
+- Grau de autonomia e complexidade das atividades.  
+- Natureza da liderança exercida (individual ou de equipe).  
+- Conhecimento técnico e comportamental exigido.  
 
-Essa metodologia organiza os cargos corporativos com base em três dimensões principais:
-1. **Escopo e Complexidade:** o nível de responsabilidade, autonomia e impacto sobre resultados.  
-2. **Conhecimento e Experiência:** o grau de especialização técnica e amplitude de expertise exigida.  
-3. **Influência e Liderança:** o alcance da atuação, seja individual, funcional ou organizacional.
+## Importância Estratégica  
+Essa padronização:
+- Facilita comparações salariais e equidade interna.  
+- Dá suporte à mobilidade de carreira (lateral e vertical).  
+- Serve como base para **remuneração, sucessão e desenvolvimento** de talentos.  
 
-A estrutura de níveis WTW é projetada para permitir comparações entre diferentes áreas funcionais e países, facilitando a governança global e a integração com sistemas de remuneração, sucessão e carreira.
+## Estrutura Global Típica
+A metodologia da WTW divide os níveis de carreira de forma crescente em escopo e responsabilidade:
+1. **Entry** – Início de carreira, foco em execução.  
+2. **Intermediate** – Profissional com experiência, executa com supervisão limitada.  
+3. **Senior** – Atua de forma autônoma e influencia decisões.  
+4. **Lead** – Especialista técnico ou líder funcional.  
+5. **Manager** – Gestão de pessoas e processos.  
+6. **Director** – Responsável por área estratégica e resultados amplos.  
+7. **Executive** – Alta liderança e responsabilidade corporativa.  
 """)
 
-st.markdown("""
-## Estrutura Hierárquica
-
-Cada nível representa um conjunto de responsabilidades e requisitos distintos, normalmente agrupados em **faixas de carreira (Career Bands)** e **níveis globais (Global Grades)**.  
-Essas categorias descrevem a progressão natural de desenvolvimento profissional, desde posições técnicas e operacionais até cargos de liderança executiva.
-
-| Nível | Características Gerais |
-|-------|--------------------------|
-| **Entry / Foundation** | Foco na execução e aprendizado; supervisão direta; escopo limitado. |
-| **Intermediate / Professional** | Aplicação de conhecimento técnico; autonomia moderada; foco em resultados operacionais. |
-| **Senior Professional** | Atuação como especialista ou mentor; influência dentro da área; complexidade ampliada. |
-| **Lead / Expert** | Responsável por projetos complexos ou liderança técnica; orientação estratégica limitada. |
-| **Manager** | Gestão de equipes e recursos; tomada de decisão sobre processos e resultados. |
-| **Director** | Direção de unidades organizacionais; foco em estratégia funcional e integração entre áreas. |
-| **Executive** | Responsabilidade global ou corporativa; formulação de estratégias e políticas organizacionais. |
-""")
-
-st.divider()
-
 # ===========================================================
-# 5. CARREGAMENTO DO ARQUIVO EXCEL
+# 4. LEITURA DOS DADOS
 # ===========================================================
-file_path = Path("data/Level Structure.xlsx")
-
-@st.cache_data
-def load_level_structure(path):
+@st.cache_data(ttl="1h")
+def load_data():
     try:
-        df = pd.read_excel(path)
+        df = pd.read_excel("data/Level Structure.xlsx")
         df.columns = df.columns.str.strip()
         return df
     except Exception as e:
-        st.error(f"❌ Erro ao carregar o arquivo: {e}")
+        st.error(f"❌ Erro ao carregar arquivo: {e}")
         return pd.DataFrame()
 
-if not file_path.exists():
-    st.error(f"❌ Arquivo não encontrado: `{file_path}`")
-    st.stop()
-
-df = load_level_structure(file_path)
+df = load_data()
 
 if df.empty:
-    st.warning("⚠️ O arquivo foi encontrado, mas está vazio ou em formato inválido.")
+    st.error("Não foi possível carregar o arquivo `Level Structure.xlsx`. Verifique se o arquivo está no diretório `/data`.")
     st.stop()
 
 # ===========================================================
-# 6. EXIBIÇÃO DA ESTRUTURA DE NÍVEIS
+# 5. EXIBIÇÃO DA TABELA
 # ===========================================================
+st.divider()
 st.subheader("Tabela de Estrutura de Níveis")
 
+# Remove colunas numéricas ou não relevantes (ex: index, Unnamed)
+drop_cols = [col for col in df.columns if re.match(r'^(Unnamed|index|ID)$', str(col), flags=re.IGNORECASE)]
+df_display = df.drop(columns=drop_cols, errors="ignore")
+
 st.dataframe(
-    df.style.set_properties(**{
+    df_display.style.set_properties(**{
         "background-color": "white",
         "color": "#222",
         "border-color": "#ddd",
@@ -140,13 +154,39 @@ st.dataframe(
 )
 
 # ===========================================================
-# 7. ANÁLISE DE DISTRIBUIÇÃO (OPCIONAL)
+# 6. GRÁFICO ESTÁTICO DE DISTRIBUIÇÃO
 # ===========================================================
 if "Career Band" in df.columns:
     st.divider()
-    st.subheader("Distribuição de Níveis por Career Band")
+    st.subheader("Distribuição de Estrutura de Níveis por Career Band")
 
     counts = df["Career Band"].value_counts().reset_index()
     counts.columns = ["Career Band", "Quantidade"]
 
-    st.bar_chart(data=counts.set_index("Career Band"))
+    fig, ax = plt.subplots(figsize=(8, 5))
+    bars = ax.bar(counts["Career Band"], counts["Quantidade"], color="#145efc", alpha=0.9)
+
+    ax.set_xlabel("Career Band", fontsize=11, fontweight="bold")
+    ax.set_ylabel("Quantidade de Níveis", fontsize=11)
+    ax.set_title("Distribuição dos Níveis de Estrutura", fontsize=13, fontweight="bold", pad=12)
+    ax.grid(axis="y", linestyle="--", alpha=0.6)
+    plt.xticks(rotation=45, ha="right")
+
+    # Rótulos de valor acima das barras
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2, height + 0.2, f'{int(height)}', 
+                ha='center', va='bottom', fontsize=9, color="#000")
+
+    st.pyplot(fig, use_container_width=False)
+
+# ===========================================================
+# 7. CONCLUSÃO
+# ===========================================================
+st.divider()
+st.markdown("""
+### Conclusão  
+O framework de **Structure Levels** permite que a organização mantenha uma linguagem única sobre 
+**posições, senioridade e responsabilidades**, em linha com as práticas de **Job Architecture** e os princípios da **Willis Towers Watson**.  
+Ele é a base para análises consistentes de remuneração, desempenho e evolução de carreira global.
+""")
