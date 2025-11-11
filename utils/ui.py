@@ -1,46 +1,46 @@
 import streamlit as st
 
 # ===========================================================
-# SIDEBAR: Apenas logo SIG centralizado e alinhado com o conteúdo principal
+# SIDEBAR LIMPA — Apenas logo SIG centralizado e sem divisor inferior
 # ===========================================================
 def sidebar_logo_and_title():
     logo_url = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
 
     st.sidebar.markdown("""
     <style>
-        /* === Bloqueia redimensionamento da sidebar === */
+        /* === Remove qualquer linha, borda ou sombra da sidebar === */
+        section[data-testid="stSidebar"],
+        [data-testid="stSidebarNav"],
+        [data-testid="stSidebarNav"]::after,
+        [data-testid="stSidebarNav"]::before,
+        section[data-testid="stSidebar"] > div:first-child,
+        section[data-testid="stSidebar"] div[data-testid="stVerticalBlockBorderWrapper"],
+        section[data-testid="stSidebar"] div[data-testid="stDecoration"],
+        section[data-testid="stSidebar"] div[data-testid="stSidebarContent"] {
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+            background: #fff !important;
+        }
+
+        /* Bloqueia redimensionamento da sidebar */
         section[data-testid="stSidebar"] {
             resize: none !important;
             overflow: hidden !important;
             min-width: 300px !important;
             max-width: 300px !important;
-            border: none !important;
-            box-shadow: none !important;
         }
 
-        /* === Estrutura geral do menu === */
+        /* Reposiciona menu e remove espaços */
         [data-testid="stSidebarNav"] {
             margin-top: 140px !important;
-            border-top: none !important;
-            border-bottom: none !important;
-            box-shadow: none !important;
+            padding-bottom: 0 !important;
         }
 
-        /* Remove qualquer divisor abaixo do menu */
-        [data-testid="stSidebarNav"]::after {
-            display: none !important;
-        }
-
-        /* Remove divisores adicionais do container */
-        section[data-testid="stSidebar"] > div:first-child {
-            border-bottom: none !important;
-            box-shadow: none !important;
-        }
-
-        /* === Header fixo com apenas o logo === */
+        /* Header fixo com apenas o logo */
         .sidebar-header {
             position: fixed;
-            top: 72px; /* ajusta altura vertical para alinhar com o container azul */
+            top: 72px; /* alinhado ao container azul */
             left: 0;
             width: 300px;
             height: 100px;
