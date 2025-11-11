@@ -7,6 +7,7 @@ import streamlit.components.v1 as components
 from utils.data_loader import load_excel_data
 from utils.ui_components import section, lock_sidebar 
 from utils.ui import setup_sidebar
+import re # Necessário para gerar o HTML do header corretamente
 
 # ===========================================================
 # 1. CONFIGURAÇÃO DE PÁGINA E ESTADO (PRIMEIRO COMANDO ST)
@@ -16,7 +17,7 @@ st.set_page_config(layout="wide", page_title="🗺️ Job Map")
 # ===========================================================
 # 2. APLICA VISUAL
 # ===========================================================
-setup_sidebar() 
+setup_sidebar() # Controla a formatação da sidebar
 lock_sidebar()
 
 if 'fullscreen' not in st.session_state:
@@ -37,7 +38,7 @@ css_base = """
     --purple: #6f42c1;  
     --red: #dc3545;     
     --gray-line: #e0e0e0;
-    --gray-bg: #f8f9fa; /* Fundo cinza claro da topbar */
+    --gray-bg: #f8f9fa; 
     --dark-gray: #333333;
 }
 
@@ -53,7 +54,7 @@ css_base = """
     align-items: center;
     gap: 18px;
     width: 100%;
-    margin-bottom: 20px; 
+    margin-bottom: 0px; /* Reduzida a margem para ficar mais próxima dos filtros */
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 .page-header img { width: 48px; height: 48px; }
@@ -65,20 +66,18 @@ css_base = """
     padding: 2rem 5rem !important;
 }
 
-/* RESTAURADO: Topbar para agrupar os filtros. Removida a borda inferior que causava a barra branca. */
+/* Topbar: ZERANDO O CONTAINER VAZIO */
 .topbar {
-    position: sticky;
-    top: 0;
-    z-index: 200;
-    background: var(--gray-bg);
-    padding: 15px 20px;
-    border-bottom: 0px none; /* REMOVIDO PARA EVITAR A LINHA BRANCA */
-    margin-bottom: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+    position: relative; /* Mudado de sticky para relative para não poluir o topo */
+    top: auto;
+    z-index: 10;
+    background: transparent; /* Fundo transparente */
+    padding: 0px 0px 20px 0px; /* ZERANDO O PADDING SUPERIOR/LATERAL, MANTENDO ESPAÇAMENTO INFERIOR */
+    border-bottom: 0px none;
+    margin-bottom: 0px; /* ZERANDO MARGIN BOTTOM */
+    border-radius: 0;
+    box-shadow: none; /* Removendo sombra */
 }
-
-/* h1 foi removido e substituído pelo .page-header */
 
 .map-wrapper {
     height: 75vh;
@@ -92,6 +91,7 @@ css_base = """
     border-radius: 8px;
 }
 
+/* ... (Demais estilos do grid permanecem) ... */
 .jobmap-grid {
     display: grid;
     border-collapse: collapse;
@@ -105,7 +105,6 @@ css_base = """
     background-color: white !important;
 }
 
-/* ... (Demais estilos do grid permanecem) ... */
 .jobmap-grid > div {
     background-color: white;
     border-right: 1px solid var(--gray-line);
@@ -442,7 +441,7 @@ if df.empty:
     st.error("Erro ao carregar dados.")
     st.stop()
 
-# NOVO HEADER PADRÃO (Ícone correto e estrutura padronizada)
+# NOVO HEADER PADRÃO COM ÍCONE CORRIGIDO
 st.markdown("""
 <div class="page-header">
   <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/job%20map%20globe%20location.png" alt="icon">
@@ -456,7 +455,7 @@ existing_families = set(df["Job Family"].unique())
 families_order = [f for f in preferred_order if f in existing_families] + sorted(list(existing_families - set(preferred_order)))
 
 if not st.session_state.fullscreen:
-    # RESTAURADO: topbar para dar o fundo cinza claro e o espaçamento correto
+    # Topbar com padding zerado verticalmente para remover o container vazio
     st.markdown("<div class='topbar'>", unsafe_allow_html=True) 
     c1, c2, c3 = st.columns([2, 2, 0.8])
     with c1: fam_filter = st.selectbox("Família", ["Todas"] + families_order)
@@ -464,10 +463,10 @@ if not st.session_state.fullscreen:
     with c2: path_filter = st.selectbox("Trilha", ["Todas"] + sorted([p for p in paths if pd.notna(p) and p != 'nan' and p != '']))
     with c3:
         st.write("")
-        st.markdown('<div style="margin-top: 15px;">', unsafe_allow_html=True) # Valor de margin-top ajustado para alinhamento
+        st.markdown('<div style="margin-top: 15px;">', unsafe_allow_html=True)
         if st.button("⛶ Tela Cheia", use_container_width=True): toggle_fullscreen(); st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True) # FECHA A TOPBAR
+    st.markdown("</div>", unsafe_allow_html=True)
 else:
     # Lógica de tela cheia
     fam_filter, path_filter = st.session_state.get('fam_filter', 'Todas'), st.session_state.get('path_filter', 'Todas')
