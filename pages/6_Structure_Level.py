@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 from pathlib import Path
 from utils.ui import sidebar_logo_and_title
 
@@ -25,7 +26,7 @@ if css_path.exists():
 sidebar_logo_and_title()
 
 # ===========================================================
-# 3. CABEÇALHO
+# 3. CABEÇALHO PADRÃO
 # ===========================================================
 st.markdown("""
 <style>
@@ -42,7 +43,7 @@ st.markdown("""
     width: 100%;
     box-sizing: border-box;
     margin-bottom: 40px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 .page-header img {
     width: 48px;
@@ -76,8 +77,7 @@ def load_data():
         st.error("❌ Arquivo 'Level Structure.xlsx' não encontrado.")
         return pd.DataFrame()
     try:
-        df = pd.read_excel(path)
-        return df
+        return pd.read_excel(path)
     except Exception as e:
         st.error(f"Erro ao carregar dados: {e}")
         return pd.DataFrame()
@@ -87,36 +87,68 @@ if df.empty:
     st.stop()
 
 # ===========================================================
-# 5. CONTEÚDO EXPLICATIVO
+# 5. CONTEÚDO CONCEITUAL
 # ===========================================================
 st.markdown("""
 ### Estrutura Detalhada de Níveis
-Abaixo, a tabela apresenta a **descrição completa dos níveis globais** da SIG, com suas respectivas trilhas de carreira e escopos.
+
+A **estrutura de níveis globais** é o alicerce que define como os cargos se organizam dentro das **trilhas de carreira da SIG**.  
+Ela traz **consistência, transparência e mobilidade** entre áreas, permitindo que colaboradores compreendam claramente o escopo e impacto de cada posição.
+
+Cada nível reflete uma combinação de **responsabilidade, complexidade e contribuição organizacional**, alinhada às práticas de mercado e à governança corporativa.
 """)
 
-# Remove o índice (coluna numérica automática)
+# ===========================================================
+# 6. TABELA DE NÍVEIS (SEM COLUNA DE ÍNDICE)
+# ===========================================================
 st.dataframe(df, use_container_width=True, hide_index=True)
 
 st.divider()
 
 # ===========================================================
-# 6. GRÁFICO MINIMALISTA DE DISTRIBUIÇÃO
+# 7. VISUALIZAÇÃO GRÁFICA MINIMALISTA
 # ===========================================================
 st.markdown("""
 ### Distribuição por Banda de Carreira
-A visualização abaixo mostra a distribuição dos níveis por **trilhas de carreira**, evidenciando a proporção entre os diferentes grupos.
+
+O gráfico abaixo ilustra como os diferentes níveis se distribuem nas **trilhas de carreira**, destacando a proporção e progressão das bandas globais.
 """)
 
 if "Career Path" in df.columns and "Global Grade" in df.columns:
     summary = df.groupby("Career Path")["Global Grade"].count().reset_index()
 
-    fig, ax = plt.subplots(figsize=(6, 3))
-    ax.bar(summary["Career Path"], summary["Global Grade"], width=0.5)
+    # estilo visual refinado e harmônico com a identidade SIG
+    sns.set_theme(style="whitegrid")
+    fig, ax = plt.subplots(figsize=(7, 3))
+    sns.barplot(
+        data=summary,
+        x="Career Path",
+        y="Global Grade",
+        color="#145efc",
+        ax=ax
+    )
+
     ax.set_xlabel("")
-    ax.set_ylabel("Quantidade de Níveis", fontsize=10)
-    ax.set_title("", fontsize=12, weight="bold")
-    plt.xticks(rotation=0)
+    ax.set_ylabel("Quantidade de Níveis", fontsize=10, labelpad=8)
+    ax.set_title("Distribuição dos Níveis por Trilha de Carreira", fontsize=12, fontweight="bold", pad=10)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.grid(True, axis="y", linestyle="--", alpha=0.4)
     plt.tight_layout()
+
     st.pyplot(fig)
 else:
     st.warning("As colunas 'Career Path' e 'Global Grade' não foram encontradas.")
+
+st.divider()
+
+# ===========================================================
+# 8. CONCLUSÃO
+# ===========================================================
+st.markdown("""
+### Interpretação
+
+A **Estrutura de Níveis** é fundamental para manter coerência entre as funções e permitir comparabilidade entre países, áreas e grades de complexidade.  
+Ela orienta decisões de **remuneração, progressão e desenho organizacional**, reforçando a meritocracia e a clareza de expectativas em toda a organização.
+""")
