@@ -3,7 +3,7 @@ from utils.ui import sidebar_logo_and_title
 from pathlib import Path
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DA PÁGINA
+# 1) CONFIGURAÇÃO DA PÁGINA
 # ===========================================================
 st.set_page_config(
     page_title="Job Architecture",
@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 # ===========================================================
-# 2. CSS GLOBAL E SIDEBAR UNIFICADA
+# 2) CSS GLOBAL E SIDEBAR
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
@@ -23,10 +23,22 @@ if css_path.exists():
 sidebar_logo_and_title()
 
 # ===========================================================
-# 3. CABEÇALHO PADRONIZADO
+# 3) CABEÇALHO + CSS (com fade-in)
 # ===========================================================
 st.markdown("""
 <style>
+/* ---------- Animações ---------- */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in       { opacity: 0; animation: fadeUp .48s ease-out forwards; }
+.fade-in-0     { animation-delay: .00s; }
+.fade-in-1     { animation-delay: .08s; }
+.fade-in-2     { animation-delay: .16s; }
+.fade-in-3     { animation-delay: .24s; }
+
+/* ---------- Header padrão ---------- */
 .page-header {
     background-color: #145efc;
     color: white;
@@ -40,12 +52,10 @@ st.markdown("""
     width: 100%;
     box-sizing: border-box;
     margin-bottom: 40px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
-.page-header img {
-    width: 54px;
-    height: 54px;
-}
+.page-header img { width: 54px; height: 54px; }
+
 .block-container {
     max-width: 1000px !important;
     padding-left: 40px !important;
@@ -57,7 +67,22 @@ st.markdown("""
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
 }
 
-/* ===== PILARES ===== */
+/* ---------- Seções ---------- */
+.section-title {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #000;
+    margin-top: 35px;
+    margin-bottom: 10px;
+}
+.section-text {
+    font-size: 1rem;
+    color: #202020;
+    line-height: 1.65;
+    text-align: justify;
+}
+
+/* ---------- Cards dos pilares (mesma altura + responsivo) ---------- */
 .pillar-row {
     display: flex;
     justify-content: space-between;
@@ -71,13 +96,13 @@ st.markdown("""
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    background-color: #ffffff;
+    background-color: #fff;
     border-left: 5px solid #145efc;
     border-radius: 10px;
     padding: 22px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    min-height: 280px;
-    transition: all 0.2s ease-in-out;
+    min-height: 280px;                 /* altura mínima uniforme */
+    transition: transform .2s ease, box-shadow .2s ease;
 }
 .pillar-card:hover {
     transform: translateY(-3px);
@@ -90,24 +115,13 @@ st.markdown("""
     margin-bottom: 6px;
 }
 .pillar-text {
-    color: #333333;
+    color: #333;
     font-size: 0.98rem;
     line-height: 1.6;
-    flex-grow: 1;
+    flex-grow: 1;                      /* faz o conteúdo ocupar o espaço e iguala alturas */
 }
-.section-title {
-    font-weight: 700;
-    font-size: 1.2rem;
-    color: #000000;
-    margin-top: 35px;
-    margin-bottom: 10px;
-}
-.section-text {
-    font-size: 1rem;
-    color: #202020;
-    line-height: 1.65;
-    text-align: justify;
-}
+
+/* ---------- Tabela conceitual (se você usar abaixo) ---------- */
 .job-table {
     width: 100%;
     border-collapse: collapse;
@@ -128,61 +142,59 @@ st.markdown("""
 }
 </style>
 
-<div class="page-header">
+<div class="page-header fade-in fade-in-0">
     <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png" alt="icon">
     Job Architecture — Fundamentos e Governança
 </div>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 4. CONCEITO CENTRAL
+# 4) CONCEITO CENTRAL (mantido)
 # ===========================================================
 st.markdown("""
-<div class="section-text">
+<div class="section-text fade-in fade-in-1">
 A <strong>Job Architecture (JA)</strong> é o modelo corporativo que estrutura de forma integrada todas as posições da organização, 
-definindo a lógica de agrupamento de funções, níveis de responsabilidade, critérios de progressão e diferenciais de complexidade.  
-
+definindo a lógica de agrupamento de funções, níveis de responsabilidade, critérios de progressão e diferenciais de complexidade.<br><br>
 Baseada na metodologia global da <strong>Willis Towers Watson (WTW)</strong>, a Job Architecture fornece um framework que garante 
 <strong>equidade interna, consistência organizacional e comparabilidade externa</strong>, sustentando decisões estratégicas sobre 
-estrutura, remuneração, carreira e sucessão.  
-
+estrutura, remuneração, carreira e sucessão.<br><br>
 Mais do que um catálogo de cargos, trata-se de uma <strong>infraestrutura de governança</strong> que conecta o desenho organizacional 
-à gestão de talentos, assegurando que as práticas de gestão de pessoas sejam <strong>claras, coerentes e orientadas por propósito.</strong>
+à gestão de talentos, assegurando que as práticas de gestão de pessoas sejam <strong>claras, coerentes e orientadas por propósito</strong>.
 </div>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 5. PILARES DA ARQUITETURA (AJUSTADOS E ALINHADOS)
+# 5) PILARES ESTRUTURANTES (com fade-in nos cards)
 # ===========================================================
 st.markdown("""
-<div class="section-title">Pilares Estruturantes</div>
+<div class="section-title fade-in fade-in-1">Pilares Estruturantes</div>
 
 <div class="pillar-row">
 
-    <div class="pillar-card">
+    <div class="pillar-card fade-in fade-in-1">
         <div class="pillar-title">Governança Global</div>
         <div class="pillar-text">
             Define princípios, critérios e regras universais para a criação, atualização e manutenção dos cargos, 
-            garantindo comparabilidade entre países, funções e níveis organizacionais.  
+            garantindo comparabilidade entre países, funções e níveis organizacionais.<br><br>
             Essa governança assegura que toda posição seja avaliada de acordo com padrões globais e práticas de mercado reconhecidas.
         </div>
     </div>
 
-    <div class="pillar-card">
+    <div class="pillar-card fade-in fade-in-2">
         <div class="pillar-title">Clareza de Carreira</div>
         <div class="pillar-text">
             Cada cargo é vinculado a um <strong>Career Band</strong> e <strong>Global Grade</strong>, refletindo o escopo de atuação, 
-            o grau de autonomia e a natureza da contribuição.  
+            o grau de autonomia e a natureza da contribuição.<br><br>
             Essa estrutura fornece visibilidade sobre oportunidades de progressão, diferenciação de níveis e mobilidade lateral entre áreas.
         </div>
     </div>
 
-    <div class="pillar-card">
+    <div class="pillar-card fade-in fade-in-3">
         <div class="pillar-title">Integração de Sistemas</div>
         <div class="pillar-text">
             A Job Architecture serve como base única de referência para os principais processos de 
             <strong>Remuneração, Performance Management, Talent Review</strong> e 
-            <strong>Benchmarking de Mercado</strong>.  
+            <strong>Benchmarking de Mercado</strong>.<br><br>
             Isso garante que as decisões de pessoas estejam ancoradas em um modelo técnico e sustentável.
         </div>
     </div>
