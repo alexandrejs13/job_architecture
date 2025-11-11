@@ -1,6 +1,9 @@
+# ===========================================================
+# 6_STRUCTURE_LEVEL.PY — VISUALIZAÇÃO DE ESTRUTURA DE NÍVEIS
+# ===========================================================
+
 import streamlit as st
 import pandas as pd
-import re
 import matplotlib.pyplot as plt
 from pathlib import Path
 from utils.ui import sidebar_logo_and_title
@@ -16,7 +19,7 @@ st.set_page_config(
 )
 
 # ===========================================================
-# 2. CSS GLOBAL E SIDEBAR
+# 2. CSS GLOBAL E SIDEBAR UNIFICADA
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
@@ -26,7 +29,7 @@ if css_path.exists():
 sidebar_logo_and_title()
 
 # ===========================================================
-# 3. HEADER PADRONIZADO
+# 3. CABEÇALHO PADRÃO
 # ===========================================================
 st.markdown("""
 <style>
@@ -34,27 +37,30 @@ st.markdown("""
     background-color: #145efc;
     color: white;
     font-weight: 750;
-    font-size: 1.35rem;
+    font-size: 1.45rem;
     border-radius: 12px;
     padding: 22px 36px;
     display: flex;
     align-items: center;
     gap: 18px;
     width: 100%;
+    box-sizing: border-box;
     margin-bottom: 40px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
-.page-header img { width: 48px; height: 48px; }
-
+.page-header img {
+    width: 54px;
+    height: 54px;
+}
+.block-container {
+    max-width: 1300px !important;
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+}
 [data-testid="stAppViewContainer"] {
     background-color: #f5f3f0;
     color: #202020;
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
-}
-.block-container {
-    max-width: 1000px !important;
-    padding-left: 40px !important;
-    padding-right: 40px !important;
 }
 </style>
 
@@ -65,82 +71,67 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 4. EXPLICAÇÃO TÉCNICA (PADRÃO WTW)
+# 4. FUNÇÃO PARA CARREGAR OS DADOS
+# ===========================================================
+@st.cache_data(ttl="1h")
+def load_data():
+    path = Path("data/Level Structure.xlsx")
+    if not path.exists():
+        st.error("❌ Arquivo 'Level Structure.xlsx' não encontrado na pasta data/.")
+        return pd.DataFrame()
+    try:
+        df = pd.read_excel(path)
+        df.columns = df.columns.str.strip()
+        return df
+    except Exception as e:
+        st.error(f"Erro ao ler o arquivo Excel: {e}")
+        return pd.DataFrame()
+
+df = load_data()
+
+if df.empty:
+    st.stop()
+
+# ===========================================================
+# 5. CONTEÚDO PRINCIPAL — TABELA
 # ===========================================================
 st.markdown("""
-## Conceito  
-A **Estrutura de Níveis (Structure Level)** define a progressão de carreira e a diferenciação entre cargos com base em **responsabilidade, complexidade, impacto e escopo**.  
-É uma abordagem alinhada às metodologias da **Willis Towers Watson (WTW)** para garantir consistência global e equidade interna.
-
-## Princípios-Chave  
-- **Amplitude de Impacto:** mede o alcance das decisões (local, regional ou global).  
-- **Complexidade:** avalia o grau de autonomia e análise exigido.  
-- **Influência:** relaciona-se ao nível de responsabilidade e tomada de decisão.  
-- **Conhecimento Técnico e Liderança:** definem a senioridade e contribuição esperada.  
-
-A estrutura possibilita uma **comparação objetiva** entre funções, servindo como base para remuneração, sucessão e desenvolvimento de carreira.
+Abaixo você pode visualizar a **estrutura de níveis corporativa (Global Grades e Career Bands)**, 
+utilizada para padronizar a arquitetura de cargos da SIG.
 """)
 
-# ===========================================================
-# 5. CARREGAMENTO DE DADOS
-# ===========================================================
-file_path = Path("data/Level Structure.xlsx")
-if not file_path.exists():
-    st.error("❌ Arquivo `Level Structure.xlsx` não encontrado na pasta `data`.")
-    st.stop()
-
-try:
-    df = pd.read_excel(file_path)
-    df.columns = df.columns.str.strip()
-except Exception as e:
-    st.error(f"Erro ao carregar o arquivo Excel: {e}")
-    st.stop()
-
-# ===========================================================
-# 6. LIMPEZA E EXIBIÇÃO DA TABELA
-# ===========================================================
-# Remove colunas automáticas de índice
-drop_cols = [col for col in df.columns if re.match(r'^(Unnamed|index|ID)$', str(col), flags=re.IGNORECASE)]
-df_display = df.drop(columns=drop_cols, errors="ignore")
+# Remove o índice numérico (coluna à esquerda)
+st.dataframe(df.reset_index(drop=True), use_container_width=True)
 
 st.divider()
-st.subheader("Tabela de Estrutura de Níveis")
-
-st.dataframe(
-    df_display.style.set_properties(**{
-        "background-color": "white",
-        "color": "#222",
-        "border-color": "#ddd",
-    }),
-    use_container_width=True
-)
 
 # ===========================================================
-# 7. GRÁFICO ESTÁTICO DE DISTRIBUIÇÃO
+# 6. VISUALIZAÇÃO GRÁFICA — DISTRIBUIÇÃO DE NÍVEIS
 # ===========================================================
+st.markdown("### 📊 Distribuição de Níveis por Career Band")
+
 if "Career Band" in df.columns:
-    st.divider()
-    st.subheader("Distribuição de Níveis por Career Band")
+    contagem = df["Career Band"].value_counts().reset_index()
+    contagem.columns = ["Career Band", "Quantidade"]
 
-    counts = df["Career Band"].value_counts().reset_index()
-    counts.columns = ["Career Band", "Quantidade"]
-
-    fig, ax = plt.subplots(figsize=(8, 5))
-    ax.bar(counts["Career Band"], counts["Quantidade"], color="#145efc", edgecolor="#0f3eb8")
-    ax.set_xlabel("Career Band", fontsize=11, fontweight="bold")
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.bar(contagem["Career Band"], contagem["Quantidade"], color="#145efc")
+    ax.set_xlabel("Career Band", fontsize=11)
     ax.set_ylabel("Quantidade de Níveis", fontsize=11)
-    ax.set_title("Distribuição de Estrutura de Níveis", fontsize=13, fontweight="bold", pad=12)
-    ax.grid(axis="y", linestyle="--", alpha=0.6)
-    plt.xticks(rotation=45, ha="right")
+    ax.set_title("Distribuição de Estrutura de Níveis", fontsize=14, fontweight="bold")
+    ax.grid(axis="y", linestyle="--", alpha=0.5)
+    st.pyplot(fig, use_container_width=True)
+else:
+    st.warning("Coluna 'Career Band' não encontrada no arquivo Excel.")
 
-    st.pyplot(fig, use_container_width=False)
+st.divider()
 
 # ===========================================================
-# 8. RESUMO FINAL
+# 7. INSIGHTS ADICIONAIS
 # ===========================================================
 st.markdown("""
-### Conclusão  
-A estrutura de níveis fornece uma visão integrada das **camadas de contribuição organizacional**, permitindo  
-o alinhamento entre **avaliação de cargos, planos de carreira e práticas salariais**.  
-Essa metodologia garante **coerência global** e **transparência interna**, pilares fundamentais do modelo de Job Architecture da SIG.
+### 💡 Interpretação
+- **Career Band** representa o agrupamento hierárquico principal (ex.: Operational, Professional, Leadership).  
+- **Global Grade** é o código numérico do nível global, usado para alinhamento interno.  
+- Essa estrutura facilita análises comparativas de cargos, transições de carreira e políticas de remuneração.
 """)
