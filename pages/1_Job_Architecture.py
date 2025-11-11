@@ -1,134 +1,139 @@
 import streamlit as st
-from utils.ui import sidebar_logo_and_title
+import pandas as pd
+import os
 from pathlib import Path
+from utils.ui import sidebar_logo_and_title
+
+st.set_page_config(page_title="Job Families", page_icon="📂", layout="wide", initial_sidebar_state="expanded")
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DA PÁGINA
-# ===========================================================
-st.set_page_config(
-    page_title="Job Architecture",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# ===========================================================
-# 2. ESTILOS E ESTRUTURA PADRÃO
+# CSS GLOBAL + SIDEBAR
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
     with open(css_path) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# ===========================================================
-# 3. CABEÇALHO E SIDEBAR
-# ===========================================================
 sidebar_logo_and_title()
 
-# Header azul com largura total do conteúdo, ícone maior e tipografia refinada
+# ===========================================================
+# HEADER PADRÃO
+# ===========================================================
 st.markdown("""
 <style>
-    .page-header {
-        background-color: #145efc;
-        color: white;
-        font-weight: 750;
-        font-size: 1.35rem; /* título ligeiramente maior */
-        border-radius: 12px;
-        padding: 22px 36px;
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        width: 100%; /* ocupa toda a largura do container de texto */
-        box-sizing: border-box;
-        margin-bottom: 40px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .page-header img {
-        width: 48px;  /* ícone maior e mais equilibrado */
-        height: 48px;
-    }
-
-    /* Mantém o corpo centralizado e proporcional */
-    .block-container {
-        max-width: 900px !important;
-        padding-left: 40px !important;
-        padding-right: 40px !important;
-    }
+.page-header {
+    background-color: #145efc;
+    color: white;
+    font-weight: 750;
+    font-size: 1.35rem;
+    border-radius: 12px;
+    padding: 22px 36px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.page-header img {
+    width: 48px;
+    height: 48px;
+}
+.block-container {
+    max-width: 950px !important;
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+}
+[data-testid="stAppViewContainer"] {
+    background-color: #f5f3f0;
+    color: #202020;
+    font-family: "Source Sans Pro", "Helvetica", sans-serif;
+}
+.jf-card {
+    background: white;
+    border-left: 5px solid #145efc;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+.card-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+.card-row > div {
+    flex: 1;
+    background: #fff;
+    border-radius: 10px;
+    border-left: 4px solid #145efc;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    padding: 20px;
+    min-height: 150px;
+}
 </style>
 
 <div class="page-header">
-    <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png" alt="icon">
-    Job Architecture
+    <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/people%20employees.png" alt="icon">
+    Famílias de Cargos (Job Families)
 </div>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 4. CONTEÚDO PRINCIPAL
+# FUNÇÃO DE LEITURA
 # ===========================================================
-st.markdown("""
-## Introdução  
-A **Job Architecture (JA)** é a base que estrutura e nivela cargos na SIG, promovendo clareza, consistência e equidade global.
-""")
+@st.cache_data(ttl="1h")
+def load_data():
+    path = "data/Job Family.xlsx"
+    if not os.path.exists(path):
+        return pd.DataFrame()
+    return pd.read_excel(path)
 
-st.markdown("""
-## Estrutura  
-A arquitetura é composta por quatro elementos principais:
-
-1. **Job Families:** grandes grupos funcionais.  
-2. **Sub-Job Families:** especializações dentro das famílias.  
-3. **Career Levels:** níveis de senioridade e foco do papel.  
-4. **Generic Profiles:** descrições padronizadas usadas em todo o mundo.
-""")
-
-st.markdown("""
-## Objetivo  
-Garantir que todas as posições SIG estejam classificadas de forma uniforme, servindo de base para remuneração, carreira e governança.
-""")
-
-st.info("""
-**Importante:**  
-A Job Architecture não substitui as descrições de cargo locais — ela fornece a referência corporativa para estrutura e avaliação.
-""")
+df = load_data()
 
 # ===========================================================
-# 5. AJUSTES VISUAIS GERAIS
+# CONTEÚDO PRINCIPAL
 # ===========================================================
 st.markdown("""
-<style>
-    [data-testid="stAppViewContainer"] {
-        background-color: #f5f3f0;
-        color: #202020;
-        font-family: "Source Sans Pro", "Helvetica", sans-serif;
-    }
+As **Job Families** representam grandes agrupamentos de funções que compartilham propósitos, competências e caminhos de desenvolvimento similares.
+""")
 
-    /* Títulos menores e mais elegantes */
-    h2 {
-        font-weight: 700 !important;
-        color: #000000 !important;
-        font-size: 1.35rem !important;
-        margin-top: 25px !important;
-        margin-bottom: 12px !important;
-    }
+st.markdown("### O que é uma Job Family?")
+st.markdown("""
+Pense nas **Job Families** como grandes **bairros organizacionais**.  
+Dentro de cada bairro, existem casas diferentes (os cargos), mas todos compartilham o mesmo propósito e estrutura.
+""")
 
-    h3 {
-        font-weight: 700 !important;
-        color: #000000 !important;
-        font-size: 1.15rem !important;
-    }
+st.markdown("""
+### Por que dividimos assim?
+""")
 
-    /* Caixa informativa refinada */
-    .stAlert {
-        background-color: #eef3ff !important;
-        border-left: 4px solid #145efc !important;
-        color: #000 !important;
-        border-radius: 6px;
-    }
-
-    /* Suaviza espaçamento interno */
-    section.main > div {
-        padding-top: 10px !important;
-        padding-left: 25px !important;
-        padding-right: 25px !important;
-    }
-</style>
+st.markdown("""
+<div class="card-row">
+    <div><b>🛣️ Clareza de Carreira</b><br>Facilita entender para onde você pode crescer.</div>
+    <div><b>⚖️ Equidade</b><br>Garante tratamento justo entre funções similares.</div>
+    <div><b>🧠 Desenvolvimento</b><br>Permite trilhas de aprendizado mais focadas.</div>
+</div>
 """, unsafe_allow_html=True)
+
+st.divider()
+
+st.header("🔍 Explorador de Famílias")
+
+if not df.empty:
+    families = sorted(df["Job Family"].dropna().unique())
+    selected_family = st.selectbox("Selecione a Família:", families)
+
+    if selected_family:
+        sub_fams = sorted(df[df["Job Family"] == selected_family]["Sub Job Family"].dropna().unique())
+        selected_sub = st.selectbox("Selecione a Sub-Família:", sub_fams)
+        if selected_sub:
+            desc = df[(df["Job Family"] == selected_family) &
+                      (df["Sub Job Family"] == selected_sub)]["Sub Job Family Description"].values
+            if len(desc):
+                st.markdown(f"""
+                <div class="jf-card">
+                    <b>📘 Descrição da Sub-Família:</b><br>{desc[0]}
+                </div>
+                """, unsafe_allow_html=True)
+else:
+    st.warning("Arquivo de dados não encontrado.")
