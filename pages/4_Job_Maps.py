@@ -498,12 +498,14 @@ else:
     if st.button("❌ Sair"): toggle_fullscreen(); st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # FUNCIONALIDADE ESC PARA SAIR DA TELA CHEIA
+    # FUNCIONALIDADE ESC PARA SAIR DA TELA CHEIA (Código ajustado para robustez)
     components.html("""
         <script>
             document.addEventListener('keydown', (e) => { 
                 if (e.key === 'Escape') {
+                    // Seleciona o botão de saída dentro do DOM do Streamlit
                     const exitButton = window.parent.document.querySelector('#fixed-exit-container button');
+                    
                     if (exitButton) {
                         exitButton.click();
                     }
