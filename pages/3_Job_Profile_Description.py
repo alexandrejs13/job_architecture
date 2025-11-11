@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import re
-import html
 from pathlib import Path
 from utils.ui import sidebar_logo_and_title
 
@@ -15,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Carrega o CSS global
+# CSS global
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
     with open(css_path) as f:
@@ -24,7 +23,7 @@ if css_path.exists():
 sidebar_logo_and_title()
 
 # ===========================================================
-# 2. ESTILO E HEADER
+# 2. ESTILO GLOBAL E HEADER
 # ===========================================================
 st.markdown("""
 <style>
@@ -56,7 +55,7 @@ st.markdown("""
     padding-right: 40px !important;
 }
 
-/* Blocos */
+/* Cartões principais */
 .profile-card {
     background: #fff;
     border-radius: 12px;
@@ -76,6 +75,8 @@ st.markdown("""
     color: #666;
     margin-bottom: 12px;
 }
+
+/* Seções descritivas */
 .section-box {
     background: #fff;
     border-left: 4px solid #145efc;
@@ -106,17 +107,15 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-
 # ===========================================================
 # 3. FUNÇÕES AUXILIARES
 # ===========================================================
 def normalize_grade(val):
-    """Remove '.0' e trata NaN"""
+    """Remove .0 e trata NaN"""
     s = str(val).strip()
     if s.lower() in ("nan", "none", "", "na"):
         return ""
     return re.sub(r"\.0$", "", s)
-
 
 @st.cache_data
 def load_excel(path):
@@ -128,7 +127,6 @@ def load_excel(path):
     except Exception as e:
         st.error(f"Erro ao carregar {path}: {e}")
         return pd.DataFrame()
-
 
 # ===========================================================
 # 4. DADOS
@@ -142,4 +140,85 @@ if df.empty:
 
 df["Global Grade"] = df["Global Grade"].apply(normalize_grade)
 if not levels.empty and "Global Grade" in levels.columns:
-    levels["Global Grade"] = levels["Global Grade"].apply(normal
+    levels["Global Grade"] = levels["Global Grade"].apply(normalize_grade)
+
+# ===========================================================
+# 5. FILTROS
+# ===========================================================
+familias = sorted(df["Job Family"].dropna().unique())
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    familia = st.selectbox("Família (Job Family):", ["Selecione..."] + familias, index=0)
+with col2:
+    subs = sorted(df[df["Job Family"] == familia]["Sub Job Family"].dropna().unique()) if familia != "Selecione..." else []
+    sub = st.selectbox("Sub-Família:", ["Selecione..."] + subs, index=0)
+with col3:
+    paths = sorted(df[df["Sub Job Family"] == sub]["Career Path"].dropna().unique()) if sub != "Selecione..." else []
+    trilha = st.selectbox("Trilha (Career Path):", ["Selecione..."] + paths, index=0)
+
+filtered = df.copy()
+if familia != "Selecione...":
+    filtered = filtered[filtered["Job Family"] == familia]
+if sub != "Selecione...":
+    filtered = filtered[filtered["Sub Job Family"] == sub]
+if trilha != "Selecione...":
+    filtered = filtered[filtered["Career Path"] == trilha]
+
+if filtered.empty:
+    st.info("Ajuste os filtros para visualizar os perfis.")
+    st.stop()
+
+perfis = sorted(filtered["Job Profile"].dropna().unique())
+selecionados = st.multiselect("Selecione até 3 perfis para comparar:", perfis, max_selections=3)
+
+if not selecionados:
+    st.info("Selecione ao menos 1 perfil para exibir.")
+    st.stop()
+
+# ===========================================================
+# 6. GRID DE COMPARAÇÃO
+# ===========================================================
+cols = st.columns(len(selecionados))
+
+for idx, nome in enumerate(selecionados):
+    row = filtered[filtered["Job Profile"] == nome]
+    if row.empty:
+        continue
+
+    data = row.iloc[0].copy()
+    gg = normalize_grade(data.get("Global Grade", ""))
+    level_name = ""
+
+    if not levels.empty and {"Global Grade", "Level Name"}.issubset(levels.columns):
+        match = levels[levels["Global Grade"].astype(str).str.strip() == gg]
+        if not match.empty:
+            level_name = match["Level Name"].iloc[0]
+
+    with cols[idx]:
+        st.markdown(f"""
+        <div class="profile-card">
+            <div class="profile-title">{data.get('Job Profile', '-')}</div>
+            <div class="profile-meta">GG {gg or '-'} • {level_name}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        sections = [
+            ("🧭 Sub Job Family Description", "Sub Job Family Description"),
+            ("🧠 Job Profile Description", "Job Profile Description"),
+            ("🏛️ Career Band Description", "Career Band Description"),
+            ("🎯 Role Description", "Role Description"),
+            ("🏅 Grade Differentiator", "Grade Differentiator"),
+            ("🎓 Qualifications", "Qualifications"),
+        ]
+
+        for title, field in sections:
+            content = str(data.get(field, "") or "").strip()
+            if not content:
+                continue
+            st.markdown(f"""
+            <div class="section-box">
+                <div class="section-title">{title}</div>
+                <div class="section-content">{content}</div>
+            </div>
+            """, unsafe_allow_html=True)
