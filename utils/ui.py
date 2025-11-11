@@ -61,4 +61,23 @@ def sidebar_logo_and_title():
             padding-left: 10px !important; /* ligeiro ajuste horizontal */
         }}
 
-        /* === Linha sutil para refinamento visual ==*
+        /* === Linha sutil para refinamento visual === */
+        .sidebar-header::after {{
+            content: "";
+            width: 60%;
+            height: 1px;
+            background-color: #e2e2e2;
+            margin-top: 12px;
+        }}
+
+        /* Remove divisor inferior padrão do Streamlit */
+        [data-testid="stSidebarNav"]::after {{
+            display: none !important;
+        }}
+    </style>
+
+    <div class="sidebar-header">
+        <img src="{logo_url}" alt="SIG Logo">
+        <h2>Job Architecture</h2>
+    </div>
+    """, unsafe_allow_html=True)
