@@ -39,11 +39,11 @@ def load_level_data():
 
 
 # ===========================================================
-# 1. CONFIGURAÇÃO DE PÁGINA (ÍCONE AJUSTADO PARA COERÊNCIA)
+# 1. CONFIGURAÇÃO DE PÁGINA (REVERTIDO PARA CORRIGIR O MENU)
 # ===========================================================
 st.set_page_config(
     page_title="Structure Level", 
-    page_icon="⚙️", # AJUSTADO: Ícone de engrenagem para coerência com Structure Level/Processo
+    page_icon="⚙️", # Mantido o ícone de engrenagem para alinhamento da sidebar
     layout="wide", 
     initial_sidebar_state="expanded"
 )
@@ -96,7 +96,7 @@ h1 { display: none !important; }
 # 5. CONTEÚDO PRINCIPAL E TABELA
 # ===========================================================
 
-# Renderiza o header padrão (ÍCONE AJUSTADO PARA process.png)
+# Renderiza o header padrão (ÍCONE process.png)
 st.markdown(f"""
 <div class="page-header">
   <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/process.png" alt="icon">
