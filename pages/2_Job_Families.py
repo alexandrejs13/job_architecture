@@ -94,24 +94,33 @@ df = load_data()
 # CONTEÚDO PRINCIPAL
 # ===========================================================
 st.markdown("""
-As **Job Families** representam grandes agrupamentos de funções que compartilham propósitos, competências e caminhos de desenvolvimento similares.
+As **Job Families** são pilares fundamentais da arquitetura de cargos e constituem agrupamentos estratégicos de funções que compartilham um propósito organizacional comum, naturezas de trabalho semelhantes e conjuntos de competências correlacionadas.
+
+Essa classificação segue a metodologia global da **Willis Towers Watson (WTW)**, que estrutura os cargos de forma lógica e comparável, permitindo análises consistentes de remuneração, mobilidade e progressão de carreira.
 """)
 
 st.markdown("### O que é uma Job Family?")
 st.markdown("""
-Pense nas **Job Families** como grandes **bairros organizacionais**.  
-Dentro de cada bairro, existem casas diferentes (os cargos), mas todos compartilham o mesmo propósito e estrutura.
+Uma **Job Family** representa uma **área funcional ou disciplina profissional** dentro da organização.  
+Ela agrupa posições que possuem **conhecimento técnico similar**, **natureza de contribuição análoga** e **propósitos de negócio interligados**.
+
+Por exemplo, dentro da Job Family “Finanças”, podem existir cargos voltados a Contabilidade, Tesouraria, Planejamento e Análise Financeira, todos conectados pela mesma base funcional.
 """)
 
+st.markdown("### Estrutura Hierárquica e Subdivisões")
 st.markdown("""
-### Por que dividimos assim?
+As **Sub Job Families** detalham as especializações técnicas ou funcionais existentes dentro de uma Job Family.  
+Elas oferecem uma visão mais granular, permitindo distinguir, por exemplo, áreas como **Remuneração e Benefícios** ou **Folha de Pagamento** dentro da Job Family de Recursos Humanos.
+
+Esse nível de detalhamento apoia a **consistência interna**, **precisão na avaliação de cargos** e **clareza na mobilidade lateral**.
 """)
 
+st.markdown("### Benefícios da Estruturação por Famílias de Cargos")
 st.markdown("""
 <div class="card-row">
-    <div><b>🛣️ Clareza de Carreira</b><br>Facilita entender para onde você pode crescer.</div>
-    <div><b>⚖️ Equidade</b><br>Garante tratamento justo entre funções similares.</div>
-    <div><b>🧠 Desenvolvimento</b><br>Permite trilhas de aprendizado mais focadas.</div>
+    <div><b>🛣️ Clareza de Carreira</b><br>Define caminhos de desenvolvimento estruturados, com visibilidade das possibilidades de crescimento vertical e lateral dentro de uma mesma disciplina profissional.</div>
+    <div><b>⚖️ Equidade Interna</b><br>Promove consistência nas comparações de cargos, assegurando que funções de complexidade semelhante recebam tratamento justo em termos de reconhecimento e recompensas.</div>
+    <div><b>🧠 Desenvolvimento Estratégico</b><br>Permite a construção de trilhas de capacitação e planos de sucessão alinhados às competências críticas de cada família funcional.</div>
 </div>
 """, unsafe_allow_html=True)
 
