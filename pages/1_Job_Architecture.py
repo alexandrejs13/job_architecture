@@ -23,7 +23,7 @@ if css_path.exists():
 sidebar_logo_and_title()
 
 # ===========================================================
-# 3) CABEÇALHO + CSS (com fade-in)
+# 3) HEADER + CSS LOCAL (inclui animação fade-in)
 # ===========================================================
 st.markdown("""
 <style>
@@ -118,7 +118,7 @@ st.markdown("""
     color: #333;
     font-size: 0.98rem;
     line-height: 1.6;
-    flex-grow: 1;                      /* faz o conteúdo ocupar o espaço e iguala alturas */
+    flex-grow: 1;                      /* iguala alturas entre os cards */
 }
 
 /* ---------- Tabela conceitual (se você usar abaixo) ---------- */
@@ -149,55 +149,67 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 4) CONCEITO CENTRAL (mantido)
+# 4) CONCEITO CENTRAL (exemplo de conteúdo acima dos pilares)
 # ===========================================================
 st.markdown("""
 <div class="section-text fade-in fade-in-1">
-A <strong>Job Architecture (JA)</strong> é o modelo corporativo que estrutura de forma integrada todas as posições da organização, 
+A <strong>Job Architecture (JA)</strong> é o modelo corporativo que estrutura de forma integrada todas as posições da organização,
 definindo a lógica de agrupamento de funções, níveis de responsabilidade, critérios de progressão e diferenciais de complexidade.<br><br>
-Baseada na metodologia global da <strong>Willis Towers Watson (WTW)</strong>, a Job Architecture fornece um framework que garante 
-<strong>equidade interna, consistência organizacional e comparabilidade externa</strong>, sustentando decisões estratégicas sobre 
+Baseada na metodologia global da <strong>Willis Towers Watson (WTW)</strong>, a Job Architecture fornece um framework que garante
+<strong>equidade interna, consistência organizacional e comparabilidade externa</strong>, sustentando decisões estratégicas sobre
 estrutura, remuneração, carreira e sucessão.<br><br>
-Mais do que um catálogo de cargos, trata-se de uma <strong>infraestrutura de governança</strong> que conecta o desenho organizacional 
+Mais do que um catálogo de cargos, trata-se de uma <strong>infraestrutura de governança</strong> que conecta o desenho organizacional
 à gestão de talentos, assegurando que as práticas de gestão de pessoas sejam <strong>claras, coerentes e orientadas por propósito</strong>.
 </div>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 5) PILARES ESTRUTURANTES (com fade-in nos cards)
+# 5) FUNÇÃO PARA RENDERIZAR A SEÇÃO "PILARES ESTRUTURANTES"
+#    (isola o HTML dentro de UM st.markdown -> evita NameError)
 # ===========================================================
-st.markdown("""
-<div class="section-title fade-in fade-in-1">Pilares Estruturantes</div>
+def render_pillars_section():
+    st.markdown("""
+    <div class="section-title fade-in fade-in-1">Pilares Estruturantes</div>
 
-<div class="pillar-row">
+    <div class="pillar-row">
 
-    <div class="pillar-card fade-in fade-in-1">
-        <div class="pillar-title">Governança Global</div>
-        <div class="pillar-text">
-            Define princípios, critérios e regras universais para a criação, atualização e manutenção dos cargos, 
-            garantindo comparabilidade entre países, funções e níveis organizacionais.<br><br>
-            Essa governança assegura que toda posição seja avaliada de acordo com padrões globais e práticas de mercado reconhecidas.
+        <div class="pillar-card fade-in fade-in-1">
+            <div class="pillar-title">Governança Global</div>
+            <div class="pillar-text">
+                Define princípios, critérios e regras universais para a criação, atualização e manutenção dos cargos,
+                garantindo comparabilidade entre países, funções e níveis organizacionais.<br><br>
+                Essa governança assegura que toda posição seja avaliada de acordo com padrões globais e práticas de mercado reconhecidas.
+            </div>
         </div>
-    </div>
 
-    <div class="pillar-card fade-in fade-in-2">
-        <div class="pillar-title">Clareza de Carreira</div>
-        <div class="pillar-text">
-            Cada cargo é vinculado a um <strong>Career Band</strong> e <strong>Global Grade</strong>, refletindo o escopo de atuação, 
-            o grau de autonomia e a natureza da contribuição.<br><br>
-            Essa estrutura fornece visibilidade sobre oportunidades de progressão, diferenciação de níveis e mobilidade lateral entre áreas.
+        <div class="pillar-card fade-in fade-in-2">
+            <div class="pillar-title">Clareza de Carreira</div>
+            <div class="pillar-text">
+                Cada cargo é vinculado a um <strong>Career Band</strong> e <strong>Global Grade</strong>, refletindo o escopo de atuação,
+                o grau de autonomia e a natureza da contribuição.<br><br>
+                Essa estrutura fornece visibilidade sobre oportunidades de progressão, diferenciação de níveis e mobilidade lateral entre áreas.
+            </div>
         </div>
-    </div>
 
-    <div class="pillar-card fade-in fade-in-3">
-        <div class="pillar-title">Integração de Sistemas</div>
-        <div class="pillar-text">
-            A Job Architecture serve como base única de referência para os principais processos de 
-            <strong>Remuneração, Performance Management, Talent Review</strong> e 
-            <strong>Benchmarking de Mercado</strong>.<br><br>
-            Isso garante que as decisões de pessoas estejam ancoradas em um modelo técnico e sustentável.
+        <div class="pillar-card fade-in fade-in-3">
+            <div class="pillar-title">Integração de Sistemas</div>
+            <div class="pillar-text">
+                A Job Architecture serve como base única de referência para os principais processos de
+                <strong>Remuneração, Performance Management, Talent Review</strong> e
+                <strong>Benchmarking de Mercado</strong>.<br><br>
+                Isso garante que as decisões de pessoas estejam ancoradas em um modelo técnico e sustentável.
+            </div>
         </div>
-    </div>
 
-</div>
-""", unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
+
+# ===========================================================
+# 6) CHAMADA DA SEÇÃO (AGORA SEM ERRO)
+# ===========================================================
+render_pillars_section()
+
+# ===========================================================
+# 7) (Opcional) OUTRAS SEÇÕES ABAIXO...
+#    Ex.: tabela conceitual, importância estratégica, etc.
+# ===========================================================
