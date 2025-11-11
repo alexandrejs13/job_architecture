@@ -109,8 +109,7 @@ df = df.iloc[:, 1:] if len(df.columns) > 1 else df
 # ===========================================================
 st.subheader("Tabela de Estrutura de Níveis")
 st.markdown("""
-Abaixo, você pode visualizar os níveis de carreira definidos corporativamente,
-incluindo as **descrições de banda** e **níveis globais (Global Grades)** correspondentes.
+Abaixo estão as **bandas de carreira** definidas corporativamente, incluindo as descrições e níveis globais correspondentes.
 """)
 
 st.dataframe(df, use_container_width=True, hide_index=True)
@@ -122,33 +121,45 @@ st.divider()
 # ===========================================================
 st.subheader("Distribuição por Banda de Carreira")
 
-if "Career Path" in df.columns:
-    contagem = df["Career Path"].value_counts().sort_index()
+if "Career Band" in df.columns:
+    contagem = df["Career Band"].value_counts().sort_index()
 
-    fig, ax = plt.subplots(figsize=(6, 3.5))
-
-    # Barras azul SIG minimalistas
-    ax.bar(
+    fig, ax = plt.subplots(figsize=(7, 4))
+    bars = ax.bar(
         contagem.index,
         contagem.values,
         color="#145efc",
-        edgecolor="none",
-        width=0.5,
+        width=0.5
     )
 
-    # Remover molduras e grades excessivas
+    # Legenda acima
+    ax.set_title("Quantidade de Níveis por Banda de Carreira", fontsize=11, fontweight="bold", pad=15)
+
+    # Remove bordas e grids verticais
     for spine in ax.spines.values():
         spine.set_visible(False)
+    ax.grid(axis="y", linestyle="--", linewidth=0.6, color="#ccc", alpha=0.6)
+    ax.grid(axis="x", visible=False)
 
-    ax.grid(axis="y", linestyle="--", linewidth=0.5, color="#ddd", alpha=0.6)
-
-    ax.set_xlabel("")
-    ax.set_ylabel("")
-    ax.tick_params(axis="x", labelrotation=0, colors="#222", labelsize=10)
-    ax.tick_params(axis="y", colors="#222", labelsize=9)
+    # Ajustes visuais minimalistas
     ax.set_facecolor("none")
     fig.patch.set_facecolor("none")
+    ax.tick_params(axis="x", labelsize=10, colors="#222")
+    ax.tick_params(axis="y", labelsize=9, colors="#222")
+    ax.set_xlabel("")
+    ax.set_ylabel("")
 
+    # Valores acima das barras
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            height + 0.2,
+            f"{int(height)}",
+            ha="center", va="bottom", fontsize=9, color="#222", fontweight="600"
+        )
+
+    plt.tight_layout(pad=1.2)
     st.pyplot(fig)
 
 st.divider()
