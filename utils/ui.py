@@ -6,25 +6,26 @@ import streamlit as st
 def sidebar_logo_and_title():
     logo_url = "https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/SIG_Logo_RGB_Blue.png"
 
-    st.sidebar.markdown(f"""
+    # usamos triple quotes normais sem f-string, e depois concatenamos manualmente o logo_url
+    st.sidebar.markdown("""
     <style>
         /* === Bloqueia redimensionamento da sidebar === */
-        section[data-testid="stSidebar"] {{
+        section[data-testid="stSidebar"] {
             resize: none !important;
             overflow: hidden !important;
             min-width: 300px !important;
             max-width: 300px !important;
-        }}
+        }
 
         /* === Estrutura geral do menu === */
-        [data-testid="stSidebarNav"] {{
+        [data-testid="stSidebarNav"] {
             margin-top: 140px !important; /* ajusta espaçamento para o logo */
             border-top: none !important;
             border-bottom: none !important;
-        }}
+        }
 
         /* === Header fixo com apenas o logo === */
-        .sidebar-header {{
+        .sidebar-header {
             position: fixed;
             top: 72px; /* ajusta altura vertical para alinhar com o container azul */
             left: 0;
@@ -37,21 +38,22 @@ def sidebar_logo_and_title():
             z-index: 100;
             border: none !important;
             box-shadow: none !important;
-        }}
+        }
 
-        .sidebar-header img {{
+        .sidebar-header img {
             width: 105px;  /* logo maior, proporcional ao novo layout */
             height: auto;
             display: block;
-        }}
+        }
 
         /* Remove divisores padrão do Streamlit */
-        [data-testid="stSidebarNav"]::after {{
+        [data-testid="stSidebarNav"]::after {
             display: none !important;
-        }}
+        }
     </style>
-
-    <div class="sidebar-header">
-        <img src="{logo_url}" alt="SIG Logo">
-    </div>
     """, unsafe_allow_html=True)
+
+    st.sidebar.markdown(
+        f'<div class="sidebar-header"><img src="{logo_url}" alt="SIG Logo"></div>',
+        unsafe_allow_html=True
+    )
