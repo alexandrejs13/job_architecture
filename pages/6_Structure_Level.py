@@ -1,7 +1,3 @@
-# ===========================================================
-# 6_STRUCTURE_LEVEL.PY — PADRONIZADO COM HEADER, TEXTO E GRÁFICO MINIMALISTA
-# ===========================================================
-
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -12,14 +8,14 @@ from utils.ui import sidebar_logo_and_title
 # 1. CONFIGURAÇÃO DA PÁGINA
 # ===========================================================
 st.set_page_config(
-    page_title="Structure Level",
-    page_icon="🏗️",
+    page_title="Estrutura de Níveis",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ===========================================================
-# 2. CSS GLOBAL E SIDEBAR
+# 2. CSS GLOBAL E HEADER
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
@@ -29,7 +25,7 @@ if css_path.exists():
 sidebar_logo_and_title()
 
 # ===========================================================
-# 3. CABEÇALHO PADRÃO
+# 3. CABEÇALHO
 # ===========================================================
 st.markdown("""
 <style>
@@ -37,7 +33,7 @@ st.markdown("""
     background-color: #145efc;
     color: white;
     font-weight: 750;
-    font-size: 1.45rem;
+    font-size: 1.35rem;
     border-radius: 12px;
     padding: 22px 36px;
     display: flex;
@@ -49,8 +45,8 @@ st.markdown("""
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 .page-header img {
-    width: 54px;
-    height: 54px;
+    width: 48px;
+    height: 48px;
 }
 .block-container {
     max-width: 900px !important;
@@ -62,123 +58,65 @@ st.markdown("""
     color: #202020;
     font-family: "Source Sans Pro", "Helvetica", sans-serif;
 }
-hr {
-    border: none;
-    border-top: 1px solid #ddd;
-    margin: 30px 0;
-}
 </style>
 
 <div class="page-header">
-    <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/process.png" alt="icon">
-    Estrutura de Níveis (Structure Level)
+    <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/checkmark%20success.png" alt="icon">
+    Estrutura de Níveis
 </div>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# 4. CARREGAMENTO DE DADOS
+# 4. CARREGAMENTO DOS DADOS
 # ===========================================================
-@st.cache_data(ttl="1h")
-def load_level_data():
+@st.cache_data
+def load_data():
     path = Path("data/Level Structure.xlsx")
     if not path.exists():
-        st.error("❌ Arquivo 'Level Structure.xlsx' não encontrado na pasta `data/`.")
+        st.error("❌ Arquivo 'Level Structure.xlsx' não encontrado.")
         return pd.DataFrame()
     try:
         df = pd.read_excel(path)
-        df.columns = df.columns.str.strip()
         return df
     except Exception as e:
-        st.error(f"Erro ao ler o arquivo Excel: {e}")
+        st.error(f"Erro ao carregar dados: {e}")
         return pd.DataFrame()
 
-df = load_level_data()
+df = load_data()
 if df.empty:
     st.stop()
 
 # ===========================================================
-# 5. CONTEÚDO TEXTUAL
+# 5. CONTEÚDO EXPLICATIVO
 # ===========================================================
 st.markdown("""
-A **estrutura de níveis (Structure Level)** é o alicerce da **Job Architecture da SIG**.  
-Ela organiza os cargos em **faixas hierárquicas globais (Global Grades)** e **bandas de carreira (Career Bands)**, 
-garantindo coerência e comparabilidade entre funções em diferentes áreas e regiões.
-
-Cada nível reflete **escopo de responsabilidade**, **complexidade** e **impacto organizacional**.  
-Essa padronização é essencial para manter **equidade interna**, **governança global** e **clareza de progressão de carreira**.
+### Estrutura Detalhada de Níveis
+Abaixo, a tabela apresenta a **descrição completa dos níveis globais** da SIG, com suas respectivas trilhas de carreira e escopos.
 """)
+
+# Remove o índice (coluna numérica automática)
+st.dataframe(df, use_container_width=True, hide_index=True)
 
 st.divider()
 
 # ===========================================================
-# 6. TABELA DE ESTRUTURA
+# 6. GRÁFICO MINIMALISTA DE DISTRIBUIÇÃO
 # ===========================================================
-st.subheader("📘 Estrutura Detalhada de Níveis")
-
 st.markdown("""
-Abaixo, a tabela apresenta a **descrição completa dos níveis globais (Global Grades)**, 
-com suas respectivas bandas de carreira e escopos.
+### Distribuição por Banda de Carreira
+A visualização abaixo mostra a distribuição dos níveis por **trilhas de carreira**, evidenciando a proporção entre os diferentes grupos.
 """)
 
-# Remove índice e exibe tabela limpa
-st.dataframe(df.reset_index(drop=True), use_container_width=True)
+if "Career Path" in df.columns and "Global Grade" in df.columns:
+    summary = df.groupby("Career Path")["Global Grade"].count().reset_index()
 
-st.divider()
-
-# ===========================================================
-# 7. VISUALIZAÇÃO MINIMALISTA
-# ===========================================================
-st.subheader("📊 Distribuição por Banda de Carreira")
-
-if "Career Band" in df.columns:
-    contagem = df["Career Band"].value_counts().reset_index()
-    contagem.columns = ["Career Band", "Quantidade"]
-
-    fig, ax = plt.subplots(figsize=(8, 4))
-    bars = ax.bar(
-        contagem["Career Band"],
-        contagem["Quantidade"],
-        color="#145efc",
-        edgecolor="#0e46c2",
-        width=0.6
-    )
-
-    ax.set_facecolor("#f5f3f0")
-    fig.patch.set_facecolor("#f5f3f0")
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.spines["left"].set_color("#cccccc")
-    ax.spines["bottom"].set_color("#cccccc")
-    ax.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.5)
-    ax.set_ylabel("Número de Níveis", fontsize=10, labelpad=10)
-    ax.set_xlabel("Career Band", fontsize=10, labelpad=6)
-    ax.set_title("Distribuição da Estrutura de Níveis", fontsize=13, fontweight="bold", pad=10)
-
-    # Adiciona valores sobre as barras
-    for bar in bars:
-        yval = bar.get_height()
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            yval + 0.2,
-            int(yval),
-            ha="center",
-            va="bottom",
-            fontsize=9,
-            color="#333"
-        )
-
-    st.pyplot(fig, use_container_width=True)
+    fig, ax = plt.subplots(figsize=(6, 3))
+    ax.bar(summary["Career Path"], summary["Global Grade"], width=0.5)
+    ax.set_xlabel("")
+    ax.set_ylabel("Quantidade de Níveis", fontsize=10)
+    ax.set_title("", fontsize=12, weight="bold")
+    plt.xticks(rotation=0)
+    plt.tight_layout()
+    st.pyplot(fig)
 else:
-    st.warning("Coluna 'Career Band' não encontrada no arquivo Excel.")
-
-st.divider()
-
-# ===========================================================
-# 8. CONCLUSÃO
-# ===========================================================
-st.markdown("""
-### 💡 Interpretação
-- A **Career Band** representa o agrupamento macro de carreira (ex.: *Operational*, *Professional*, *Leadership*).  
-- O **Global Grade** indica o nível global, usado como referência para estrutura, remuneração e mobilidade.  
-- A combinação entre ambos define **consistência global** e **equidade entre funções** dentro da SIG.
-""")
+    st.warning("As colunas 'Career Path' e 'Global Grade' não foram encontradas.")
