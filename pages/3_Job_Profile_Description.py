@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 import re
 from pathlib import Path
-from utils.ui import sidebar_logo_and_title
-import html
+# Importar html é necessário se for usar html.escape
+import html 
 
 # ===========================================================
 # 1. CONFIGURAÇÃO GERAL
@@ -18,14 +18,20 @@ st.set_page_config(
 # ===========================================================
 # 2. CSS GLOBAL, HEADER PADRÃO E ESTILO DE COMPARAÇÃO
 # ===========================================================
+# Não alterado, mantém o layout
+# ... (restante do CSS omitido por brevidade, mas o código completo o incluiria)
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
     with open(css_path) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-sidebar_logo_and_title()
+# Supondo que você tem a função sidebar_logo_and_title no utils.ui
+try:
+    from utils.ui import sidebar_logo_and_title
+    sidebar_logo_and_title()
+except ImportError:
+    st.sidebar.title("📋 Job Profile Description")
 
-# Estilo unificado (Header Padronizado e Layout de Comparação da Pag 5)
 st.markdown("""
 <style>
 .page-header {
@@ -123,10 +129,24 @@ def normalize_grade(val):
         return ""
     return re.sub(r"\.0$", "", s)
 
+# NOVA FUNÇÃO: Normaliza nomes das colunas
+def sanitize_columns(df):
+    """Converte nomes de colunas para snake_case e remove caracteres especiais."""
+    cols = {}
+    for col in df.columns:
+        # Substitui espaços, barras e traços por underscore
+        new_col = re.sub(r'[ /-]+', '_', col.strip())
+        # Remove quaisquer outros caracteres não alfanuméricos ou underscore
+        new_col = re.sub(r'[^\w_]', '', new_col).lower()
+        cols[col] = new_col
+    return df.rename(columns=cols)
+
 @st.cache_data
 def load_excel(path):
     try:
         df = pd.read_excel(path)
+        # Aplicar sanitização na leitura
+        df = sanitize_columns(df) 
         for c in df.select_dtypes(include="object"):
             df[c] = df[c].astype(str).str.strip()
         return df
@@ -137,6 +157,7 @@ def load_excel(path):
 # ===========================================================
 # 4. DADOS
 # ===========================================================
+# Atenção: os nomes das colunas AGORA devem estar em snake_case minúsculo
 df = load_excel("data/Job Profile.xlsx")
 levels = load_excel("data/Level Structure.xlsx")
 
@@ -144,38 +165,42 @@ if df.empty:
     st.error("❌ Arquivo 'Job Profile.xlsx' não encontrado ou inválido.")
     st.stop()
 
-df["Global Grade"] = df["Global Grade"].apply(normalize_grade)
-df["GG"] = df["Global Grade"].str.replace(r"\.0$", "", regex=True) 
-df["Global Grade Num"] = pd.to_numeric(df["Global Grade"], errors='coerce').fillna(0).astype(int)
+# Usando nomes de colunas normalizados (minúsculas e underscore)
+df["global_grade"] = df["global_grade"].apply(normalize_grade)
+df["gg"] = df["global_grade"].str.replace(r"\.0$", "", regex=True) 
+df["global_grade_num"] = pd.to_numeric(df["global_grade"], errors='coerce').fillna(0).astype(int)
 
-if not levels.empty and "Global Grade" in levels.columns:
-    levels["Global Grade"] = levels["Global Grade"].apply(normalize_grade)
-    levels["Global Grade Num"] = pd.to_numeric(levels["Global Grade"], errors='coerce').fillna(0).astype(int)
+if not levels.empty and "global_grade" in levels.columns:
+    levels["global_grade"] = levels["global_grade"].apply(normalize_grade)
+    levels["global_grade_num"] = pd.to_numeric(levels["global_grade"], errors='coerce').fillna(0).astype(int)
 
 # ===========================================================
 # 5. FILTROS
 # ===========================================================
 st.markdown("## 🔍 Explorador de Perfis")
 
-familias = sorted(df["Job Family"].dropna().unique())
+# Usando nomes de colunas normalizados
+familias = sorted(df["job_family"].dropna().unique())
 
 col1, col2, col3 = st.columns(3)
 with col1:
     familia = st.selectbox("Família (Job Family):", ["Selecione..."] + familias, index=0)
 with col2:
-    subs = sorted(df[df["Job Family"] == familia]["Sub Job Family"].dropna().unique()) if familia != "Selecione..." else []
+    # Usando nomes de colunas normalizados
+    subs = sorted(df[df["job_family"] == familia]["sub_job_family"].dropna().unique()) if familia != "Selecione..." else []
     sub = st.selectbox("Sub-Família:", ["Selecione..."] + subs, index=0)
 with col3:
-    paths = sorted(df[df["Sub Job Family"] == sub]["Career Path"].dropna().unique()) if sub != "Selecione..." else []
+    # Usando nomes de colunas normalizados
+    paths = sorted(df[df["sub_job_family"] == sub]["career_path"].dropna().unique()) if sub != "Selecione..." else []
     trilha = st.selectbox("Trilha (Career Path):", ["Selecione..."] + paths, index=0)
 
 filtered = df.copy()
 if familia != "Selecione...":
-    filtered = filtered[filtered["Job Family"] == familia]
+    filtered = filtered[filtered["job_family"] == familia]
 if sub != "Selecione...":
-    filtered = filtered[filtered["Sub Job Family"] == sub]
+    filtered = filtered[filtered["sub_job_family"] == sub]
 if trilha != "Selecione...":
-    filtered = filtered[filtered["Career Path"] == trilha]
+    filtered = filtered[filtered["career_path"] == trilha]
 
 if filtered.empty:
     st.info("Ajuste os filtros para visualizar os perfis.")
@@ -184,10 +209,11 @@ if filtered.empty:
 # ===========================================================
 # 6. PICKLIST (GG + CARGO)
 # ===========================================================
+# Usando nomes de colunas normalizados
 filtered["label"] = filtered.apply(
-    lambda r: f'GG {r["GG"] or "-"} • {r["Job Profile"]}', axis=1
+    lambda r: f'GG {r["gg"] or "-"} • {r["job_profile"]}', axis=1
 )
-label_to_profile = dict(zip(filtered["label"], filtered["Job Profile"]))
+label_to_profile = dict(zip(filtered["label"], filtered["job_profile"]))
 
 selecionados_labels = st.multiselect(
     "Selecione até 3 perfis para comparar:",
@@ -209,20 +235,21 @@ st.header("✨ Comparativo de Perfis Selecionados")
 
 cards_data = []
 for nome in selecionados:
-    row = filtered[filtered["Job Profile"] == nome]
+    # Usando nomes de colunas normalizados
+    row = filtered[filtered["job_profile"] == nome]
     if row.empty:
         continue
 
     data = row.iloc[0].copy()
-    gg = data.get("Global Grade", "")
-    gg_num = data.get("Global Grade Num", 0)
+    gg = data.get("global_grade", "")
+    gg_num = data.get("global_grade_num", 0)
     level_name = ""
 
-    # Buscar Level Name
-    if not levels.empty and "Global Grade Num" in levels.columns and "Level Name" in levels.columns:
-        match = levels[levels["Global Grade Num"] == gg_num]
+    # Buscar Level Name (usando nomes de colunas normalizados)
+    if not levels.empty and "global_grade_num" in levels.columns and "level_name" in levels.columns:
+        match = levels[levels["global_grade_num"] == gg_num]
         if not match.empty:
-            level_name = f"• {match['Level Name'].iloc[0]}"
+            level_name = f"• {match['level_name'].iloc[0]}"
 
     cards_data.append({"row": data, "lvl": level_name})
 
@@ -234,29 +261,29 @@ num_results = len(cards_data)
 grid_style = f"grid-template-columns: repeat({num_results}, 1fr);"
 grid_html = f'<div class="comparison-grid" style="{grid_style}">'
 
-# Configuração das seções com cores
+# Configuração das seções com o título de exibição e o nome da coluna no DataFrame
 sections_config = [
-    ("🧭 Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
-    ("🧠 Job Profile Description", "Job Profile Description", "#e91e63"),
-    ("🏛️ Career Band Description", "Career Band Description", "#673ab7"),
-    ("🎯 Role Description", "Role Description", "#145efc"), 
-    ("🏅 Grade Differentiator", "Grade Differentiator", "#ff9800"),
-    ("🎓 Qualifications", "Qualifications", "#009688"),
+    ("🧭 Sub Job Family Description", "sub_job_family_description", "#95a5a6"),
+    ("🧠 Job Profile Description", "job_profile_description", "#e91e63"),
+    ("🏛️ Career Band Description", "career_band_description", "#673ab7"),
+    ("🎯 Role Description", "role_description", "#145efc"), 
+    ("🏅 Grade Differentiator", "grade_differentiator", "#ff9800"),
+    ("🎓 Qualifications", "qualifications", "#009688"),
     
-    # NOVAS COLUNAS (Cor de destaque: #c0392b)
-    ("📊 Specific parameters / KPIs", "Specific parameters / KPIs", "#c0392b"),
-    ("💡 Competencies 1", "Competencies 1", "#c0392b"),
-    ("💡 Competencies 2", "Competencies 2", "#c0392b"),
-    ("💡 Competencies 3", "Competencies 3", "#c0392b"),
+    # NOVAS COLUNAS - usando nomes de colunas normalizados (snake_case)
+    ("📊 Specific parameters / KPIs", "specific_parameters_kpis", "#c0392b"),
+    ("💡 Competencies 1", "competencies_1", "#c0392b"),
+    ("💡 Competencies 2", "competencies_2", "#c0392b"),
+    ("💡 Competencies 3", "competencies_3", "#c0392b"),
 ]
 
 # 1. Cabeçalho
 for card in cards_data:
     grid_html += f"""
     <div class="grid-cell header-cell">
-        <div class="fjc-title">{html.escape(card['row'].get('Job Profile', '-'))}</div>
+        <div class="fjc-title">{html.escape(card['row'].get('job_profile', '-'))}</div>
         <div class="fjc-gg-row">
-            <div class="fjc-gg">GG {card['row'].get('Global Grade', '-')} {card['lvl']}</div>
+            <div class="fjc-gg">GG {card['row'].get('global_grade', '-')} {card['lvl']}</div>
         </div>
     </div>"""
 
@@ -265,12 +292,12 @@ for card in cards_data:
     d = card['row']
     meta = []
     
-    # Lista de metadados, incluindo Full Job Code
+    # Lista de metadados, usando nomes de colunas normalizados
     for lbl, col in [
-        ("Família", "Job Family"), 
-        ("Subfamília", "Sub Job Family"), 
-        ("Carreira", "Career Path"), 
-        ("Cód", "Full Job Code") 
+        ("Família", "job_family"), 
+        ("Subfamília", "sub_job_family"), 
+        ("Carreira", "career_path"), 
+        ("Cód", "full_job_code") 
     ]:
         val = str(d.get(col, "") or "-").strip()
         meta.append(f'<div class="meta-row"><strong>{lbl}:</strong> {html.escape(val)}</div>')
@@ -280,15 +307,17 @@ for card in cards_data:
         {''.join(meta)}
     </div>"""
 
-# 3. Seções de Conteúdo (LÓGICA ALTERADA PARA EXIBIR SEMPRE A CÉLULA)
+# 3. Seções de Conteúdo (agora forçando a renderização de todas as células)
 for title, field, color in sections_config:
     for card in cards_data:
-        # Pega o conteúdo, tratando 'nan' ou vazio como vazio para exibição
-        content = str(card['row'].get(field, '-')).strip()
+        # Pega o conteúdo usando o nome da coluna normalizado.
+        content = str(card['row'].get(field, '')).strip()
+        
+        # Se o conteúdo for 'nan' ou '-' (tratado no normalize_grade, mas garantindo), ele fica vazio.
         if content.lower() in ('nan', '-'):
             content = ''
         
-        # Renderiza a célula SEMPRE (o conteúdo será o texto ou uma string vazia)
+        # Renderiza a célula SEMPRE
         grid_html += f"""
         <div class="grid-cell section-cell" style="border-left-color: {color};">
             <div class="section-title" style="color: {color};">{title}</div>
