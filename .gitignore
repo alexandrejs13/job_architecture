@@ -1,13 +1,13 @@
-# Ignorar arquivos de cache de embeddings
-data/job_embeddings.npy
-data/job_embeddings.meta.json
-
-# Cache e metadados do Streamlit
-.streamlit/
+# Ignorar caches de modelos grandes
+.cache/
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-*.DS_Store
-.pytest_cache/
-.vscode/
+
+# Ignorar caches específicos de Python/ML
+.venv/
+venv/
+.ipynb_checkpoints
+
+# Se estiver usando Sentence Transformers
+# Isso pode variar, mas geralmente o cache fica em .cache/huggingface/
+# Se você souber onde o modelo está sendo salvo, adicione o caminho aqui.
