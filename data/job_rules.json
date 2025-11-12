@@ -1,162 +1,97 @@
 {
-  "hierarchy": {
-    "levels": [
-      "Auxiliar",
-      "Assistente",
-      "Analista",
-      "Especialista",
-      "Coordenador",
-      "Gerente",
-      "Diretor"
-    ],
-    "career_type": {
-      "no_team": "Professional",
-      "has_team": "Management"
+  "version": "1.0",
+  "description": "Regras adicionais de negócio aplicadas no módulo Job Match",
+  "rules": [
+
+    {
+      "name": "Gestão de Pessoas",
+      "keywords": ["lidera equipe", "coordena equipe", "gestão de pessoas", "liderança", "time sob responsabilidade"],
+      "multiplier": 1.15,
+      "comment": "Aumenta o peso de cargos com liderança quando a descrição menciona gestão de equipe."
     },
-    "rules": [
-      {
-        "if_input_contains": ["auxiliar", "assistente"],
-        "must_not_return": ["coordenador", "gerente", "diretor"],
-        "prefer_levels": ["analista"]
-      },
-      {
-        "if_input_contains": ["analista"],
-        "must_not_return": ["gerente", "diretor", "coordenador"],
-        "prefer_levels": ["assistente", "especialista"]
-      },
-      {
-        "if_input_contains": ["especialista"],
-        "must_not_return": ["gerente", "diretor"],
-        "prefer_levels": ["analista", "coordenador"]
-      },
-      {
-        "if_input_contains": ["coordenador"],
-        "must_not_return": ["gerente", "diretor"],
-        "prefer_levels": ["especialista", "analista"]
-      },
-      {
-        "if_input_contains": ["supervisor"],
-        "must_not_return": ["gerente", "diretor"],
-        "prefer_levels": ["coordenador", "especialista"]
-      },
-      {
-        "if_input_contains": ["gerente"],
-        "must_not_return": ["auxiliar", "assistente", "analista"],
-        "prefer_levels": ["coordenador", "especialista"]
-      },
-      {
-        "if_input_contains": ["diretor", "head", "líder executivo"],
-        "must_not_return": ["auxiliar", "assistente", "analista", "coordenador"],
-        "prefer_levels": ["gerente"]
-      }
-    ]
-  },
-  "weight_factors": {
-    "scope": {
-      "local": 1.0,
-      "regional": 1.2,
-      "global": 1.5
+
+    {
+      "name": "Sem Gestão",
+      "keywords": ["sem equipe", "individual contributor", "trabalha sozinho", "atua individualmente"],
+      "multiplier": 0.7,
+      "comment": "Reduz peso de cargos gerenciais quando o texto indica trabalho individual."
     },
-    "team_size": {
-      "none": 1.0,
-      "small": 1.2,
-      "medium": 1.4,
-      "large": 1.6
+
+    {
+      "name": "Escopo Global",
+      "keywords": ["global", "internacional", "latam", "regional", "américas"],
+      "multiplier": 1.2,
+      "comment": "Prioriza cargos com abrangência internacional."
     },
-    "functions": {
-      "single": 1.0,
-      "multiple": 1.3
+
+    {
+      "name": "Análise Estratégica",
+      "keywords": ["estratégia", "planejamento estratégico", "indicadores", "kpi", "business intelligence"],
+      "multiplier": 1.1,
+      "comment": "Reforça cargos de natureza analítica ou estratégica."
+    },
+
+    {
+      "name": "Operacional",
+      "keywords": ["rotina operacional", "execução", "tarefas administrativas", "apoio operacional"],
+      "multiplier": 0.85,
+      "comment": "Penaliza cargos táticos/estratégicos quando o foco for operacional."
+    },
+
+    {
+      "name": "Senioridade Elevada",
+      "keywords": ["sênior", "senior", "experiente", "expert", "avançado"],
+      "multiplier": 1.1,
+      "comment": "Reforça correspondência com perfis de maior senioridade."
+    },
+
+    {
+      "name": "Área Financeira",
+      "keywords": ["financeiro", "contábil", "orçamento", "custos", "auditoria"],
+      "multiplier": 1.1,
+      "comment": "Dá mais peso quando a descrição do texto está relacionada a finanças."
+    },
+
+    {
+      "name": "Área de RH",
+      "keywords": ["recursos humanos", "folha de pagamento", "benefícios", "remuneração", "desenvolvimento organizacional"],
+      "multiplier": 1.15,
+      "comment": "Destaque para funções de RH e remuneração."
+    },
+
+    {
+      "name": "Área Comercial",
+      "keywords": ["vendas", "clientes", "negociação", "comercial", "receita"],
+      "multiplier": 1.1,
+      "comment": "Valoriza cargos voltados à área de negócios e clientes."
+    },
+
+    {
+      "name": "Tecnologia / Digital",
+      "keywords": ["tecnologia", "sistemas", "dados", "digital", "plataforma", "automação", "ia", "inteligência artificial"],
+      "multiplier": 1.2,
+      "comment": "Aumenta o peso de cargos com forte componente técnico ou digital."
+    },
+
+    {
+      "name": "Projetos",
+      "keywords": ["projetos", "pm", "gestão de projetos", "cronograma", "pmo"],
+      "multiplier": 1.1,
+      "comment": "Dá ênfase a cargos de gerenciamento e controle de projetos."
+    },
+
+    {
+      "name": "Compliance e Riscos",
+      "keywords": ["compliance", "ética", "auditoria interna", "riscos", "controles internos"],
+      "multiplier": 1.15,
+      "comment": "Prioriza cargos de governança e conformidade."
+    },
+
+    {
+      "name": "Inovação e Melhoria Contínua",
+      "keywords": ["inovação", "melhoria contínua", "transformação", "mudança organizacional", "process improvement"],
+      "multiplier": 1.1,
+      "comment": "Reforça cargos de transformação e inovação corporativa."
     }
-  },
-  "semantic_synonyms": {
-    "auxiliar": ["assistant", "junior", "entry level"],
-    "assistente": ["assistant", "support", "clerk"],
-    "analista": ["analyst", "associate", "consultant"],
-    "especialista": ["specialist", "expert", "advisor"],
-    "coordenador": ["coordinator", "lead", "supervisor"],
-    "supervisor": ["foreman", "team leader", "coordinator"],
-    "gerente": ["manager", "head", "leader"],
-    "diretor": ["director", "executive director", "vp", "head of"],
-    "gestão": ["management", "leadership", "oversight"],
-    "profissional": ["individual contributor", "technical role", "professional"],
-    "projeto": ["project", "initiative", "program"],
-    "equipe": ["team", "staff", "employees", "reporting line"],
-    "subordinado": ["direct report", "staff", "team member"],
-    "abrangência": ["scope", "coverage", "span of control"],
-    "função": ["function", "role", "responsibility"]
-  },
-  "business_logic": {
-    "career_rules": [
-      {
-        "description": "Se não possuir equipe, a carreira é Professional.",
-        "condition": "team_size == 'none'",
-        "career_type": "Professional"
-      },
-      {
-        "description": "Se possuir equipe, a carreira é Management, mas apenas acima de Coordenador.",
-        "condition": "team_size != 'none' and level in ['Coordenador', 'Gerente', 'Diretor']",
-        "career_type": "Management"
-      },
-      {
-        "description": "Se o cargo for abaixo de Coordenador e tiver equipe, reclassificar como Profissional.",
-        "condition": "team_size != 'none' and level in ['Auxiliar','Assistente','Analista']",
-        "career_type": "Professional"
-      }
-    ],
-    "hierarchy_weight_rules": [
-      {
-        "description": "Maior abrangência aumenta o peso do cargo.",
-        "factor": "scope",
-        "mapping": {
-          "local": 1.0,
-          "regional": 1.2,
-          "global": 1.5
-        }
-      },
-      {
-        "description": "Maior número de subordinados aumenta o peso do cargo.",
-        "factor": "team_size",
-        "mapping": {
-          "none": 1.0,
-          "small": 1.2,
-          "medium": 1.4,
-          "large": 1.6
-        }
-      },
-      {
-        "description": "Múltiplas áreas ou funções elevam o peso.",
-        "factor": "functions",
-        "mapping": {
-          "single": 1.0,
-          "multiple": 1.3
-        }
-      }
-    ]
-  },
-  "semantic_boost": {
-    "leadership_terms": [
-      "liderança",
-      "coordenação",
-      "gestão",
-      "supervisão",
-      "planejamento estratégico"
-    ],
-    "technical_terms": [
-      "execução",
-      "técnico",
-      "especialista",
-      "analítico",
-      "operacional"
-    ],
-    "scope_terms": {
-      "global": ["regional", "global", "corporativo", "matriz"],
-      "regional": ["regional", "cluster", "multi-country"],
-      "local": ["local", "planta", "fábrica", "filial"]
-    }
-  },
-  "matching_parameters": {
-    "semantic_similarity_weight": 0.75,
-    "hierarchy_coherence_weight": 0.15,
-    "scope_and_team_weight": 0.10
-  }
+  ]
 }
