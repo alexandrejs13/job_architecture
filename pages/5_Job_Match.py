@@ -128,6 +128,24 @@ st.markdown("""
     gap: 8px;
     margin-bottom: 5px;
 }
+/* Estilo customizado para o alerta de erro (substitui st.error) */
+.custom-error-box {
+    border-left: 5px solid #d93025; /* Vermelho do Streamlit */
+    background-color: #ffecec; /* Fundo levemente vermelho */
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    color: #2c3e50;
+}
+.custom-error-title {
+    font-weight: 800;
+    color: #d93025;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+    font-size: 1rem;
+}
 </style>
 
 <div class="page-header">
@@ -350,12 +368,16 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     if allowed_grades_wtw:
         allowed_grades_wtw = [gg for gg in allowed_grades_wtw if gg < max_gg_allowed]
         if not allowed_grades_wtw:
-            st.error(f"""
-            ❌ **Conflito de Nível Hierárquico (Regra WTW Rígida).**
-            <br>
-            A banda de carreira sugerida (**{detected_band}**) ou a Descrição do Cargo sugere um nível que é igual ou superior ao limite permitido pelo cargo ao qual ele reporta (GG < {max_gg_allowed}).
-            <br>
-            Ajuste o **Cargo ao qual reporta** ou refine a **Descrição Detalhada do Cargo** para um nível inferior.
+            
+            # --- CORREÇÃO DO ERRO DE RENDERIZAÇÃO AQUI (1/2) ---
+            # Usando st.markdown para o erro de hierarquia, caso o st.error falhe no ambiente
+            st.markdown(f"""
+            <div class="custom-error-box">
+                <div class="custom-error-title">❌ Conflito de Nível Hierárquico (Regra WTW Rígida)</div>
+                A banda de carreira sugerida (**{detected_band}**) ou a Descrição do Cargo sugere um nível que é igual ou superior ao limite permitido pelo cargo ao qual ele reporta (GG < {max_gg_allowed}).
+                <br>
+                Ajuste o **Cargo ao qual reporta** ou refine a **Descrição Detalhada do Cargo** para um nível inferior.
+            </div>
             """, unsafe_allow_html=True)
             st.stop()
 
@@ -426,14 +448,17 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         # Garante que a variável para exibição é um float válido.
         score_to_display = float(best_score * 100)
         
-        st.error(f"""
-        ❌ **Alerta: Incoerência de Conteúdo (Baixa Aderência)**
-        <br>
-        A pontuação do melhor cargo compatível ({score_to_display:.1f}%) está abaixo do limite de Match Fraco ({threshold_weak*100:.0f}%).
-        <br>
-        Isso indica que a sua **Descrição Detalhada do Cargo** não é semanticamente coerente com o conteúdo dos cargos já existentes na **Família/Subfamília ({selected_family}/{selected_subfamily})**. 
-        <br>
-        **Ação Necessária:** Por favor, **refine o texto da descrição** para que ele reflita melhor o conteúdo dos cargos dessa área, usando termos que remetam aos **7 Fatores de Graduação (GGS)**.
+        # --- CORREÇÃO DO ERRO DE RENDERIZAÇÃO AQUI (2/2) ---
+        # Substituindo st.error(f"""...""", unsafe_allow_html=True) por st.markdown
+        st.markdown(f"""
+        <div class="custom-error-box">
+            <div class="custom-error-title">❌ Alerta: Incoerência de Conteúdo (Baixa Aderência)</div>
+            A pontuação do melhor cargo compatível ({score_to_display:.1f}%) está abaixo do limite de Match Fraco ({threshold_weak*100:.0f}%).
+            <br>
+            Isso indica que a sua **Descrição Detalhada do Cargo** não é semanticamente coerente com o conteúdo dos cargos já existentes na **Família/Subfamília ({selected_family}/{selected_subfamily})**. 
+            <br>
+            **Ação Necessária:** Por favor, **refine o texto da descrição** para que ele reflita melhor o conteúdo dos cargos dessa área, usando termos que remetam aos **7 Fatores de Graduação (GGS)**.
+        </div>
         """, unsafe_allow_html=True)
         st.stop()
 
