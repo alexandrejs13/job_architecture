@@ -156,6 +156,16 @@ def sanitize_columns(df):
 def load_model():
     return SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 
+# Carregar o JSON de regras hierárquicas
+@st.cache_data
+def load_json_rules():
+    path = Path("job_architecture/data/job_rules.json")
+    if path.exists():
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {"hierarchy": {}}
+
+
 @st.cache_data
 def load_data():
     """Carrega os dados, aplica a sanitização e cria a coluna Global Grade Num."""
@@ -169,6 +179,24 @@ def load_data():
     if "global_grade" in df_jobs.columns:
         df_jobs["global_grade_num"] = pd.to_numeric(df_jobs["global_grade"], errors="coerce").fillna(0).astype(int)
     
+    # 3. Adicionar coluna 'hierarchy_level' ao df_jobs usando o job_rules.json
+    rules = load_json_rules()
+    hierarchy_map = {k.lower(): v['level'] for k, v in rules['hierarchy'].items()}
+    
+    # Tenta mapear o nível hierárquico (ex: Gerente -> 5)
+    # A coluna job_profile contém o nome completo, precisamos extrair o título
+    def extract_and_map_level(job_profile):
+        if not job_profile:
+            return 0
+        # Simplificação: assume que o título hierárquico é a última palavra ou a palavra principal
+        title_match = re.search(r'(\w+)', job_profile, re.I)
+        if title_match:
+            title = title_match.group(1).lower()
+            return hierarchy_map.get(title, 0) # Retorna 0 se não encontrar o nível
+        return 0
+
+    df_jobs['hierarchy_level'] = df_jobs['job_profile'].apply(extract_and_map_level)
+
     return df_jobs, df_levels
 
 df, df_levels = load_data()
@@ -235,6 +263,7 @@ LEVEL_GG_MAPPING = {
 }
 
 def infer_market_level(superior, lidera, subordinados, abrangencia):
+    # Lógica de inferência de nível (WTW)
     if superior in ["Presidente / CEO", "Vice-presidente"]:
         return "E2"
     if superior == "Diretor" or abrangencia in ["Multipaís", "Global"]:
@@ -248,8 +277,27 @@ def infer_market_level(superior, lidera, subordinados, abrangencia):
         return "P4"
     return "P2"
 
+# Mapeamento do cargo superior para nível hierárquico usando job_rules.json
+def get_superior_level(superior_cargo):
+    rules = load_json_rules()
+    hierarchy = rules.get('hierarchy', {})
+    # Mapeia cargos de UI para os nomes de título do JSON (ex: Gerente -> Manager)
+    map_ui_to_json = {
+        "Supervisor": "Supervisor",
+        "Coordenador": "Coordinator",
+        "Gerente": "Manager",
+        "Diretor": "Director",
+        "Vice-presidente": "Vice President",
+        "Presidente / CEO": "Vice President" # Usamos VP/Senior Director como proxy para o limite superior
+    }
+    
+    json_title = map_ui_to_json.get(superior_cargo)
+    if json_title:
+        return hierarchy.get(json_title, {}).get('level', 10) # 10 é um nível alto para garantir que filtra bem
+    return 10
+
 # ===========================================================
-# 7. EXECUÇÃO DE ANÁLISE
+# 7. EXECUÇÃO DE ANÁLISE (FILTRAGEM HIERÁRQUICA APLICADA)
 # ===========================================================
 if st.button("🔍 Analisar Aderência", type="primary", use_container_width=True):
 
@@ -259,24 +307,35 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
 
     detected_key = infer_market_level(superior,lidera,subordinados,abrangencia)
     allowed_grades = LEVEL_GG_MAPPING.get(detected_key, [])
+    
+    # 1. Obter o Nível Hierárquico do Superior
+    superior_level = get_superior_level(superior)
 
     st.markdown(f"""
     <div class="ai-insight-box">
         <div class="ai-insight-title">🤖 Contexto Hierárquico Detectado</div>
-        <strong>Banda sugerida:</strong> {detected_key} — conforme práticas WTW e parâmetros informados.<br>
-        <small>Baseado em: reporte a {superior.lower()}, liderança = {lidera.lower()}, abrangência = {abrangencia.lower()}.</small>
+        <strong>Banda sugerida (WTW):</strong> {detected_key}.<br>
+        <strong>Nível Máximo Permitido:</strong> O cargo pesquisado deve ter um nível hierárquico **estritamente inferior** a {superior_level} (nível do superior).
     </div>
     """, unsafe_allow_html=True)
 
-    # Usando nomes de colunas normalizados para filtragem
+    # 2. Filtragem de Máscara (Family/Subfamily e GG Range)
     mask = (df["job_family"] == selected_family) & (df["sub_job_family"] == selected_subfamily)
     if allowed_grades:
         mask &= df["global_grade_num"].isin(allowed_grades) 
+
+    # 3. Filtragem HIERÁRQUICA (O NOVO FILTRO)
+    # A pesquisa deve retornar cargos com nível HIERÁRQUICO menor que o do superior.
+    if superior_level > 0:
+        mask &= (df["hierarchy_level"] < superior_level) 
+        
     if not mask.any():
-        st.error("Nenhum cargo encontrado dentro da família e subfamília informadas.")
+        st.error("Nenhum cargo encontrado dentro dos filtros de Família, Subfamília, Banda Sugerida e Hierarquia (nível abaixo do superior).")
         st.stop()
 
     filtered = df[mask].copy()
+    
+    # ... (Restante da lógica de matching e exibição)
     
     # Usando nomes de colunas normalizados para o Matching (MANTIDO)
     job_texts = (filtered["job_profile"].fillna("") + ". " +
