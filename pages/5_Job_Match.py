@@ -182,16 +182,18 @@ JOB_RULES = load_json_rules()
 
 # Mapeamento do GG Máximo do subordinado com base no Cargo Superior
 # O GG Máximo aqui é o TETO permitido, i.e., cargo_candidato.GG < GG_LIMITS_MAP[superior]
+# Usamos o GG Máximo da faixa imediatamente inferior para ser rigoroso.
 GG_LIMITS_MAP = {
-    # Coordenador/Supervisor (M1) ou P4 tem GGs 11-17. Vamos garantir que o subordinado seja Analista Sênior (P3/P2)
-    "Supervisor": 12,    # GG Máximo = 11 (Analista Pleno/Sênior P2)
-    "Coordenador": 12,   # GG Máximo = 11 (Analista Pleno/Sênior P2)
+    # Supervisor/Coordenador (M1/P4) tem GGs 11-17. Máximo subordinado é P3/P2 (GG 10-14).
+    "Supervisor": 12,    # GG Máximo = 11 (P2/Analista Pleno)
+    "Coordenador": 12,   # GG Máximo = 11 (P2/Analista Pleno)
     
-    # Gerente (M2/M3) tem GGs 14-19. Subordinado pode ser Coordenador (M1) ou Especialista (P4).
-    "Gerente": 15,       # GG Máximo = 14 (Coordenador M1 ou Especialista P4)
+    # Gerente (M2/M3) tem GGs 14-19. Máximo subordinado é M1/P4 (GG 11-17).
+    # Se reporta a Gerente, o subordinado mais alto deve ser Coordenador/Especialista (GG < 15)
+    "Gerente": 15,       # GG Máximo = 14 (M1/Coordenador ou P4/Especialista)
     
-    # Diretor (E1) tem GGs 18-21. Subordinado pode ser Gerente (M2/M3).
-    "Diretor": 18,       # GG Máximo = 17 (Gerente M3 ou P4)
+    # Diretor (E1) tem GGs 18-21. Máximo subordinado é M3/M2 (GG 14-19).
+    "Diretor": 18,       # GG Máximo = 17 (Gerente Sênior M3)
     
     # Níveis Executivos
     "Vice-presidente": 21, 
@@ -257,16 +259,17 @@ LEVEL_GG_MAPPING = {
 }
 
 def infer_market_level(superior, lidera, subordinados, abrangencia):
-    # Lógica ajustada para ser mais CONSERVADORA e sugerir o nível do subordinado.
+    # Lógica ajustada para ser CONSERVADORA e evitar sobreposição com o cargo superior.
     if superior in ["Presidente / CEO", "Vice-presidente"]:
         return "E1" 
     if superior == "Diretor" or abrangencia in ["Multipaís", "Global"]:
         return "M3" 
     if superior == "Gerente":
+        # Se reporta a Gerente (M2), o cargo é no máximo M1 (Coordenador) ou P4 (Especialista)
         if lidera == "Sim" and subordinados in ["6-10","11-20","21-50","51-100","100+"]:
-            return "P4" # Sugere Especialista ou Coordenador (GG 14-17)
+            return "M1" # Sugere Coordenador/Supervisor (GG 11-14)
         else:
-            return "P3" # Sugere Analista Sênior/Especialista (GG 12-14)
+            return "P4" # Sugere Especialista (GG 14-17) - Nota: O filtro hierárquico abaixo limitará este GG.
     if superior in ["Coordenador","Supervisor"]:
         # Se reporta a Coordenador/Supervisor (M1/P4), o cargo é Analista Pleno/Júnior (P2/P1)
         if lidera == "Sim":
@@ -300,18 +303,16 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     # 2. Filtragem de Máscara (Family/Subfamily)
     mask = (df["job_family"] == selected_family) & (df["sub_job_family"] == selected_subfamily)
     
-    # Filtro 1 (WTW SUGERIDO): Filtro de Range
-    # Aplica o filtro WTW (P2 -> GGs 10-12)
+    # Filtro 1 (WTW SUGERIDO): Filtro de Range (GGs 14-17, por exemplo)
     if allowed_grades:
         mask &= df["global_grade_num"].isin(allowed_grades) 
 
     # Filtro 2 (CRÍTICO - HIERARQUIA): FILTRAGEM RIGOROSA
-    # Se o filtro hierárquico (GG < 14) entra em conflito com o filtro WTW (GG 14, 15, 16, 17), 
-    # o filtro Hierárquico garante que cargos SUPERIORES não passem.
+    # Se o Superior é Gerente (limite GG < 15), isso garante que Managers (GG 15+) sejam excluídos.
     mask &= (df["global_grade_num"] < max_gg_allowed)
         
     if not mask.any():
-        st.error(f"Nenhum cargo encontrado que satisfaça todos os filtros. Verifique se existem cargos com Global Grade {allowed_grades} E GG < {max_gg_allowed} na família selecionada.")
+        st.error(f"Nenhum cargo encontrado que satisfaça todos os filtros. Verifique se existem cargos com Global Grade no range {allowed_grades} E GG < {max_gg_allowed} na família selecionada. Seus dados no Excel podem não ter cargos nesse nível hierárquico inferior.")
         st.stop()
 
     filtered = df[mask].copy()
