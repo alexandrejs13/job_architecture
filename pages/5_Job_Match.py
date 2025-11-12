@@ -159,7 +159,7 @@ def load_model():
 @st.cache_data
 def load_json_rules():
     # Carrega o NOVO JSON UNIFICADO
-    path = Path("wtw_match_rules.json") # Assumindo este é o nome do arquivo unificado
+    path = Path("wtw_match_rules.json") 
     if path.exists():
         with open(path, 'r', encoding='utf-8') as f:
             return json.load(f)
@@ -168,12 +168,10 @@ def load_json_rules():
 @st.cache_data
 def load_data():
     """Carrega os dados, aplica a sanitização e cria a coluna Global Grade Num."""
-    # Nota: load_excel_data() deve ser fornecido
-    # Assumindo que o load_excel_data() carrega os dados corretamente
-    # Para fins de demonstração, simulamos um DataFrame vazio
     try:
         data = load_excel_data() 
     except NameError:
+        # Se load_excel_data() não existir ou falhar, retorna DataFrames vazios
         data = {"job_profile": pd.DataFrame(), "level_structure": pd.DataFrame()}
 
     df_jobs = sanitize_columns(data.get("job_profile", pd.DataFrame())).fillna("")
@@ -260,94 +258,72 @@ st.caption(f"Contagem de palavras: {word_count} / 50")
 def ggs_decision_score(desc_text, superior_reporta, lidera_equipe, abrangencia_funcao):
     """
     Pontua a descrição do cargo e as entradas de escopo para simular a Árvore de Decisão GGS (Pág. 44).
-    Retorna a Banda GGS (1, 2, 3IC, 4IC, 3M, 4M, 5FS, 5BS, 6) mais provável.
+    Retorna a Banda WTW (EX, M, P, U, W) mais provável.
     """
     desc_lower = desc_text.lower()
     
-    # --- Passo 1: Gerencia Pessoas? (Managing people a focus?) [cite: 581, 838] ---
-    # Usamos o input 'lidera' e reforçamos com keywords (Gestão de projetos/equipes/vendors de longo prazo).
-    is_management_focus = lidera_equipe == "Sim"
-    if not is_management_focus:
-        # Reforça IC: verifica palavras-chave de gestão indireta/foco em expertise.
-        management_kws = LEVEL_KEYWORDS.get("M", []) + LEVEL_KEYWORDS.get("EX", [])
-        ic_kws = LEVEL_KEYWORDS.get("P", []) + LEVEL_KEYWORDS.get("U", []) + LEVEL_KEYWORDS.get("W", [])
-        
-        m_score = sum(1 for kw in management_kws if kw in desc_lower)
-        ic_score = sum(1 for kw in ic_kws if kw in desc_lower)
-        
-        # Se a descrição tem forte indicação de gestão (ex: "coordena", "supervisiona") ou estratégia, 
-        # considera foco em gestão, mesmo sem time direto (dotted-line reports)[cite: 586].
-        if m_score > ic_score and m_score > 3:
-            is_management_focus = True
-
-    # --- SIM: Carreira de Management (3M, 4M, 5FS, 5BS, 6) ---
+    # 1. Pontuação de Keywords de Management vs IC (Todas as variáveis de conteúdo do trabalho)
+    management_kws = LEVEL_KEYWORDS.get("M", []) + LEVEL_KEYWORDS.get("EX", [])
+    ic_kws = LEVEL_KEYWORDS.get("P", []) + LEVEL_KEYWORDS.get("U", []) + LEVEL_KEYWORDS.get("W", [])
+    
+    m_score = sum(1 for kw in management_kws if kw in desc_lower)
+    ic_score = sum(1 for kw in ic_kws if kw in desc_lower)
+    
+    # --- Passo A: Gerencia Pessoas? (Managing people a focus?) ---
+    is_management_focus = lidera_equipe == "Sim" or m_score > ic_score
+    
+    # --- SIM: Carreira de Management (M, EX) ---
     if is_management_focus:
-        # 1. CEO/Business Unit Manager? (Banda 6) [cite: 672, 858, 864]
-        if superior_reporta in ["Presidente / CEO", "Vice-presidente"]:
-             # Se o cargo reporta ao CEO ou VP (o topo da hierarquia), ele é EX (Banda 6) se for C-Level/Head of Function.
-             # Como o GG LIMITS já filtra o GG, definimos como 6 (a banda EX/Top Management mais provável).
-            return "6" 
-            
-        # 2. Set/Significantly influence business strategy? (5FS ou 5BS) [cite: 650, 851]
-        # Se reporta a Diretor/VP (i.e., é Head de Função)
-        if superior_reporta in ["Diretor", "Vice-presidente"] or "estratégia de negócio" in desc_lower or "define a visão" in desc_lower:
-            # Em organizações maiores (CEO Grade 19+), distingue 5FS e 5BS. Aqui, usamos a abrangência como proxy para Business Strategy.
-            if abrangencia in ["Global", "Multipaís"]:
-                return "5BS" # Business Strategy (Maior escopo/impacto estratégico) [cite: 579, 653]
-            return "5FS" # Functional Strategy (Função chave com grande impacto) [cite: 578, 630]
-            
-        # 3. Set/Significantly influence functional strategy? (4M ou 3M) [cite: 630, 843]
-        if superior_reporta in ["Gerente"] or "estratégia funcional" in desc_lower or "define políticas operacionais" in desc_lower:
-            # Média e Alta Gerência
-            if "multiplas áreas" in desc_lower or "mais de 10 subordinados" in desc_lower:
-                return "4M" # Middle Management (Múltiplos times/Sub-funções) [cite: 621, 1997]
-            return "3M" # Junior Management/Supervisor (Primeira linha de gerência) [cite: 629, 1644]
-            
-        # Se não se enquadrou acima, é um Supervisor de base ou IC que foi puxado por keywords
-        return "3M"
-
-    # --- NÃO: Carreira de Individual Contributor (1, 2, 3IC, 4IC) ---
-    else:
-        # 1. Specific job functional knowledge? (NÃO é Banda 1) [cite: 694, 842]
-        # Banda 1 (Manual/Junior Admin) - Não exige conhecimento funcional ou treinamento prévio. [cite: 700, 876]
-        if not ("conhecimento" in desc_lower or "técnico" in desc_lower or "educação formal" in desc_lower or any(kw in desc_lower for kw in LEVEL_KEYWORDS.get("W", []))):
-             return "1" 
-
-        # 2. Independence in applying professional expertise? (3IC, 4IC vs Banda 2) [cite: 718, 849]
-        # Profissionais (3IC/4IC) vs Clerical/Admin/Technical (Banda 2)
-        if "independente" in desc_lower or "julgamento" in desc_lower or "expertise profissional" in desc_lower or "resolver problemas" in desc_lower:
-            
-            # 3. Subject Matter Expert (SME)? (Banda 4IC vs 3IC) [cite: 746, 856]
-            if "expert" in desc_lower or "líder técnico" in desc_lower or "autoridade reconhecida" in desc_lower or "guru" in desc_lower or "poucos pares técnicos" in desc_lower:
-                return "4IC" # Subject Matter Expert [cite: 749, 3699]
-            
-            # Se não é SME, é Professional (3IC)
-            return "3IC" # Professional (Aplica expertise e julgamento de forma independente) [cite: 701, 3701]
         
-        # Se não há independência, é Banda 2 (Clerical/Admin/Técnico) [cite: 725, 3703]
-        return "2" 
+        # 1. CEO/Business Unit Manager? (Banda 6 / EX)
+        if superior_reporta in ["Presidente / CEO", "Vice-presidente"]:
+            # Diretor/VP é um C-Level/Head reportando ao topo ou fazendo parte dele.
+            return "EX"
+            
+        # 2. Set/Significantly influence business strategy? (5FS/5BS / EX)
+        # Se reporta a Diretor/VP (i.e., é Head de Função) E tem escopo estratégico/global
+        is_business_strategy = superior_reporta in ["Diretor"] or abrangencia_funcao in ["Global", "Multipaís"]
+        if is_business_strategy:
+            return "EX" # Usamos EX para as bandas 5FS/5BS que têm foco estratégico
+            
+        # 3. Set/Significantly influence functional strategy? (4M / M)
+        is_functional_strategy = superior_reporta in ["Gerente"] or "estratégia funcional" in desc_lower or "define políticas operacionais" in desc_lower
+        if is_functional_strategy:
+            return "M" # Middle Management (4M)
+            
+        # 4. Supervisor (3M / M)
+        if superior_reporta in ["Coordenador", "Supervisor"]:
+            return "M" # Junior Management/Supervisor (3M)
+            
+        return "M" # Default para M (Middle/Junior Management)
+
+    # --- NÃO: Carreira de Individual Contributor (P, U, W) ---
+    else:
+        # 1. Specific job functional knowledge? (Banda 1 / W)
+        # Se a pontuação de IC é muito baixa e há keywords de W (Manual/Júnior Admin)
+        if ic_score < 3 and any(kw in desc_lower for kw in LEVEL_KEYWORDS.get("W", [])):
+             return "W" # Banda 1 (Manual/Junior Admin)
+
+        # 2. Independence in applying professional expertise? (Banda 3IC/4IC vs Banda 2)
+        # Profissionais (P) vs Clerical/Admin/Technical (U)
+        is_independent_expertise = "independente" in desc_lower or "julgamento" in desc_lower or "expertise profissional" in desc_lower
+        
+        if is_independent_expertise:
+            
+            # 3. Subject Matter Expert (SME)? (Banda 4IC vs 3IC / P)
+            is_sme = "expert" in desc_lower or "líder técnico" in desc_lower or "guru" in desc_lower
+            if is_sme:
+                return "P" # Subject Matter Expert (4IC)
+            
+            return "P" # Professional (3IC)
+        
+        # 4. Clerical/Admin/Technical (Banda 2 / U)
+        return "U" # Business Support/Clerical (Banda 2)
 
 
 def infer_market_band(superior, lidera, abrangencia, desc_input):
-    # Wrapper para simular a Árvore de Decisão
-    # Para o propósito desta função, mapeamos as bandas GGS para as bandas WTW (M, P, W, EX) se necessário.
-    
-    ggs_band = ggs_decision_score(desc_input, superior, lidera, abrangencia)
-    
-    # Mapeamento para as bandas WTW usadas nos GGs (EX: 5BS, 5FS, 6 -> EX/M; 3IC, 4IC -> P; 1, 2 -> W/U)
-    if ggs_band in ["6", "5BS", "5FS"]:
-        return "EX"
-    elif ggs_band in ["4M", "3M"]:
-        return "M"
-    elif ggs_band in ["4IC", "3IC"]:
-        return "P"
-    elif ggs_band in ["2"]:
-        # Banda 2 abrange Technical (T) e Clerical/Admin (U), que na estrutura simples são U.
-        return "U" 
-    elif ggs_band in ["1"]:
-        return "W" # Manual/Junior Admin
-        
-    return "P" # Default fallback
+    # Wrapper para simular a Árvore de Decisão GGS e retornar a banda WTW
+    return ggs_decision_score(desc_input, superior, lidera, abrangencia)
 
 
 # ===========================================================
@@ -361,7 +337,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         st.warning("⚠️ Todos os campos obrigatórios devem ser preenchidos e a descrição deve ter no mínimo 50 palavras.")
         st.stop()
         
-    # Chama a função revisada que considera a descrição E as regras GGS
+    # Chama a função que considera a descrição E as regras GGS
     detected_band = infer_market_band(superior, lidera, abrangencia, desc_input)
     
     # 7.2. Obter o GG Máximo Permitido (Regra RÍGIDA WTW: Subordinado < Superior)
@@ -377,9 +353,9 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
             st.error(f"""
             ❌ **Conflito de Nível Hierárquico (Regra WTW Rígida).**
             <br>
-            A banda de carreira sugerida (**{detected_band}**) ou a Descrição do Cargo sugere um nível que não respeita o **Filtro Hierárquico Rígido** (GG < {max_gg_allowed}).
+            A banda de carreira sugerida (**{detected_band}**) ou a Descrição do Cargo sugere um nível que é igual ou superior ao limite permitido pelo cargo ao qual ele reporta (GG < {max_gg_allowed}).
             <br>
-            Ajuste o **Cargo ao qual reporta** ou refine a **Descrição Detalhada do Cargo** para um nível mais operacional/júnior.
+            Ajuste o **Cargo ao qual reporta** ou refine a **Descrição Detalhada do Cargo** para um nível inferior.
             """, unsafe_allow_html=True)
             st.stop()
 
@@ -390,7 +366,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     <div class="ai-insight-box">
         <div class="ai-insight-title">🤖 Contexto Hierárquico e de Conteúdo Detectado (GGS 4.2)</div>
         **Banda de Carreira Sugerida:** **{detected_band}** (GGs Válidos: **{min_gg_suggested}** a **{max_gg_suggested}**).<br>
-        **Filtro Hierárquico Rígido:** O cargo deve ter um **Global Grade estritamente menor** que **{max_gg_allowed}** (GG < {max_gg_allowed}).
+        **Filtro Hierárquico Rígido:** O cargo deve ter um **Global Grade estritamente menor** que **{max_gg_allowed}** (GG < {max_gg_allowed}) para aderir à estrutura.
     </div>
     """, unsafe_allow_html=True)
 
@@ -409,7 +385,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     if filtered.empty:
         st.error(f"""
         ❌ **Nenhum Cargo Compatível Encontrado.** <br>
-        O filtro combinado de **Arquitetura (Família/Subfamília)** e **Hierarquia (GG < {max_gg_allowed})** não retornou nenhum resultado no range **{min_gg_suggested}** a **{max_gg_suggested}**. 
+        O filtro combinado de **Arquitetura (Família/Subfamília)** e **Hierarquia (GG < {max_gg_allowed})** não retornou nenhum resultado. 
         <br>
         Verifique se existem cargos no seu arquivo de dados que atendam a todos os critérios.
         """, unsafe_allow_html=True)
