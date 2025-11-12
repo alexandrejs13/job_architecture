@@ -3,7 +3,7 @@ import pandas as pd
 import re
 from pathlib import Path
 from utils.ui import sidebar_logo_and_title
-import html 
+import html
 
 # ===========================================================
 # 1. CONFIGURAÇÃO GERAL
@@ -235,13 +235,20 @@ grid_style = f"grid-template-columns: repeat({num_results}, 1fr);"
 grid_html = f'<div class="comparison-grid" style="{grid_style}">'
 
 # Configuração das seções com cores
+# TRÊS NOVAS SEÇÕES ADICIONADAS AQUI: KPIs e Competências
 sections_config = [
     ("🧭 Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
     ("🧠 Job Profile Description", "Job Profile Description", "#e91e63"),
     ("🏛️ Career Band Description", "Career Band Description", "#673ab7"),
     ("🎯 Role Description", "Role Description", "#145efc"), 
     ("🏅 Grade Differentiator", "Grade Differentiator", "#ff9800"),
-    ("🎓 Qualifications", "Qualifications", "#009688")
+    ("🎓 Qualifications", "Qualifications", "#009688"),
+    
+    # NOVAS COLUNAS
+    ("📊 Specific parameters / KPIs", "Specific parameters / KPIs", "#c0392b"),
+    ("💡 Competencies 1", "Competencies 1", "#c0392b"),
+    ("💡 Competencies 2", "Competencies 2", "#c0392b"),
+    ("💡 Competencies 3", "Competencies 3", "#c0392b"),
 ]
 
 # 1. Cabeçalho
