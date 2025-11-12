@@ -209,13 +209,13 @@ c1, c2, c3 = st.columns(3)
 with c1:
     superior = st.selectbox("📋 Cargo ao qual reporta *", [
         "Selecione...", "Supervisor", "Coordenador", "Gerente", "Diretor", "Vice-presidente", "Presidente / CEO"
-    ])
+    ], index=3) # Mantém "Gerente" como exemplo para teste
 with c2:
-    lidera = st.selectbox("👥 Possui equipe? *", ["Selecione...", "Sim", "Não"])
+    lidera = st.selectbox("👥 Possui equipe? *", ["Selecione...", "Sim", "Não"], index=2) # Mantém "Não"
 with c3:
     abrangencia = st.selectbox("🌍 Abrangência da função *", [
         "Selecione...", "Local", "Regional (mais de 1 estado)", "Nacional", "Multipaís", "Global"
-    ])
+    ], index=1) # Mantém "Local"
 
 if lidera == "Sim":
     c4, c5 = st.columns(2)
@@ -244,7 +244,7 @@ with c2:
     subfamilies = sorted(df[df["job_family"] == selected_family]["sub_job_family"].unique()) if selected_family != "Selecione..." else []
     selected_subfamily = st.selectbox("📂 Subfamília (Obrigatório)", ["Selecione..."] + subfamilies)
 
-desc_input = st.text_area("📝 Descrição detalhada do cargo (mínimo 50 palavras):", height=200)
+desc_input = st.text_area("📝 Descrição detalhada do cargo (mínimo 50 palavras):", height=200, value="Elaborar relatórios e planilhas de indicadores de desempenho de RH (turnover, absenteísmo, headcount, etc.). Atender colaboradores, prestando informações sobre benefícios, férias, holerites e demais dúvidas relacionadas a RH. Auxiliar na organização de documentos e arquivos digitais, cumprindo normas de confidencialidade e LGPD. Participar de projetos de melhoria contínua e automação de processos de RH.")
 word_count = len(desc_input.strip().split())
 st.caption(f"Contagem de palavras: {word_count} / 50")
 
@@ -260,6 +260,7 @@ LEVEL_GG_MAPPING = {
 
 def infer_market_level(superior, lidera, subordinados, abrangencia):
     # Lógica ajustada para ser CONSERVADORA e evitar sobreposição com o cargo superior.
+    # Esta função apenas sugere uma banda, o filtro hierárquico abaixo a restringe.
     if superior in ["Presidente / CEO", "Vice-presidente"]:
         return "E1" 
     if superior == "Diretor" or abrangencia in ["Multipaís", "Global"]:
@@ -269,12 +270,11 @@ def infer_market_level(superior, lidera, subordinados, abrangencia):
         if lidera == "Sim" and subordinados in ["6-10","11-20","21-50","51-100","100+"]:
             return "M1" # Sugere Coordenador/Supervisor (GG 11-14)
         else:
-            return "P4" # Sugere Especialista (GG 14-17) - Nota: O filtro hierárquico abaixo limitará este GG.
+            return "P3" # Sugere Analista Sênior (GG 12-14) - O filtro GG < 15 funciona bem com P3.
     if superior in ["Coordenador","Supervisor"]:
-        # Se reporta a Coordenador/Supervisor (M1/P4), o cargo é Analista Pleno/Júnior (P2/P1)
         if lidera == "Sim":
              return "W3" # Sugere Líder de Produção (GG 7-10)
-        return "P2" # Sugere Analista Pleno (GG 10-12)
+        return "P1" # Sugere Analista Júnior (GG 8-10)
     return "W2" 
 
 # ===========================================================
@@ -287,7 +287,6 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         st.stop()
 
     detected_key = infer_market_level(superior,lidera,subordinados,abrangencia)
-    allowed_grades = LEVEL_GG_MAPPING.get(detected_key, [])
     
     # 1. Obter o GG Máximo Permitido para o Cargo Subordinado
     max_gg_allowed = GG_LIMITS_MAP.get(superior, 99) 
@@ -295,7 +294,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     st.markdown(f"""
     <div class="ai-insight-box">
         <div class="ai-insight-title">🤖 Contexto Hierárquico Detectado</div>
-        <strong>Banda sugerida (WTW):</strong> {detected_key} (GGs {allowed_grades}).<br>
+        <strong>Banda sugerida (WTW):</strong> {detected_key}.<br>
         <strong>GG Máximo Permitido:</strong> O cargo pesquisado deve ter um **Global Grade estritamente menor** que {max_gg_allowed}.
     </div>
     """, unsafe_allow_html=True)
@@ -303,16 +302,12 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     # 2. Filtragem de Máscara (Family/Subfamily)
     mask = (df["job_family"] == selected_family) & (df["sub_job_family"] == selected_subfamily)
     
-    # Filtro 1 (WTW SUGERIDO): Filtro de Range (GGs 14-17, por exemplo)
-    if allowed_grades:
-        mask &= df["global_grade_num"].isin(allowed_grades) 
-
-    # Filtro 2 (CRÍTICO - HIERARQUIA): FILTRAGEM RIGOROSA
-    # Se o Superior é Gerente (limite GG < 15), isso garante que Managers (GG 15+) sejam excluídos.
+    # FILTRO HIERÁRQUICO RÍGIDO (Prioridade máxima)
+    # Garante que o GG do cargo pesquisado seja estritamente inferior ao limite.
     mask &= (df["global_grade_num"] < max_gg_allowed)
         
     if not mask.any():
-        st.error(f"Nenhum cargo encontrado que satisfaça todos os filtros. Verifique se existem cargos com Global Grade no range {allowed_grades} E GG < {max_gg_allowed} na família selecionada. Seus dados no Excel podem não ter cargos nesse nível hierárquico inferior.")
+        st.error(f"Nenhum cargo encontrado que satisfaça os filtros de Família/Subfamília E Global Grade estritamente menor que {max_gg_allowed}. Seus dados no Excel podem não ter cargos nesse nível hierárquico inferior na família selecionada.")
         st.stop()
 
     filtered = df[mask].copy()
