@@ -9,6 +9,7 @@ from pathlib import Path
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sentence_transformers import SentenceTransformer
+# Nota: Assume-se que 'utils/data_loader' e 'utils/ui_components' existem e funcionam
 from utils.data_loader import load_excel_data
 from utils.ui_components import lock_sidebar
 from utils.ui import setup_sidebar
@@ -169,9 +170,9 @@ def load_json_rules():
 def load_data():
     """Carrega os dados, aplica a sanitização e cria a coluna Global Grade Num."""
     try:
+        # load_excel_data() deve ser fornecido
         data = load_excel_data() 
     except NameError:
-        # Se load_excel_data() não existir ou falhar, retorna DataFrames vazios
         data = {"job_profile": pd.DataFrame(), "level_structure": pd.DataFrame()}
 
     df_jobs = sanitize_columns(data.get("job_profile", pd.DataFrame())).fillna("")
@@ -417,15 +418,18 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     filtered["similarity"] = sims
     top3 = filtered.sort_values("similarity", ascending=False).head(3)
     
-    # CORREÇÃO DE TYPEERROR: Garante que top3 não está vazio antes de acessar iloc[0]
+    # CÁLCULO SEGURO DO SCORE E GUARDAIL
     best_score = top3.iloc[0]["similarity"] if not top3.empty else 0.0
     threshold_weak = JOB_RULES.get("thresholds", {}).get("weak_match", 0.50)
 
     # 7.5. Guardrail de Coerência (Verificação de Incoerência Semântica)
-    if top3.empty or best_score < threshold_weak:
-        # Usa 0.0% se top3 estiver vazio para a mensagem
+    # Aqui, a checagem 'if top3.empty' não é estritamente necessária antes, mas torna o código mais seguro.
+    if best_score < threshold_weak:
+        
+        # O cálculo é seguro: best_score * 100
         score_to_display = best_score * 100 
         
+        # LINHA 429 DO SEU CÓDIGO (onde o erro ocorreu)
         st.error(f"""
         ❌ **Alerta: Incoerência de Conteúdo (Baixa Aderência)**
         <br>
