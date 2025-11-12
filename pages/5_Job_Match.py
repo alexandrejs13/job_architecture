@@ -331,7 +331,7 @@ def infer_market_band(superior, lidera, abrangencia, desc_input):
 # ===========================================================
 if st.button("🔍 Analisar Aderência", type="primary", use_container_width=True):
 
-    # 7.1. Validação de Inputs - REFORÇADA PARA EVITAR ERRO NA INICIALIZAÇÃO
+    # 7.1. Validação de Inputs - REFORÇADA E AGORA MAIS RÍGIDA
     required_inputs = [superior, lidera, abrangencia, selected_family, selected_subfamily]
     if "Selecione..." in required_inputs or word_count < 50:
         st.warning("⚠️ Todos os campos obrigatórios devem ser preenchidos e a descrição deve ter no mínimo 50 palavras.")
