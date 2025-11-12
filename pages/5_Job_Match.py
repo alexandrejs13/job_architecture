@@ -142,7 +142,6 @@ lock_sidebar()
 # 3. FUNÇÕES AUXILIARES E CARREGAMENTO DE DADOS E MODELO
 # ===========================================================
 
-# Funções auxiliares (essenciais para sanitização)
 def sanitize_columns(df):
     """Converte nomes de colunas para snake_case e remove caracteres especiais."""
     cols = {}
@@ -162,7 +161,7 @@ def load_json_rules():
     if path.exists():
         with open(path, 'r', encoding='utf-8') as f:
             return json.load(f)
-    return {} # Retorna vazio se não encontrar
+    return {}
 
 @st.cache_data
 def load_data():
@@ -182,13 +181,21 @@ model = load_model()
 JOB_RULES = load_json_rules()
 
 # Mapeamento do GG Máximo do subordinado com base no Cargo Superior
+# O GG Máximo aqui representa o TETO que o CARGO PESQUISADO pode ter.
 GG_LIMITS_MAP = {
-    "Supervisor": 10, # GG Máximo que um subordinado de Supervisor deve ter (Analista Pleno/Sênior P2/P3)
-    "Coordenador": 13, # GG Máximo que um subordinado de Coordenador deve ter (Analista Sênior P3/P4)
-    "Gerente": 17, # GG Máximo que um subordinado de Gerente deve ter (Coordenador/Supervisor M1)
-    "Diretor": 19, # GG Máximo que um subordinado de Diretor deve ter (Gerente M2/M3)
-    "Vice-presidente": 21, # GG Máximo que um subordinado de VP deve ter (Diretor E1)
-    "Presidente / CEO": 23 # GG Máximo que um subordinado de CEO deve ter (VP E2)
+    # Se o superior é Supervisor/Coordenador (GG 11-14), o subordinado deve ser Analista Pleno/Senior (GG 10-12)
+    "Supervisor": 12, # GG Máximo do subordinado deve ser GG 11 (Analista Pleno/Sênior P2/P3)
+    "Coordenador": 12, # GG Máximo do subordinado deve ser GG 11 (Analista Pleno/Sênior P2/P3)
+    
+    # Se o superior é Gerente (GG 14-16), o subordinado pode ser Coordenador (GG 11-14)
+    "Gerente": 14, 
+    
+    # Se o superior é Diretor (GG 18-21), o subordinado pode ser Gerente (GG 14-16)
+    "Diretor": 17, 
+    
+    # Níveis Executivos
+    "Vice-presidente": 20, 
+    "Presidente / CEO": 23 
 }
 
 # ===========================================================
@@ -250,19 +257,22 @@ LEVEL_GG_MAPPING = {
 }
 
 def infer_market_level(superior, lidera, subordinados, abrangencia):
+    # Lógica ajustada para ser mais conservadora e sugerir o nível do cargo que está sendo criado
     if superior in ["Presidente / CEO", "Vice-presidente"]:
-        return "E2"
+        return "E1" # Sugere Diretor
     if superior == "Diretor" or abrangencia in ["Multipaís", "Global"]:
-        return "E1"
+        return "M3" # Sugere Gerente Sênior/Head
     if superior == "Gerente":
         if lidera == "Sim" and subordinados in ["6-10","11-20","21-50","51-100","100+"]:
-            return "M2"
+            return "M1" # Sugere Coordenador/Supervisor (GG 11-14)
         else:
-            return "M1"
+            return "P4" # Sugere Especialista (GG 14-17)
     if superior in ["Coordenador","Supervisor"]:
-        # Se for coordenador/supervisor, o cargo é provavelmente P2/P3, não P4. Corrigido para P3
-        return "P3" 
-    return "P2"
+        # Se reporta a Coordenador, o cargo é Analista Pleno/Sênior (P2 ou P3)
+        if lidera == "Sim":
+             return "W3" # Sugere Líder de Produção (GG 7-10)
+        return "P2" # Sugere Analista Pleno (GG 10-12)
+    return "W2" # Cargo operacional se reporta a nada acima
 
 # ===========================================================
 # 7. EXECUÇÃO DE ANÁLISE (FILTRAGEM HIERÁRQUICA APLICADA)
@@ -277,7 +287,6 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     allowed_grades = LEVEL_GG_MAPPING.get(detected_key, [])
     
     # 1. Obter o GG Máximo Permitido para o Cargo Subordinado
-    # Se o Superior for Supervisor, o GG Máximo deve ser 10.
     max_gg_allowed = GG_LIMITS_MAP.get(superior, 99) 
 
     st.markdown(f"""
@@ -291,22 +300,19 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     # 2. Filtragem de Máscara (Family/Subfamily e GG Range)
     mask = (df["job_family"] == selected_family) & (df["sub_job_family"] == selected_subfamily)
     
-    # Filtro 1: Filtro de Range WTW (pode ser um filtro forte)
+    # Filtro 1: Filtro de Range WTW (Fortemente recomendado)
     if allowed_grades:
         mask &= df["global_grade_num"].isin(allowed_grades) 
 
     # Filtro 2 (CRÍTICO): FILTRAGEM HIERÁRQUICA POR GG MÁXIMO
     # O GG do cargo candidato deve ser estritamente menor que o GG limite do superior.
-    # Usamos GG_LIMITS_MAP para garantir que o cargo sugerido seja junior ao cargo reportado.
     mask &= (df["global_grade_num"] < max_gg_allowed)
         
     if not mask.any():
-        st.error("Nenhum cargo encontrado dentro dos filtros de Família, Subfamília, Banda Sugerida e Hierarquia (GG inferior ao superior).")
+        st.error("Nenhum cargo encontrado dentro dos filtros de Família, Subfamília, Banda Sugerida e Hierarquia (GG inferior ao superior). Tente ajustar o cargo superior ou a descrição para que o GG sugerido não entre em conflito com o GG máximo do subordinado.")
         st.stop()
 
     filtered = df[mask].copy()
-    
-    # ... (Restante da lógica de matching e exibição - inalterada)
     
     # Usando nomes de colunas normalizados para o Matching (MANTIDO)
     job_texts = (filtered["job_profile"].fillna("") + ". " +
@@ -367,7 +373,6 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         ("🏅 Grade Differentiator", "grade_differentiator", "#ff9800"),
         ("🎓 Qualifications", "qualifications", "#009688"),
         
-        # NOVAS COLUNAS ADICIONADAS
         ("📊 Specific parameters / KPIs", "specific_parameters_kpis", "#c0392b"),
         ("💡 Competencies 1", "competencies_1", "#c0392b"),
         ("💡 Competencies 2", "competencies_2", "#c0392b"),
