@@ -156,51 +156,40 @@ def sanitize_columns(df):
 def load_model():
     return SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 
-# Carregar o JSON de regras hierárquicas
 @st.cache_data
 def load_json_rules():
     path = Path("job_architecture/data/job_rules.json")
     if path.exists():
         with open(path, 'r', encoding='utf-8') as f:
             return json.load(f)
-    return {"hierarchy": {}}
-
+    return {} # Retorna vazio se não encontrar
 
 @st.cache_data
 def load_data():
     """Carrega os dados, aplica a sanitização e cria a coluna Global Grade Num."""
     data = load_excel_data()
     
-    # 1. Aplicar Sanitização
     df_jobs = sanitize_columns(data.get("job_profile", pd.DataFrame())).fillna("")
     df_levels = sanitize_columns(data.get("level_structure", pd.DataFrame())).fillna("")
     
-    # 2. Renomear e Calcular Global Grade Num (usando nomes sanitizados)
     if "global_grade" in df_jobs.columns:
         df_jobs["global_grade_num"] = pd.to_numeric(df_jobs["global_grade"], errors="coerce").fillna(0).astype(int)
     
-    # 3. Adicionar coluna 'hierarchy_level' ao df_jobs usando o job_rules.json
-    rules = load_json_rules()
-    hierarchy_map = {k.lower(): v['level'] for k, v in rules['hierarchy'].items()}
-    
-    # Tenta mapear o nível hierárquico (ex: Gerente -> 5)
-    # A coluna job_profile contém o nome completo, precisamos extrair o título
-    def extract_and_map_level(job_profile):
-        if not job_profile:
-            return 0
-        # Simplificação: assume que o título hierárquico é a última palavra ou a palavra principal
-        title_match = re.search(r'(\w+)', job_profile, re.I)
-        if title_match:
-            title = title_match.group(1).lower()
-            return hierarchy_map.get(title, 0) # Retorna 0 se não encontrar o nível
-        return 0
-
-    df_jobs['hierarchy_level'] = df_jobs['job_profile'].apply(extract_and_map_level)
-
     return df_jobs, df_levels
 
 df, df_levels = load_data()
 model = load_model()
+JOB_RULES = load_json_rules()
+
+# Mapeamento do GG Máximo do subordinado com base no Cargo Superior
+GG_LIMITS_MAP = {
+    "Supervisor": 10, # GG Máximo que um subordinado de Supervisor deve ter (Analista Pleno/Sênior P2/P3)
+    "Coordenador": 13, # GG Máximo que um subordinado de Coordenador deve ter (Analista Sênior P3/P4)
+    "Gerente": 17, # GG Máximo que um subordinado de Gerente deve ter (Coordenador/Supervisor M1)
+    "Diretor": 19, # GG Máximo que um subordinado de Diretor deve ter (Gerente M2/M3)
+    "Vice-presidente": 21, # GG Máximo que um subordinado de VP deve ter (Diretor E1)
+    "Presidente / CEO": 23 # GG Máximo que um subordinado de CEO deve ter (VP E2)
+}
 
 # ===========================================================
 # 4. CAMPOS DE ENTRADA (WTW)
@@ -240,11 +229,9 @@ st.markdown("### 🧠 Contexto Funcional e Descrição do Cargo")
 
 c1, c2 = st.columns(2)
 with c1:
-    # Usando nomes de colunas normalizados
     families = sorted(df["job_family"].unique())
     selected_family = st.selectbox("📂 Família (Obrigatório)", ["Selecione..."] + families)
 with c2:
-    # Usando nomes de colunas normalizados
     subfamilies = sorted(df[df["job_family"] == selected_family]["sub_job_family"].unique()) if selected_family != "Selecione..." else []
     selected_subfamily = st.selectbox("📂 Subfamília (Obrigatório)", ["Selecione..."] + subfamilies)
 
@@ -263,7 +250,6 @@ LEVEL_GG_MAPPING = {
 }
 
 def infer_market_level(superior, lidera, subordinados, abrangencia):
-    # Lógica de inferência de nível (WTW)
     if superior in ["Presidente / CEO", "Vice-presidente"]:
         return "E2"
     if superior == "Diretor" or abrangencia in ["Multipaís", "Global"]:
@@ -274,27 +260,9 @@ def infer_market_level(superior, lidera, subordinados, abrangencia):
         else:
             return "M1"
     if superior in ["Coordenador","Supervisor"]:
-        return "P4"
+        # Se for coordenador/supervisor, o cargo é provavelmente P2/P3, não P4. Corrigido para P3
+        return "P3" 
     return "P2"
-
-# Mapeamento do cargo superior para nível hierárquico usando job_rules.json
-def get_superior_level(superior_cargo):
-    rules = load_json_rules()
-    hierarchy = rules.get('hierarchy', {})
-    # Mapeia cargos de UI para os nomes de título do JSON (ex: Gerente -> Manager)
-    map_ui_to_json = {
-        "Supervisor": "Supervisor",
-        "Coordenador": "Coordinator",
-        "Gerente": "Manager",
-        "Diretor": "Director",
-        "Vice-presidente": "Vice President",
-        "Presidente / CEO": "Vice President" # Usamos VP/Senior Director como proxy para o limite superior
-    }
-    
-    json_title = map_ui_to_json.get(superior_cargo)
-    if json_title:
-        return hierarchy.get(json_title, {}).get('level', 10) # 10 é um nível alto para garantir que filtra bem
-    return 10
 
 # ===========================================================
 # 7. EXECUÇÃO DE ANÁLISE (FILTRAGEM HIERÁRQUICA APLICADA)
@@ -308,34 +276,37 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     detected_key = infer_market_level(superior,lidera,subordinados,abrangencia)
     allowed_grades = LEVEL_GG_MAPPING.get(detected_key, [])
     
-    # 1. Obter o Nível Hierárquico do Superior
-    superior_level = get_superior_level(superior)
+    # 1. Obter o GG Máximo Permitido para o Cargo Subordinado
+    # Se o Superior for Supervisor, o GG Máximo deve ser 10.
+    max_gg_allowed = GG_LIMITS_MAP.get(superior, 99) 
 
     st.markdown(f"""
     <div class="ai-insight-box">
         <div class="ai-insight-title">🤖 Contexto Hierárquico Detectado</div>
-        <strong>Banda sugerida (WTW):</strong> {detected_key}.<br>
-        <strong>Nível Máximo Permitido:</strong> O cargo pesquisado deve ter um nível hierárquico **estritamente inferior** a {superior_level} (nível do superior).
+        <strong>Banda sugerida (WTW):</strong> {detected_key} (GGs {allowed_grades}).<br>
+        <strong>GG Máximo Permitido:</strong> O cargo pesquisado deve ter um **Global Grade estritamente menor** que {max_gg_allowed}.
     </div>
     """, unsafe_allow_html=True)
 
     # 2. Filtragem de Máscara (Family/Subfamily e GG Range)
     mask = (df["job_family"] == selected_family) & (df["sub_job_family"] == selected_subfamily)
+    
+    # Filtro 1: Filtro de Range WTW (pode ser um filtro forte)
     if allowed_grades:
         mask &= df["global_grade_num"].isin(allowed_grades) 
 
-    # 3. Filtragem HIERÁRQUICA (O NOVO FILTRO)
-    # A pesquisa deve retornar cargos com nível HIERÁRQUICO menor que o do superior.
-    if superior_level > 0:
-        mask &= (df["hierarchy_level"] < superior_level) 
+    # Filtro 2 (CRÍTICO): FILTRAGEM HIERÁRQUICA POR GG MÁXIMO
+    # O GG do cargo candidato deve ser estritamente menor que o GG limite do superior.
+    # Usamos GG_LIMITS_MAP para garantir que o cargo sugerido seja junior ao cargo reportado.
+    mask &= (df["global_grade_num"] < max_gg_allowed)
         
     if not mask.any():
-        st.error("Nenhum cargo encontrado dentro dos filtros de Família, Subfamília, Banda Sugerida e Hierarquia (nível abaixo do superior).")
+        st.error("Nenhum cargo encontrado dentro dos filtros de Família, Subfamília, Banda Sugerida e Hierarquia (GG inferior ao superior).")
         st.stop()
 
     filtered = df[mask].copy()
     
-    # ... (Restante da lógica de matching e exibição)
+    # ... (Restante da lógica de matching e exibição - inalterada)
     
     # Usando nomes de colunas normalizados para o Matching (MANTIDO)
     job_texts = (filtered["job_profile"].fillna("") + ". " +
@@ -362,7 +333,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     st.header("🏆 Cargos Mais Compatíveis")
 
     if len(top3) < 1:
-        st.warning("Nenhum resultado encontrado.")
+        st.warning("Nenhum resultado encontrado. Tente ajustar a descrição ou filtros.")
         st.stop()
 
     cards_data = []
@@ -370,10 +341,8 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         score_val = float(row["similarity"]) * 100
         score_bg = "#145efc"
         lvl_name = ""
-        # Usando nome de coluna normalizado
         gg_val = str(row["global_grade"]).strip() 
         
-        # Usando nomes de colunas normalizados em df_levels
         if not df_levels.empty and "global_grade" in df_levels.columns and "level_name" in df_levels.columns:
             match = df_levels[df_levels["global_grade"].astype(str).str.strip() == gg_val]
             if not match.empty:
@@ -407,7 +376,6 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
 
     # 1. Cabeçalho
     for card in cards_data:
-        # Usando nomes de colunas normalizados
         grid_html += f"""
         <div class="grid-cell header-cell">
             <div class="fjc-title">{html.escape(card['row'].get('job_profile', '-'))}</div>
@@ -421,7 +389,6 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     for card in cards_data:
         d = card['row']
         meta = []
-        # Usando nomes de colunas normalizados
         for lbl, col in [("Família","job_family"),("Subfamília","sub_job_family"),("Carreira","career_path"),("Cód","full_job_code")]:
             val = str(d.get(col,"") or "-").strip()
             meta.append(f'<div class="meta-row"><strong>{lbl}:</strong> {html.escape(val)}</div>')
@@ -430,14 +397,10 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     # 3. Seções coloridas (FORÇANDO A RENDERIZAÇÃO DO TÍTULO, SE VAZIO)
     for title, field, color in sections_config:
         for card in cards_data:
-            # Pega o conteúdo usando o nome da coluna normalizado.
             content = str(card['row'].get(field, '')).strip()
-            
-            # Se o conteúdo for 'nan' ou '-', ele fica vazio.
             if content.lower() in ('nan', '-'):
                 content = ''
             
-            # Renderiza a célula SEMPRE
             grid_html += f"""
             <div class="grid-cell section-cell" style="border-left-color: {color};">
                 <div class="section-title" style="color: {color};">{title}</div>
