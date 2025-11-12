@@ -1,37 +1,23 @@
 {
   "hierarchy": {
-    "intern": 0,
     "assistant": 1,
-    "analyst": 2,
+    "analyst": 1,
+    "associate": 2,
+    "coordinator": 3,
     "specialist": 3,
-    "coordinator": 4,
-    "supervisor": 4,
-    "manager": 5,
-    "head": 6,
-    "director": 7,
-    "executive": 8,
-    "vp": 9
+    "manager": 4,
+    "head": 5,
+    "director": 6,
+    "vp": 7,
+    "president": 8
   },
   "leadership_type": {
-    "individual_contributor": [
-      "intern",
-      "assistant",
-      "analyst",
-      "specialist"
-    ],
-    "people_leader": [
-      "coordinator",
-      "supervisor",
-      "manager",
-      "head",
-      "director",
-      "executive",
-      "vp"
-    ]
+    "individual_contributor": ["analyst", "assistant", "specialist"],
+    "people_leader": ["coordinator", "manager", "head", "director", "vp", "president"]
   },
   "scope": {
     "local": ["local"],
-    "regional": ["regional", "latam", "emea"],
-    "global": ["global", "corporate", "worldwide", "international"]
+    "regional": ["regional", "nacional"],
+    "global": ["global", "corporate", "multipaís"]
   }
 }
