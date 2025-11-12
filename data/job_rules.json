@@ -1,97 +1,74 @@
 {
-  "version": "1.0",
-  "description": "Regras adicionais de negócio aplicadas no módulo Job Match",
-  "rules": [
+  "hierarchy": {
+    "Intern": 1,
+    "Analyst": 2,
+    "Senior Analyst": 3,
+    "Specialist": 4,
+    "Coordinator": 5,
+    "Supervisor": 6,
+    "Manager": 7,
+    "Senior Manager": 8,
+    "Director": 9,
+    "Executive Director": 10,
+    "VP": 11,
+    "SVP": 12
+  },
 
-    {
-      "name": "Gestão de Pessoas",
-      "keywords": ["lidera equipe", "coordena equipe", "gestão de pessoas", "liderança", "time sob responsabilidade"],
-      "multiplier": 1.15,
-      "comment": "Aumenta o peso de cargos com liderança quando a descrição menciona gestão de equipe."
-    },
+  "leadership_type": {
+    "Individual Contributor": ["Intern", "Analyst", "Senior Analyst", "Specialist"],
+    "Team Leader": ["Coordinator", "Supervisor"],
+    "People Manager": ["Manager", "Senior Manager", "Director"],
+    "Executive": ["Executive Director", "VP", "SVP"]
+  },
 
-    {
-      "name": "Sem Gestão",
-      "keywords": ["sem equipe", "individual contributor", "trabalha sozinho", "atua individualmente"],
-      "multiplier": 0.7,
-      "comment": "Reduz peso de cargos gerenciais quando o texto indica trabalho individual."
-    },
+  "scope": {
+    "Local": ["Analyst", "Specialist", "Coordinator"],
+    "Regional": ["Manager", "Senior Manager", "Director"],
+    "Global": ["Executive Director", "VP", "SVP"]
+  },
 
-    {
-      "name": "Escopo Global",
-      "keywords": ["global", "internacional", "latam", "regional", "américas"],
-      "multiplier": 1.2,
-      "comment": "Prioriza cargos com abrangência internacional."
-    },
+  "complexity": {
+    "Low": ["Intern", "Analyst"],
+    "Moderate": ["Senior Analyst", "Specialist", "Coordinator"],
+    "High": ["Supervisor", "Manager", "Senior Manager"],
+    "Very High": ["Director", "Executive Director", "VP", "SVP"]
+  },
 
-    {
-      "name": "Análise Estratégica",
-      "keywords": ["estratégia", "planejamento estratégico", "indicadores", "kpi", "business intelligence"],
-      "multiplier": 1.1,
-      "comment": "Reforça cargos de natureza analítica ou estratégica."
-    },
+  "autonomy": {
+    "Supervised": ["Intern", "Analyst"],
+    "Guided": ["Senior Analyst", "Specialist", "Coordinator"],
+    "Independent": ["Supervisor", "Manager", "Senior Manager"],
+    "Strategic": ["Director", "Executive Director", "VP", "SVP"]
+  },
 
-    {
-      "name": "Operacional",
-      "keywords": ["rotina operacional", "execução", "tarefas administrativas", "apoio operacional"],
-      "multiplier": 0.85,
-      "comment": "Penaliza cargos táticos/estratégicos quando o foco for operacional."
-    },
+  "team_size": {
+    "0": ["Individual Contributor"],
+    "1-5": ["Coordinator", "Supervisor"],
+    "6-15": ["Manager"],
+    "16-50": ["Senior Manager"],
+    "51-200": ["Director"],
+    "200+": ["Executive Director", "VP", "SVP"]
+  },
 
-    {
-      "name": "Senioridade Elevada",
-      "keywords": ["sênior", "senior", "experiente", "expert", "avançado"],
-      "multiplier": 1.1,
-      "comment": "Reforça correspondência com perfis de maior senioridade."
-    },
+  "decision_making": {
+    "Operacional": ["Intern", "Analyst", "Specialist"],
+    "Tático": ["Coordinator", "Supervisor", "Manager"],
+    "Estratégico": ["Senior Manager", "Director", "Executive Director", "VP", "SVP"]
+  },
 
-    {
-      "name": "Área Financeira",
-      "keywords": ["financeiro", "contábil", "orçamento", "custos", "auditoria"],
-      "multiplier": 1.1,
-      "comment": "Dá mais peso quando a descrição do texto está relacionada a finanças."
-    },
+  "education": {
+    "Ensino Técnico": ["Intern"],
+    "Superior Completo": ["Analyst", "Senior Analyst", "Specialist"],
+    "Pós-Graduação": ["Coordinator", "Supervisor", "Manager"],
+    "MBA": ["Senior Manager", "Director"],
+    "Mestrado/Doutorado": ["Executive Director", "VP", "SVP"]
+  },
 
-    {
-      "name": "Área de RH",
-      "keywords": ["recursos humanos", "folha de pagamento", "benefícios", "remuneração", "desenvolvimento organizacional"],
-      "multiplier": 1.15,
-      "comment": "Destaque para funções de RH e remuneração."
-    },
-
-    {
-      "name": "Área Comercial",
-      "keywords": ["vendas", "clientes", "negociação", "comercial", "receita"],
-      "multiplier": 1.1,
-      "comment": "Valoriza cargos voltados à área de negócios e clientes."
-    },
-
-    {
-      "name": "Tecnologia / Digital",
-      "keywords": ["tecnologia", "sistemas", "dados", "digital", "plataforma", "automação", "ia", "inteligência artificial"],
-      "multiplier": 1.2,
-      "comment": "Aumenta o peso de cargos com forte componente técnico ou digital."
-    },
-
-    {
-      "name": "Projetos",
-      "keywords": ["projetos", "pm", "gestão de projetos", "cronograma", "pmo"],
-      "multiplier": 1.1,
-      "comment": "Dá ênfase a cargos de gerenciamento e controle de projetos."
-    },
-
-    {
-      "name": "Compliance e Riscos",
-      "keywords": ["compliance", "ética", "auditoria interna", "riscos", "controles internos"],
-      "multiplier": 1.15,
-      "comment": "Prioriza cargos de governança e conformidade."
-    },
-
-    {
-      "name": "Inovação e Melhoria Contínua",
-      "keywords": ["inovação", "melhoria contínua", "transformação", "mudança organizacional", "process improvement"],
-      "multiplier": 1.1,
-      "comment": "Reforça cargos de transformação e inovação corporativa."
-    }
-  ]
+  "examples": {
+    "Analyst": "Executa atividades operacionais com orientação próxima. Apoia a equipe em análises, controles e relatórios.",
+    "Specialist": "Atua de forma independente em uma área de expertise técnica. Garante qualidade e padronização dos processos.",
+    "Manager": "Conduz equipes e entrega resultados da área. Responsável por planejamento e controle de recursos.",
+    "Director": "Define estratégias e políticas da unidade. Atua com foco em resultados de longo prazo e integração organizacional.",
+    "VP": "Lidera unidades de negócio ou funções corporativas globais. Foco em governança, estratégia e performance organizacional."
+  }
 }
