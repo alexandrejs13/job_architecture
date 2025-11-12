@@ -5,25 +5,11 @@ import streamlit as st
 import pandas as pd
 import html
 import json
+import re
 from pathlib import Path
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sentence_transformers import SentenceTransformer
-from utils.data_loader import load_excel_data
-from utils.ui_components import lock_sidebar
-from utils.ui import setup_sidebar
-import re
-
-# Carrega as regras de correspondência de cargos
-try:
-    with open("data/job_rules.json", "r", encoding="utf-8") as f:
-        job_rules = json.load(f)
-except FileNotFoundError:
-    st.warning("⚠️ Arquivo 'data/job_rules.json' não encontrado.")
-    job_rules = {}
-except json.JSONDecodeError as e:
-    st.error(f"Erro ao ler 'job_rules.json': {e}")
-    job_rules = {}
+from utils.ui import sidebar_logo_and_title
 
 # ===========================================================
 # 1. CONFIGURAÇÃO DA PÁGINA
@@ -35,15 +21,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-
-
 # ===========================================================
-# 2. CSS GLOBAL
+# 2. CSS GLOBAL E HEADER
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
     with open(css_path) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+sidebar_logo_and_title()
 
 st.markdown("""
 <style>
@@ -68,139 +54,178 @@ st.markdown("""
     color: #202020;
     font-family: "Source Sans Pro","Helvetica",sans-serif;
 }
+
 .block-container {
-    max-width: 95% !important; 
-    padding-left: 1rem !important; 
-    padding-right: 1rem !important;
+    max-width: 1200px !important;
+    padding-left: 40px !important;
+    padding-right: 40px !important;
 }
-.comparison-grid { display: grid; gap: 20px; margin-top: 20px; }
-.grid-cell {
+
+.match-card {
     background: #fff;
-    border: 1px solid #e0e0e0;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-}
-.header-cell {
-    background: #f8f9fa;
-    border-radius: 12px 12px 0 0;
-    border-bottom: none;
-}
-.fjc-title { font-size: 18px; font-weight: 800; color: #2c3e50; margin-bottom: 2px; min-height: 50px; }
-.fjc-gg-row { display: flex; justify-content: space-between; align-items: center; }
-.fjc-gg { color: #145efc; font-weight: 700; }
-.fjc-score { color: #145efc; font-weight: 700; padding: 4px 10px; border-radius: 12px; font-size: 0.9rem; } 
-.meta-cell {
-    border-top: 1px solid #eee;
-    border-bottom: 1px solid #eee;
-    font-size: 0.85rem;
-    color: #555;
-    min-height: 120px;
-}
-.meta-row { margin-bottom: 5px; }
-.section-cell {
-    border-left-width: 5px;
-    border-left-style: solid;
-    border-top: none;
-    background: #fdfdfd;
-}
-.section-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; color: #333; display: flex; align-items: center; gap: 5px;}
-.section-content { color: #444; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; }
-.footer-cell {
-    height: 10px;
-    border-top: none;
-    border-radius: 0 0 12px 12px;
-    background: #fff;
-}
-.ai-insight-box {
-    background-color: #eef6fc;
     border-left: 5px solid #145efc;
-    padding: 15px 20px;
-    border-radius: 8px;
-    margin: 20px 0;
-    color: #2c3e50;
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-top: 25px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
 }
-.ai-insight-title {
+.match-score {
     font-weight: 800;
+    font-size: 1.25rem;
     color: #145efc;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 5px;
 }
 </style>
 
 <div class="page-header">
-  <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/checkmark%20success.png" alt="icon">
-  Análise de Aderência de Cargo (Job Match)
+  <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/process.png" alt="icon">
+  Job Match — Similaridade de Perfis
 </div>
 """, unsafe_allow_html=True)
 
-setup_sidebar()
-lock_sidebar()
+# ===========================================================
+# 3. FUNÇÕES AUXILIARES
+# ===========================================================
 
-# ===========================================================
-# 3. CARREGAMENTO DE DADOS E MODELO
-# ===========================================================
 @st.cache_resource
 def load_model():
-    return SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+    return SentenceTransformer("paraphrase-MiniLM-L6-v2")
+
+def clean_text(text):
+    if not isinstance(text, str):
+        return ""
+    text = html.unescape(text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
 
 @st.cache_data
-def load_data():
-    data = load_excel_data()
-    df_jobs = data.get("job_profile", pd.DataFrame()).fillna("")
-    df_levels = data.get("level_structure", pd.DataFrame()).fillna("")
-    if "Global Grade" in df_jobs.columns:
-        df_jobs["Global Grade Num"] = pd.to_numeric(df_jobs["Global Grade"], errors="coerce").fillna(0).astype(int)
-    return df_jobs, df_levels
+def load_excel(path):
+    try:
+        df = pd.read_excel(path)
+        for c in df.select_dtypes(include="object"):
+            df[c] = df[c].astype(str).str.strip()
+        return df
+    except Exception as e:
+        st.error(f"Erro ao carregar {path}: {e}")
+        return pd.DataFrame()
 
-df, df_levels = load_data()
+def calculate_similarity(text1, text2, model):
+    if not text1 or not text2:
+        return 0.0
+    embeddings = model.encode([text1, text2])
+    return float(cosine_similarity([embeddings[0]], [embeddings[1]])[0][0])
+
+# Ajusta a similaridade com base nas regras de coerência
+def adjust_similarity(base_score, job_a, job_b, rules):
+    adjusted = base_score
+    try:
+        # Normaliza
+        ja, jb = job_a.lower(), job_b.lower()
+
+        # Checa tipo de liderança
+        for leadership_type, positions in rules.get("leadership_type", {}).items():
+            if any(p.lower() in ja for p in positions) and any(p.lower() in jb for p in positions):
+                adjusted += 0.05
+
+        # Checa hierarquia coerente
+        hierarchy = rules.get("hierarchy", {})
+        if hierarchy:
+            a_val = next((v for k, v in hierarchy.items() if k.lower() in ja), None)
+            b_val = next((v for k, v in hierarchy.items() if k.lower() in jb), None)
+            if a_val and b_val:
+                diff = abs(a_val - b_val)
+                if diff == 0:
+                    adjusted += 0.05
+                elif diff == 1:
+                    adjusted += 0.02
+                elif diff > 2:
+                    adjusted -= 0.05
+
+        # Checa escopo
+        for scope, positions in rules.get("scope", {}).items():
+            if any(p.lower() in ja for p in positions) and any(p.lower() in jb for p in positions):
+                adjusted += 0.03
+
+    except Exception:
+        pass
+
+    return max(0, min(adjusted, 1.0))
+
+# ===========================================================
+# 4. DADOS E REGRAS
+# ===========================================================
+df_profiles = load_excel("data/Job Profile.xlsx")
 model = load_model()
 
+rules_path = Path("data/job_rules.json")
+if rules_path.exists():
+    with open(rules_path, "r", encoding="utf-8") as f:
+        job_rules = json.load(f)
+else:
+    job_rules = {}
+
+if df_profiles.empty:
+    st.error("❌ Arquivo 'Job Profile.xlsx' não encontrado ou inválido.")
+    st.stop()
+
 # ===========================================================
-# 4. INTERFACE E ANÁLISE
+# 5. INTERFACE — INPUT DO USUÁRIO
 # ===========================================================
-st.markdown("### 🧠 Descrição do Cargo para Análise")
-desc_input = st.text_area("📝 Digite ou cole a descrição do cargo:", height=180)
+st.markdown("### Descreva o perfil que deseja comparar:")
 
-if st.button("🔍 Analisar Aderência", type="primary", use_container_width=True):
-    if len(desc_input.split()) < 50:
-        st.warning("Por favor, insira ao menos 50 palavras.")
-        st.stop()
+col1, col2 = st.columns(2)
+with col1:
+    job_title = st.text_input("Título do cargo:", placeholder="Ex: HR Business Partner Senior")
+with col2:
+    job_scope = st.selectbox("Escopo:", ["Global", "Regional", "Local", "Não se aplica"], index=3)
 
-    job_texts = (df["Job Profile"].fillna("") + ". " + df["Role Description"].fillna("") + ". " + df["Qualifications"].fillna("")).tolist()
-    job_emb = model.encode(job_texts, show_progress_bar=False)
-    query_emb = model.encode([desc_input], show_progress_bar=False)[0]
-    sims_sem = cosine_similarity([query_emb], job_emb)[0]
+job_desc = st.text_area("Descrição do cargo:", height=180, placeholder="Cole aqui a descrição completa do cargo...")
 
-    tfidf = TfidfVectorizer(max_features=10000, ngram_range=(1, 2)).fit(job_texts)
-    job_tfidf = tfidf.transform(job_texts)
-    query_tfidf = tfidf.transform([desc_input])
-    sims_kw = cosine_similarity(query_tfidf, job_tfidf)[0]
+if not job_desc.strip():
+    st.info("✏️ Insira a descrição para realizar o Job Match.")
+    st.stop()
 
-    sims = 0.75 * sims_sem + 0.25 * sims_kw
+# ===========================================================
+# 6. PROCESSAMENTO — SIMILARIDADE
+# ===========================================================
+model = load_model()
 
-    # ➕ Aplica regras de negócio no peso de similaridade
-    for i, row in df.iterrows():
-        sims[i] *= apply_business_rules(desc_input, row["Job Profile"], row.to_dict(), job_rules)
+df_profiles["text_concat"] = df_profiles[
+    ["Job Profile Description", "Role Description", "Sub Job Family Description"]
+].astype(str).agg(" ".join, axis=1)
 
-    df["similarity"] = sims
-    top3 = df.sort_values("similarity", ascending=False).head(3)
+# Calcula similaridade base e ajusta com as regras
+results = []
+for _, row in df_profiles.iterrows():
+    ref_text = clean_text(row["text_concat"])
+    base_sim = calculate_similarity(clean_text(job_desc), ref_text, model)
+    adjusted_sim = adjust_similarity(base_sim, job_title, row.get("Job Profile", ""), job_rules)
 
-    st.markdown("---")
-    st.header("🏆 Cargos Mais Compatíveis")
+    results.append({
+        "Job Profile": row.get("Job Profile", ""),
+        "Job Family": row.get("Job Family", ""),
+        "Sub Job Family": row.get("Sub Job Family", ""),
+        "Career Path": row.get("Career Path", ""),
+        "Global Grade": row.get("Global Grade", ""),
+        "Similarity": adjusted_sim
+    })
 
-    if top3.empty:
-        st.warning("Nenhum resultado encontrado.")
-        st.stop()
+df_results = pd.DataFrame(results).sort_values(by="Similarity", ascending=False).head(5)
 
-    for _, row in top3.iterrows():
-        st.markdown(f"""
-        <div class="ai-insight-box">
-            <div class="ai-insight-title">🎯 {html.escape(row['Job Profile'])}</div>
-            <b>Similaridade:</b> {row['similarity']*100:.1f}%<br>
-            <b>Global Grade:</b> {row['Global Grade']}<br>
-            <b>Família:</b> {row['Job Family']} | <b>Sub-Família:</b> {row['Sub Job Family']}
-        </div>
-        """, unsafe_allow_html=True)
+# ===========================================================
+# 7. EXIBIÇÃO DE RESULTADOS
+# ===========================================================
+st.markdown("## 🔍 Resultados do Job Match")
+
+for _, r in df_results.iterrows():
+    st.markdown(f"""
+    <div class="match-card">
+        <div class="match-score">🎯 Similaridade: {r['Similarity']*100:.1f}%</div>
+        <b>{r['Job Profile']}</b><br>
+        <small>
+        Família: {r['Job Family']}<br>
+        Sub-Família: {r['Sub Job Family']}<br>
+        Trilha: {r['Career Path']}<br>
+        Global Grade: {r['Global Grade']}
+        </small>
+    </div>
+    """, unsafe_allow_html=True)
