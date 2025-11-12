@@ -417,15 +417,19 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     filtered["similarity"] = sims
     top3 = filtered.sort_values("similarity", ascending=False).head(3)
     
+    # CORREÇÃO DE TYPEERROR: Garante que top3 não está vazio antes de acessar iloc[0]
     best_score = top3.iloc[0]["similarity"] if not top3.empty else 0.0
     threshold_weak = JOB_RULES.get("thresholds", {}).get("weak_match", 0.50)
 
     # 7.5. Guardrail de Coerência (Verificação de Incoerência Semântica)
-    if best_score < threshold_weak:
+    if top3.empty or best_score < threshold_weak:
+        # Usa 0.0% se top3 estiver vazio para a mensagem
+        score_to_display = best_score * 100 
+        
         st.error(f"""
         ❌ **Alerta: Incoerência de Conteúdo (Baixa Aderência)**
         <br>
-        A pontuação do melhor cargo compatível ({best_score*100:.1f}%) está abaixo do limite de Match Fraco ({threshold_weak*100:.0f}%).
+        A pontuação do melhor cargo compatível ({score_to_display:.1f}%) está abaixo do limite de Match Fraco ({threshold_weak*100:.0f}%).
         <br>
         Isso indica que a sua **Descrição Detalhada do Cargo** não é semanticamente coerente com o conteúdo dos cargos já existentes na **Família/Subfamília ({selected_family}/{selected_subfamily})**. 
         <br>
