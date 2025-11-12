@@ -1,80 +1,194 @@
 {
   "metadata": {
-    "source": "Willis Towers Watson - Job Matching Guide 2023 / GGS User Guide 4.2",
-    "description": "Regras unificadas de Career Bands, Survey Grades, e Keywords de acordo com a metodologia WTW/GGS."
-  },
-  
-  "thresholds": {
-    "excellent_match": 0.85,
-    "good_match": 0.7,
-    "weak_match": 0.5
-  },
-
-  "wtw_reporting_limits": {
-    [cite_start]"description": "GG Máximo permitido para o cargo subordinado (GG do subordinado deve ser ESTRITAMENTE MENOR que este limite) [cite: 13, 238, 483]",
-    "Presidente / CEO": 25, 
-    "Vice-presidente": 21,
-    "Diretor": 18,
-    "Gerente": 15,
-    "Coordenador": 12,
-    "Supervisor": 12
+    "source": "Willis Towers Watson - Career Map & Global Grading System",
+    "version": "2.0",
+    "last_updated": "2025-11-09",
+    "description": "Dicionário de reconhecimento automático de nível de cargo, baseado na metodologia WTW, com palavras-chave e termos que usuários digitam nas descrições sumárias."
   },
 
   "career_bands": {
-    "EX": {
-      "label": "Executive (EX) / Banda 6 (CEO/Top Management)",
-      "gg_range": [15, 25],
-      "description": "Cargos executivos e de alta liderança estratégica."
-    },
-    "M": {
-      "label": "Supervisory / Management (Banda 4M/3M)",
-      "gg_range": [10, 17],
-      "description": "Funções de Middle e Junior Management com foco em alavancar resultados através de outros. (Bands 4M e 3M).",
-      "ggs_bands": ["4M", "3M"]
-    },
-    "P": {
-      "label": "Professional / Expert (Banda 4IC/3IC)",
-      "gg_range": [8, 17],
-      "description": "Funções de analistas, especialistas e consultores com autonomia técnica e foco em expertise individual. (Bands 4IC e 3IC).",
-      "ggs_bands": ["4IC", "3IC"]
-    },
-    "U": {
-      "label": "Business Support / Clerical/Admin (Banda 2)",
-      "gg_range": [4, 9],
-      "description": "Suporte administrativo e de escritório, rotinas de apoio, Clerical/Admin, Customer Service. (Banda 2)."
-    },
+
     "W": {
-      "label": "Production / Manual Labor (Banda 1)",
-      "gg_range": [2, 8],
-      "description": "Funções operacionais/manuais, Junior Admin. Requer pouco ou nenhum conhecimento funcional específico. (Banda 1)."
+      "label": "Production / Manual",
+      "description": "Funções operacionais com foco em execução manual, produção ou apoio direto.",
+      "levels": {
+        "W1": {
+          "label": "Auxiliar / Ajudante",
+          "core_keywords": ["auxiliar", "ajudante", "aprendiz", "estagiário operacional"],
+          "user_keywords": [
+            "apoio nas rotinas", "executar tarefas simples", "ajuda na produção",
+            "carregar materiais", "embalar produtos", "organizar estoque",
+            "apoio operacional", "limpeza da linha", "movimentação de materiais"
+          ]
+        },
+        "W2": {
+          "label": "Operador / Técnico Pleno",
+          "core_keywords": ["operador", "técnico", "mecânico", "montador"],
+          "user_keywords": [
+            "realiza ajustes de máquina", "executa operações técnicas", "montagem de peças",
+            "controle de qualidade", "inspeciona equipamentos", "opera máquinas industriais",
+            "realiza manutenção preventiva", "segue padrões de produção"
+          ]
+        },
+        "W3": {
+          "label": "Líder / Supervisor de Produção",
+          "core_keywords": ["supervisor", "líder de linha", "encarregado", "chefe de turno"],
+          "user_keywords": [
+            "lidera equipe operacional", "supervisiona a produção", "coordena processos produtivos",
+            "responsável pela equipe de linha", "acompanha indicadores de produção",
+            "distribui tarefas", "garante cumprimento de metas", "apoia operadores"
+          ]
+        }
+      }
+    },
+
+    "U": {
+      "label": "Business Support",
+      "description": "Suporte administrativo e de escritório, rotinas de apoio às áreas corporativas.",
+      "levels": {
+        "U1": {
+          "label": "Auxiliar Administrativo",
+          "core_keywords": ["auxiliar", "office boy", "assistente de escritório"],
+          "user_keywords": [
+            "apoia rotinas administrativas", "organiza documentos", "arquiva registros",
+            "controla planilhas", "apoia o setor administrativo", "emite relatórios simples",
+            "atende chamadas", "apoio a gestores"
+          ]
+        },
+        "U2": {
+          "label": "Assistente Administrativo",
+          "core_keywords": ["assistente", "administrativo", "suporte técnico"],
+          "user_keywords": [
+            "realiza controle de planilhas", "apoia processos de RH", "emite relatórios",
+            "prepara documentos", "lança informações em sistema", "apoio ao financeiro",
+            "auxilia nas rotinas de DP", "faz conciliação simples"
+          ]
+        },
+        "U3": {
+          "label": "Analista de Suporte / Técnico",
+          "core_keywords": ["analista", "técnico", "suporte"],
+          "user_keywords": [
+            "analisa dados administrativos", "apoia projetos internos", "prepara relatórios gerenciais",
+            "controle de indicadores", "atende áreas internas", "otimiza processos administrativos",
+            "fornece suporte técnico a departamentos"
+          ]
+        }
+      }
+    },
+
+    "P": {
+      "label": "Professional / Expert",
+      "description": "Funções de analistas, especialistas e consultores com autonomia técnica.",
+      "levels": {
+        "P1": {
+          "label": "Analista Júnior",
+          "core_keywords": ["analista júnior", "consultor júnior"],
+          "user_keywords": [
+            "apoia projetos", "elabora planilhas", "faz análises sob supervisão",
+            "auxilia em relatórios técnicos", "interpreta dados", "mantém controles atualizados",
+            "atua sob orientação de sênior"
+          ]
+        },
+        "P2": {
+          "label": "Analista Pleno",
+          "core_keywords": ["analista pleno", "profissional intermediário"],
+          "user_keywords": [
+            "atua com autonomia", "realiza análises complexas", "propõe melhorias",
+            "acompanha indicadores", "gera relatórios gerenciais", "interage com outras áreas",
+            "executa processos ponta a ponta"
+          ]
+        },
+        "P3": {
+          "label": "Analista Sênior / Especialista",
+          "core_keywords": ["analista sênior", "especialista", "consultor sênior"],
+          "user_keywords": [
+            "responsável por projetos estratégicos", "atua como referência técnica",
+            "define processos", "orienta profissionais juniores", "atua com foco em resultados",
+            "apoia gestão com informações analíticas", "atua com foco em melhoria contínua"
+          ]
+        },
+        "P4": {
+          "label": "Especialista / Consultor Master",
+          "core_keywords": ["especialista sênior", "subject matter expert", "advisor"],
+          "user_keywords": [
+            "atua como autoridade técnica", "define padrões da área", "apoia decisões estratégicas",
+            "revisa políticas técnicas", "conduz treinamentos técnicos avançados",
+            "atua como consultor interno", "lidera soluções complexas"
+          ]
+        }
+      }
+    },
+
+    "M": {
+      "label": "Management",
+      "description": "Funções de liderança direta, com responsabilidade sobre equipes e resultados.",
+      "levels": {
+        "M1": {
+          "label": "Supervisor / Coordenador",
+          "core_keywords": ["supervisor", "coordenador", "líder de equipe"],
+          "user_keywords": [
+            "coordena equipe", "supervisiona atividades", "controla indicadores de performance",
+            "apoia plano de ação", "define prioridades", "acompanha produtividade",
+            "garante cumprimento de metas", "orienta analistas e assistentes"
+          ]
+        },
+        "M2": {
+          "label": "Gerente",
+          "core_keywords": ["gerente", "gestor", "manager"],
+          "user_keywords": [
+            "responsável pela gestão da área", "define estratégias operacionais",
+            "gerencia orçamento", "lidera equipe multidisciplinar",
+            "acompanha performance de resultados", "apoia diretoria",
+            "responsável por planos de ação e metas", "coordena projetos corporativos"
+          ]
+        },
+        "M3": {
+          "label": "Gerente Sênior / Head de Área",
+          "core_keywords": ["gerente sênior", "head", "regional manager"],
+          "user_keywords": [
+            "atua com visão estratégica", "gestão de múltiplas equipes",
+            "define políticas operacionais", "atua com autonomia de decisão",
+            "influencia stakeholders", "responde por resultados regionais",
+            "atua junto à diretoria executiva"
+          ]
+        }
+      }
+    },
+
+    "E": {
+      "label": "Executive / Leadership",
+      "description": "Cargos executivos e de alta liderança estratégica.",
+      "levels": {
+        "E1": {
+          "label": "Diretor / Vice-Presidente",
+          "core_keywords": ["diretor", "vice-presidente", "vp"],
+          "user_keywords": [
+            "define estratégias corporativas", "lidera times executivos",
+            "atua com foco em rentabilidade e crescimento", "representa a empresa",
+            "aprova orçamentos e metas", "define prioridades de negócio",
+            "interage com conselhos e investidores"
+          ]
+        },
+        "E2": {
+          "label": "Presidente / CEO",
+          "core_keywords": ["presidente", "ceo", "chief executive officer", "chairman"],
+          "user_keywords": [
+            "define a visão organizacional", "lidera a estratégia global",
+            "representa a companhia institucionalmente", "toma decisões de alto impacto",
+            "coordena diretores executivos", "atua junto ao conselho",
+            "define políticas corporativas", "representa a empresa perante o mercado"
+          ]
+        }
+      }
     }
   },
 
-  "level_keywords": {
-    "W": [
-      "auxiliar", "ajudante", "aprendiz", "estagiário operacional", "executar tarefas simples", 
-      "ajuda na produção", "carregar materiais", "embalar produtos", "limpeza da linha", "movimentação de materiais",
-      "tarefas de rotina", "repetitivas", "adquirido em poucos dias"
-    ],
-    "U": [
-      "auxiliar administrativo", "office boy", "assistente de escritório", "organiza documentos", 
-      "arquiva registros", "controla planilhas", "atende chamadas", "suporte técnico", "procedimentos bem definidos", 
-      "treinamento formal", "clerical", "administrativo"
-    ],
-    "P": [
-      "analista", "consultor", "especialista", "expertise profissional", "julgamento", "independente",
-      "conhecimento profundo", "soluções inovadoras", "líder técnico", "autoridade reconhecida", "guru", 
-      "define a estratégia dentro da própria disciplina"
-    ],
-    "M": [
-      "supervisor", "coordenador", "líder de equipe", "gerente", "gestor", "coordena equipe", 
-      "supervisiona atividades", "responsabilidade total de supervisão", "gestão de orçamentos", 
-      "responsabilidade por planejamento", "multiplas áreas", "influence business strategy"
-    ],
-    "EX": [
-      "diretor", "vice-presidente", "presidente", "ceo", "define estratégias corporativas", 
-      "lidera times executivos", "atua com foco em rentabilidade", "toma decisões de alto impacto", 
-      "membro do conselho executivo", "modelo a imagem da organização"
-    ]
+  "grading_factors": {
+    "knowledge": "Complexidade e profundidade do conhecimento necessário.",
+    "problem_solving": "Nível de autonomia e complexidade das decisões.",
+    "impact": "Amplitude do impacto no negócio.",
+    "communication": "Habilidade de influência e negociação.",
+    "leadership": "Escopo de gestão e tomada de decisão.",
+    "scope": "Abrangência geográfica e organizacional."
   }
 }
