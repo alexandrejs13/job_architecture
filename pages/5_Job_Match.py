@@ -1,7 +1,3 @@
-# ===========================================================
-# 5_JOB_MATCH.PY — CORRIGIDO E APRIMORADO
-# ===========================================================
-
 import streamlit as st
 import pandas as pd
 import json
@@ -10,17 +6,17 @@ from pathlib import Path
 from utils.ui import sidebar_logo_and_title
 
 # ===========================================================
-# CONFIGURAÇÃO GERAL
+# 1. CONFIGURAÇÃO GERAL
 # ===========================================================
 st.set_page_config(
     page_title="Job Match",
-    page_icon="⚙️",
+    page_icon="🔎",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ===========================================================
-# CSS E HEADER
+# 2. CSS GLOBAL E SIDEBAR
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
@@ -35,16 +31,22 @@ st.markdown("""
     background-color: #145efc;
     color: white;
     font-weight: 750;
-    font-size: 1.4rem;
+    font-size: 1.35rem;
     border-radius: 12px;
     padding: 22px 36px;
     display: flex;
     align-items: center;
     gap: 18px;
+    width: 100%;
     margin-bottom: 40px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 .page-header img { width: 50px; height: 50px; }
+[data-testid="stAppViewContainer"] {
+    background-color: #f5f3f0;
+    color: #202020;
+    font-family: "Source Sans Pro", "Helvetica", sans-serif;
+}
 .result-card {
     background: #fff;
     border-left: 5px solid #145efc;
@@ -53,137 +55,127 @@ st.markdown("""
     margin-bottom: 18px;
     box-shadow: 0 3px 8px rgba(0,0,0,0.05);
 }
-.score {
-    font-weight: 700;
-    color: #145efc;
+.result-title {
+    font-weight: 750;
+    font-size: 1.1rem;
+    color: #000;
+}
+.result-sub {
+    color: #444;
+    font-size: 0.9rem;
+    margin-bottom: 6px;
 }
 </style>
-
 <div class="page-header">
-  <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/checkmark%20success.png">
-  Job Match — Alinhamento de Descrições
+  <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/checkmark%20success.png" alt="icon">
+  Job Match — Inteligência de Correlação
 </div>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# FUNÇÕES AUXILIARES
+# 3. FUNÇÕES AUXILIARES
 # ===========================================================
 @st.cache_data
-def load_excel(path):
+def load_file(path):
     try:
-        df = pd.read_excel(path)
-        df.columns = df.columns.str.strip()
-        return df
+        if path.endswith(".json"):
+            with open(path, "r") as f:
+                return json.load(f)
+        if path.endswith(".xlsx"):
+            return pd.read_excel(path)
+        return None
     except Exception as e:
         st.error(f"Erro ao carregar {path}: {e}")
-        return pd.DataFrame()
+        return None
 
-@st.cache_data
-def load_json(path):
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        st.error(f"Erro ao ler {path}: {e}")
-        return {}
+def normalize_text(txt):
+    return re.sub(r"[^a-z0-9 ]+", " ", str(txt).lower()).strip()
 
-def normalize_txt(txt):
-    return re.sub(r"[^a-zA-Z0-9áéíóúãõâêôç\s]", "", str(txt)).lower().strip()
+def grade_to_level(grade, levels_df):
+    """Retorna nome de nível conforme 'Level Name', 'Level' ou 'Career Level Name'."""
+    g = str(grade).strip()
+    if levels_df is None or levels_df.empty:
+        return ""
+    cols = list(levels_df.columns)
+    name_col = next((c for c in ["Level Name", "Career Level Name", "Level"] if c in cols), None)
+    if not name_col:
+        return ""
+    match = levels_df[levels_df["Global Grade"].astype(str).str.strip() == g]
+    if not match.empty:
+        return str(match[name_col].iloc[0])
+    return ""
 
-def similarity(a, b):
-    a, b = normalize_txt(a), normalize_txt(b)
-    if not a or not b:
-        return 0
-    a_set, b_set = set(a.split()), set(b.split())
-    return len(a_set & b_set) / len(a_set | b_set)
+def compute_match_score(text, rule_set):
+    text = normalize_text(text)
+    score = 0
+    weights = rule_set["rules"]["matching_weights"]
 
-# ===========================================================
-# DADOS
-# ===========================================================
-profiles = load_excel("data/Job Profile.xlsx")
-levels = load_excel("data/Level Structure.xlsx")
-rules = load_json("data/job_rules.json")
+    # Palavras-chave básicas
+    if any(k in text for k in ["lidera", "coordena", "supervisiona"]):
+        score += 0.2
+    if any(k in text for k in ["analisa", "apoia", "executa"]):
+        score += 0.1
+    if any(k in text for k in ["estratégia", "planejamento", "gestão"]):
+        score += 0.2
 
-if profiles.empty:
-    st.error("❌ Arquivo Job Profile.xlsx não encontrado ou inválido.")
-    st.stop()
+    # Penaliza inconsistências (ex: menciona “apoia” + “gerente”)
+    if "apoia" in text and "gerente" in text:
+        score -= 0.15
 
-# Corrigir possíveis nomes de colunas
-if not levels.empty:
-    levels.columns = [c.strip().lower() for c in levels.columns]
-    if "level name" not in levels.columns:
-        # tenta alternativas conhecidas
-        rename_map = {
-            "level": "level name",
-            "career level": "level name",
-            "nivel": "level name",
-        }
-        levels.rename(columns=rename_map, inplace=True)
+    return max(0, min(1, score))
 
 # ===========================================================
-# INTERFACE — ENTRADA DO USUÁRIO
+# 4. DADOS
 # ===========================================================
-st.subheader("🔍 Cole ou digite abaixo a descrição do cargo:")
+rules = load_file("data/job_rules.json")
+profiles = load_file("data/Job Profile.xlsx")
+levels = load_file("data/Level Structure.xlsx")
 
-descricao = st.text_area("Descrição do Cargo", height=280, placeholder="Cole aqui a descrição completa do cargo...")
-
-if not descricao.strip():
+if profiles is None or profiles.empty:
+    st.error("❌ Arquivo 'Job Profile.xlsx' não encontrado.")
     st.stop()
 
 # ===========================================================
-# ANÁLISE DE COMPATIBILIDADE
+# 5. INTERFACE DE ENTRADA
 # ===========================================================
-results = []
-descricao_norm = normalize_txt(descricao)
+st.markdown("### 🧩 Descrição do Cargo para Análise")
+desc_input = st.text_area("Cole aqui a descrição completa do cargo:", height=260, placeholder="Exemplo: Responsável por prestar suporte nas atividades de RH...")
 
+if not desc_input.strip():
+    st.info("Insira uma descrição para iniciar o Job Match.")
+    st.stop()
+
+# ===========================================================
+# 6. ANÁLISE
+# ===========================================================
+st.markdown("### ⚙️ Processando correspondências...")
+
+profiles["normalized"] = profiles["Job Profile Description"].fillna("").apply(normalize_text)
+text_input = normalize_text(desc_input)
+
+matches = []
 for _, row in profiles.iterrows():
-    nome = str(row.get("Job Profile", "")).strip()
-    job_text = " ".join([
-        str(row.get("Job Profile Description", "")),
-        str(row.get("Role Description", "")),
-        str(row.get("Grade Differentiator", "")),
-        str(row.get("Qualifications", ""))
-    ])
-    score = similarity(descricao_norm, job_text)
-    gg = str(row.get("Global Grade", "")).strip()
-    fam = str(row.get("Job Family", "")).strip()
-    sub = str(row.get("Sub Job Family", "")).strip()
-    trilha = str(row.get("Career Path", "")).strip()
-
-    level_name = ""
-    if not levels.empty and "global grade" in levels.columns:
-        match = levels[levels["global grade"].astype(str).str.strip() == gg]
-        if not match.empty:
-            level_name = str(match.iloc[0].get("level name", ""))
-
-    results.append({
-        "Job Profile": nome,
-        "Job Family": fam,
-        "Sub Job Family": sub,
-        "Career Path": trilha,
-        "Global Grade": gg,
-        "Level Name": level_name,
-        "Score": round(score, 3)
+    desc = row.get("Job Profile Description", "")
+    sim = compute_match_score(desc + " " + text_input, rules)
+    lvl_name = grade_to_level(row.get("Global Grade", ""), levels)
+    matches.append({
+        "Job Profile": row.get("Job Profile", ""),
+        "Global Grade": row.get("Global Grade", ""),
+        "Level Name": lvl_name,
+        "Similarity": sim
     })
 
-df_result = pd.DataFrame(results).sort_values(by="Score", ascending=False).head(5)
+df_results = pd.DataFrame(matches).sort_values("Similarity", ascending=False).head(10)
 
 # ===========================================================
-# EXIBIÇÃO DOS RESULTADOS
+# 7. EXIBIÇÃO
 # ===========================================================
-st.header("📊 Resultados — Top 5 Matches")
-
-if df_result.empty:
-    st.warning("Nenhum resultado encontrado.")
-else:
-    for _, r in df_result.iterrows():
-        st.markdown(f"""
-        <div class="result-card">
-            <div class="score">🎯 Similaridade: {r['Score']*100:.1f}%</div>
-            <b>{r['Job Profile']}</b>  
-            {r['Level Name']} (GG {r['Global Grade']})
-            <br><b>Família:</b> {r['Job Family']}  
-            <br><b>Sub-Família:</b> {r['Sub Job Family']}  
-            <br><b>Trilha:</b> {r['Career Path']}
-        </div>
-        """, unsafe_allow_html=True)
+for _, r in df_results.iterrows():
+    color = "#145efc" if r["Similarity"] > 0.8 else "#f5a623" if r["Similarity"] > 0.6 else "#bbb"
+    st.markdown(f"""
+    <div class="result-card" style="border-left-color:{color}">
+        <div class="result-title">{r['Job Profile']}</div>
+        <div class="result-sub">GG {r['Global Grade']} • {r['Level Name']}</div>
+        <div>🎯 Similaridade: <b>{r['Similarity']*100:.1f}%</b></div>
+    </div>
+    """, unsafe_allow_html=True)
