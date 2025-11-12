@@ -9,7 +9,8 @@ from pathlib import Path
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sentence_transformers import SentenceTransformer
-from utils.data_loader import load_excel_data
+# Importar data_loader e ui_components
+from utils.data_loader import load_excel_data 
 from utils.ui_components import lock_sidebar
 from utils.ui import setup_sidebar
 import re
@@ -139,22 +140,42 @@ setup_sidebar()
 lock_sidebar()
 
 # ===========================================================
-# 3. CARREGAMENTO DE DADOS E MODELO
+# 3. FUNÇÕES AUXILIARES (INCLUÍDA A SANITIZAÇÃO DE COLUNAS)
 # ===========================================================
+
+# Funções auxiliares (re-incluídas aqui para garantir que o código funcione como uma página Standalone)
+
+def sanitize_columns(df):
+    """Converte nomes de colunas para snake_case e remove caracteres especiais."""
+    cols = {}
+    for col in df.columns:
+        # Substitui espaços, barras e traços por underscore
+        new_col = re.sub(r'[ /-]+', '_', col.strip())
+        # Remove quaisquer outros caracteres não alfanuméricos ou underscore
+        new_col = re.sub(r'[^\w_]', '', new_col).lower()
+        cols[col] = new_col
+    return df.rename(columns=cols)
+
+def load_data_sanitized():
+    """Carrega os dados e aplica a sanitização de colunas."""
+    # Assume que load_excel_data retorna um dicionário de DataFrames
+    data = load_excel_data()
+    
+    # Aplicar sanitização na leitura e renomear Global Grade para Global Grade Num
+    df_jobs = sanitize_columns(data.get("job_profile", pd.DataFrame())).fillna("")
+    df_levels = sanitize_columns(data.get("level_structure", pd.DataFrame())).fillna("")
+    
+    if "global_grade" in df_jobs.columns:
+        df_jobs["global_grade_num"] = pd.to_numeric(df_jobs["global_grade"], errors="coerce").fillna(0).astype(int)
+    
+    return df_jobs, df_levels
+
+
 @st.cache_resource
 def load_model():
     return SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 
-@st.cache_data
-def load_data():
-    data = load_excel_data()
-    df_jobs = data.get("job_profile", pd.DataFrame()).fillna("")
-    df_levels = data.get("level_structure", pd.DataFrame()).fillna("")
-    if "Global Grade" in df_jobs.columns:
-        df_jobs["Global Grade Num"] = pd.to_numeric(df_jobs["Global Grade"], errors="coerce").fillna(0).astype(int)
-    return df_jobs, df_levels
-
-df, df_levels = load_data()
+df, df_levels = load_data_sanitized() # Usando a função atualizada
 model = load_model()
 
 # ===========================================================
@@ -195,10 +216,12 @@ st.markdown("### 🧠 Contexto Funcional e Descrição do Cargo")
 
 c1, c2 = st.columns(2)
 with c1:
-    families = sorted(df["Job Family"].unique())
+    # Usando nomes de colunas normalizados
+    families = sorted(df["job_family"].unique())
     selected_family = st.selectbox("📂 Família (Obrigatório)", ["Selecione..."] + families)
 with c2:
-    subfamilies = sorted(df[df["Job Family"] == selected_family]["Sub Job Family"].unique()) if selected_family != "Selecione..." else []
+    # Usando nomes de colunas normalizados
+    subfamilies = sorted(df[df["job_family"] == selected_family]["sub_job_family"].unique()) if selected_family != "Selecione..." else []
     selected_subfamily = st.selectbox("📂 Subfamília (Obrigatório)", ["Selecione..."] + subfamilies)
 
 desc_input = st.text_area("📝 Descrição detalhada do cargo (mínimo 50 palavras):", height=200)
@@ -249,17 +272,21 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     </div>
     """, unsafe_allow_html=True)
 
-    mask = (df["Job Family"] == selected_family) & (df["Sub Job Family"] == selected_subfamily)
+    # Usando nomes de colunas normalizados para filtragem
+    mask = (df["job_family"] == selected_family) & (df["sub_job_family"] == selected_subfamily)
     if allowed_grades:
-        mask &= df["Global Grade Num"].isin(allowed_grades)
+        # Usando o novo nome de coluna global_grade_num
+        mask &= df["global_grade_num"].isin(allowed_grades) 
     if not mask.any():
         st.error("Nenhum cargo encontrado dentro da família e subfamília informadas.")
         st.stop()
 
     filtered = df[mask].copy()
-    job_texts = (filtered["Job Profile"].fillna("") + ". " +
-                 filtered["Role Description"].fillna("") + ". " +
-                 filtered["Qualifications"].fillna("")).tolist()
+    
+    # Usando nomes de colunas normalizados para o Matching
+    job_texts = (filtered["job_profile"].fillna("") + ". " +
+                 filtered["role_description"].fillna("") + ". " +
+                 filtered["qualifications"].fillna("")).tolist()
 
     job_emb = model.encode(job_texts, show_progress_bar=False)
     query_emb = model.encode([desc_input], show_progress_bar=False)[0]
@@ -289,11 +316,14 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         score_val = float(row["similarity"]) * 100
         score_bg = "#145efc"
         lvl_name = ""
-        gg_val = str(row["Global Grade"]).strip()
-        if not df_levels.empty and "Global Grade" in df_levels.columns and "Level Name" in df_levels.columns:
-            match = df_levels[df_levels["Global Grade"].astype(str).str.strip() == gg_val]
+        # Usando nome de coluna normalizado
+        gg_val = str(row["global_grade"]).strip() 
+        
+        # Usando nomes de colunas normalizados em df_levels
+        if not df_levels.empty and "global_grade" in df_levels.columns and "level_name" in df_levels.columns:
+            match = df_levels[df_levels["global_grade"].astype(str).str.strip() == gg_val]
             if not match.empty:
-                lvl_name = f"• {match['Level Name'].iloc[0]}"
+                lvl_name = f"• {match['level_name'].iloc[0]}"
         cards_data.append({
             "row": row,
             "score_fmt": f"{score_val:.1f}%",
@@ -305,22 +335,30 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     grid_style = f"grid-template-columns: repeat({num_results}, 1fr);"
     grid_html = f'<div class="comparison-grid" style="{grid_style}">'
 
+    # CONFIGURAÇÃO DAS SEÇÕES: NOVAS COLUNAS INCLUÍDAS AQUI
     sections_config = [
-        ("🧭 Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
-        ("🧠 Job Profile Description", "Job Profile Description", "#e91e63"),
-        ("🏛️ Career Band Description", "Career Band Description", "#673ab7"),
-        ("🎯 Role Description", "Role Description", "#145efc"), 
-        ("🏅 Grade Differentiator", "Grade Differentiator", "#ff9800"),
-        ("🎓 Qualifications", "Qualifications", "#009688")
+        ("🧭 Sub Job Family Description", "sub_job_family_description", "#95a5a6"),
+        ("🧠 Job Profile Description", "job_profile_description", "#e91e63"),
+        ("🏛️ Career Band Description", "career_band_description", "#673ab7"),
+        ("🎯 Role Description", "role_description", "#145efc"), 
+        ("🏅 Grade Differentiator", "grade_differentiator", "#ff9800"),
+        ("🎓 Qualifications", "qualifications", "#009688"),
+        
+        # NOVAS COLUNAS ADICIONADAS (usando snake_case e cor de destaque)
+        ("📊 Specific parameters / KPIs", "specific_parameters_kpis", "#c0392b"),
+        ("💡 Competencies 1", "competencies_1", "#c0392b"),
+        ("💡 Competencies 2", "competencies_2", "#c0392b"),
+        ("💡 Competencies 3", "competencies_3", "#c0392b"),
     ]
 
     # 1. Cabeçalho
     for card in cards_data:
+        # Usando nomes de colunas normalizados
         grid_html += f"""
         <div class="grid-cell header-cell">
-            <div class="fjc-title">{html.escape(card['row'].get('Job Profile', '-'))}</div>
+            <div class="fjc-title">{html.escape(card['row'].get('job_profile', '-'))}</div>
             <div class="fjc-gg-row">
-                <div class="fjc-gg">GG {card['row'].get('Global Grade', '-')} {card['lvl']}</div>
+                <div class="fjc-gg">GG {card['row'].get('global_grade', '-')} {card['lvl']}</div>
                 <div class="fjc-score">{card['score_fmt']} Match</div>
             </div>
         </div>"""
@@ -329,23 +367,28 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     for card in cards_data:
         d = card['row']
         meta = []
-        for lbl, col in [("Família","Job Family"),("Subfamília","Sub Job Family"),("Carreira","Career Path"),("Cód","Full Job Code")]:
+        # Usando nomes de colunas normalizados
+        for lbl, col in [("Família","job_family"),("Subfamília","sub_job_family"),("Carreira","career_path"),("Cód","full_job_code")]:
             val = str(d.get(col,"") or "-").strip()
             meta.append(f'<div class="meta-row"><strong>{lbl}:</strong> {html.escape(val)}</div>')
         grid_html += f'<div class="grid-cell meta-cell">{"".join(meta)}</div>'
 
-    # 3. Seções coloridas
+    # 3. Seções coloridas (FORÇANDO A RENDERIZAÇÃO DO TÍTULO, SE VAZIO)
     for title, field, color in sections_config:
         for card in cards_data:
-            content = str(card['row'].get(field, '-'))
-            if len(content.strip()) < 2 or content.lower() == 'nan':
-                grid_html += '<div class="grid-cell section-cell" style="border-left-color: transparent; background: transparent; border: none;"></div>'
-            else:
-                grid_html += f"""
-                <div class="grid-cell section-cell" style="border-left-color: {color};">
-                    <div class="section-title" style="color: {color};">{title}</div>
-                    <div class="section-content">{html.escape(content)}</div>
-                </div>"""
+            # Pega o conteúdo usando o nome da coluna normalizado.
+            content = str(card['row'].get(field, '')).strip()
+            
+            # Se o conteúdo for 'nan' ou '-', ele fica vazio.
+            if content.lower() in ('nan', '-'):
+                content = ''
+            
+            # Renderiza a célula SEMPRE
+            grid_html += f"""
+            <div class="grid-cell section-cell" style="border-left-color: {color};">
+                <div class="section-title" style="color: {color};">{title}</div>
+                <div class="section-content">{html.escape(content)}</div>
+            </div>"""
 
     # 4. Rodapé
     for _ in cards_data:
