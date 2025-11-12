@@ -359,6 +359,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     detected_band = infer_market_band(superior, lidera, abrangencia, desc_input)
     
     # 7.2. Obter o GG Máximo Permitido (Regra RÍGIDA WTW: Subordinado < Superior)
+    # A leitura correta do "superior" deve buscar o limite correto (e.g., 12 para Coordenador)
     max_gg_allowed = GG_LIMITS_MAP.get(superior, 99) 
     
     # Obtemos a faixa de GGs sugeridos pela Banda detectada
@@ -448,8 +449,6 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         # Garante que a variável para exibição é um float válido.
         score_to_display = float(best_score * 100)
         
-        # --- CORREÇÃO DO ERRO DE RENDERIZAÇÃO AQUI (2/2) ---
-        # Substituindo st.error(f"""...""", unsafe_allow_html=True) por st.markdown
         st.markdown(f"""
         <div class="custom-error-box">
             <div class="custom-error-title">❌ Alerta: Incoerência de Conteúdo (Baixa Aderência)</div>
