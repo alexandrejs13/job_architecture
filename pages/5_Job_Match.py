@@ -182,7 +182,6 @@ JOB_RULES = load_json_rules()
 
 # Mapeamento do GG Máximo do subordinado com base no Cargo Superior
 # O GG Máximo aqui é o TETO permitido, i.e., cargo_candidato.GG < GG_LIMITS_MAP[superior]
-# Usamos o GG Máximo da faixa imediatamente inferior para ser rigoroso.
 GG_LIMITS_MAP = {
     # Supervisor/Coordenador (M1/P4) tem GGs 11-17. Máximo subordinado é P3/P2 (GG 10-14).
     "Supervisor": 12,    # GG Máximo = 11 (P2/Analista Pleno)
@@ -209,13 +208,13 @@ c1, c2, c3 = st.columns(3)
 with c1:
     superior = st.selectbox("📋 Cargo ao qual reporta *", [
         "Selecione...", "Supervisor", "Coordenador", "Gerente", "Diretor", "Vice-presidente", "Presidente / CEO"
-    ], index=3) # Mantém "Gerente" como exemplo para teste
+    ])
 with c2:
-    lidera = st.selectbox("👥 Possui equipe? *", ["Selecione...", "Sim", "Não"], index=2) # Mantém "Não"
+    lidera = st.selectbox("👥 Possui equipe? *", ["Selecione...", "Sim", "Não"])
 with c3:
     abrangencia = st.selectbox("🌍 Abrangência da função *", [
         "Selecione...", "Local", "Regional (mais de 1 estado)", "Nacional", "Multipaís", "Global"
-    ], index=1) # Mantém "Local"
+    ])
 
 if lidera == "Sim":
     c4, c5 = st.columns(2)
@@ -244,7 +243,7 @@ with c2:
     subfamilies = sorted(df[df["job_family"] == selected_family]["sub_job_family"].unique()) if selected_family != "Selecione..." else []
     selected_subfamily = st.selectbox("📂 Subfamília (Obrigatório)", ["Selecione..."] + subfamilies)
 
-desc_input = st.text_area("📝 Descrição detalhada do cargo (mínimo 50 palavras):", height=200, value="Elaborar relatórios e planilhas de indicadores de desempenho de RH (turnover, absenteísmo, headcount, etc.). Atender colaboradores, prestando informações sobre benefícios, férias, holerites e demais dúvidas relacionadas a RH. Auxiliar na organização de documentos e arquivos digitais, cumprindo normas de confidencialidade e LGPD. Participar de projetos de melhoria contínua e automação de processos de RH.")
+desc_input = st.text_area("📝 Descrição detalhada do cargo (mínimo 50 palavras):", height=200)
 word_count = len(desc_input.strip().split())
 st.caption(f"Contagem de palavras: {word_count} / 50")
 
@@ -260,7 +259,7 @@ LEVEL_GG_MAPPING = {
 
 def infer_market_level(superior, lidera, subordinados, abrangencia):
     # Lógica ajustada para ser CONSERVADORA e evitar sobreposição com o cargo superior.
-    # Esta função apenas sugere uma banda, o filtro hierárquico abaixo a restringe.
+    # O filtro hierárquico (GG_LIMITS_MAP) abaixo é a regra RÍGIDA de exclusão.
     if superior in ["Presidente / CEO", "Vice-presidente"]:
         return "E1" 
     if superior == "Diretor" or abrangencia in ["Multipaís", "Global"]:
@@ -270,15 +269,16 @@ def infer_market_level(superior, lidera, subordinados, abrangencia):
         if lidera == "Sim" and subordinados in ["6-10","11-20","21-50","51-100","100+"]:
             return "M1" # Sugere Coordenador/Supervisor (GG 11-14)
         else:
-            return "P3" # Sugere Analista Sênior (GG 12-14) - O filtro GG < 15 funciona bem com P3.
+            return "P3" # Sugere Analista Sênior (GG 12-14)
     if superior in ["Coordenador","Supervisor"]:
+        # Se reporta a Coordenador/Supervisor (M1/P4), o cargo é Analista Pleno/Júnior (P2/P1)
         if lidera == "Sim":
              return "W3" # Sugere Líder de Produção (GG 7-10)
-        return "P1" # Sugere Analista Júnior (GG 8-10)
+        return "P2" # Sugere Analista Pleno (GG 10-12)
     return "W2" 
 
 # ===========================================================
-# 7. EXECUÇÃO DE ANÁLISE (FILTRAGEM HIERÁRQUICA APLICADA)
+# 7. EXECUÇÃO DE ANÁLISE (FILTRAGEM HIERÁRQUICA E OTIMIZAÇÃO DO MATCHING)
 # ===========================================================
 if st.button("🔍 Analisar Aderência", type="primary", use_container_width=True):
 
@@ -290,50 +290,66 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     
     # 1. Obter o GG Máximo Permitido para o Cargo Subordinado
     max_gg_allowed = GG_LIMITS_MAP.get(superior, 99) 
+    
+    # Obter os GGs sugeridos pela Banda WTW
+    allowed_grades_wtw = LEVEL_GG_MAPPING.get(detected_key, [])
 
     st.markdown(f"""
     <div class="ai-insight-box">
         <div class="ai-insight-title">🤖 Contexto Hierárquico Detectado</div>
-        <strong>Banda sugerida (WTW):</strong> {detected_key}.<br>
-        <strong>GG Máximo Permitido:</strong> O cargo pesquisado deve ter um **Global Grade estritamente menor** que {max_gg_allowed}.
+        <strong>Banda sugerida (WTW):</strong> {detected_key} (GGs {allowed_grades_wtw}).<br>
+        <strong>GG Máximo Permitido (Filtro Hierárquico):</strong> O cargo pesquisado deve ter um **Global Grade estritamente menor** que {max_gg_allowed}.
     </div>
     """, unsafe_allow_html=True)
 
     # 2. Filtragem de Máscara (Family/Subfamily)
     mask = (df["job_family"] == selected_family) & (df["sub_job_family"] == selected_subfamily)
     
-    # FILTRO HIERÁRQUICO RÍGIDO (Prioridade máxima)
-    # Garante que o GG do cargo pesquisado seja estritamente inferior ao limite.
+    # Filtro 1 (Hierarquia RÍGIDA): Garante que o GG do cargo pesquisado seja estritamente inferior ao limite do superior.
     mask &= (df["global_grade_num"] < max_gg_allowed)
+    
+    # Filtro 2 (WTW Otimizado): Combina a banda WTW sugerida com o filtro hierárquico.
+    # Apenas aplicamos a banda WTW se ela não anular o filtro hierárquico.
+    # Como a função infer_market_level foi ajustada para ser conservadora, este filtro ajuda a refinar.
+    if allowed_grades_wtw:
+        mask &= df["global_grade_num"].isin(allowed_grades_wtw) 
         
     if not mask.any():
-        st.error(f"Nenhum cargo encontrado que satisfaça os filtros de Família/Subfamília E Global Grade estritamente menor que {max_gg_allowed}. Seus dados no Excel podem não ter cargos nesse nível hierárquico inferior na família selecionada.")
+        st.error(f"Nenhum cargo encontrado que satisfaça todos os filtros. Verifique se existem cargos com Global Grade no range {allowed_grades_wtw} E GG < {max_gg_allowed} na família selecionada. Seus dados no Excel podem não ter cargos nesse nível hierárquico inferior.")
         st.stop()
 
     filtered = df[mask].copy()
     
-    # ... (Restante da lógica de matching e exibição - inalterada)
+    # 3. Otimização do Texto Base para Matching (Ponderação de Fatores WTW)
+    # Incluindo todos os campos relevantes para maior precisão semântica (Competências, KPIs, etc.)
+    job_texts = (
+        filtered["job_profile"].fillna("") + ". " +
+        filtered["role_description"].fillna("") + ". " +
+        filtered["qualifications"].fillna("") + ". " +
+        filtered["specific_parameters_kpis"].fillna("") + ". " +
+        filtered["competencies_1"].fillna("") + ". " +
+        filtered["competencies_2"].fillna("") + ". " +
+        filtered["competencies_3"].fillna("")
+    ).tolist()
     
-    # Usando nomes de colunas normalizados para o Matching (MANTIDO)
-    job_texts = (filtered["job_profile"].fillna("") + ". " +
-                 filtered["role_description"].fillna("") + ". " +
-                 filtered["qualifications"].fillna("")).tolist()
-
-    job_emb = model.encode(job_texts, show_progress_bar=False)
+    # Usando o desc_input do usuário como query
     query_emb = model.encode([desc_input], show_progress_bar=False)[0]
+    job_emb = model.encode(job_texts, show_progress_bar=False)
     sims_sem = cosine_similarity([query_emb], job_emb)[0]
 
+    # Similaridade por Keyword (TF-IDF)
     tfidf = TfidfVectorizer(max_features=10000, ngram_range=(1,2)).fit(job_texts)
     job_tfidf = tfidf.transform(job_texts)
     query_tfidf = tfidf.transform([desc_input])
     sims_kw = cosine_similarity(query_tfidf, job_tfidf)[0]
 
+    # Ponderação Final (75% Semântica, 25% Keyword)
     sims = 0.75 * sims_sem + 0.25 * sims_kw
     filtered["similarity"] = sims
     top3 = filtered.sort_values("similarity", ascending=False).head(3)
 
     # ===========================================================
-    # 8. GRID FINAL (IDÊNTICO AO JOB PROFILE DESCRIPTION)
+    # 8. GRID FINAL (EXIBIÇÃO)
     # ===========================================================
     st.markdown("---")
     st.header("🏆 Cargos Mais Compatíveis")
