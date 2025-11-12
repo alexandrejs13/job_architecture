@@ -142,7 +142,7 @@ lock_sidebar()
 # 3. FUNÇÕES AUXILIARES E CARREGAMENTO DE DADOS E MODELO
 # ===========================================================
 
-# Funções auxiliares (re-incluídas aqui para garantir que o código funcione como uma página Standalone)
+# Funções auxiliares (essenciais para sanitização)
 def sanitize_columns(df):
     """Converte nomes de colunas para snake_case e remove caracteres especiais."""
     cols = {}
@@ -278,7 +278,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
 
     filtered = df[mask].copy()
     
-    # Usando nomes de colunas normalizados para o Matching
+    # Usando nomes de colunas normalizados para o Matching (MANTIDO)
     job_texts = (filtered["job_profile"].fillna("") + ". " +
                  filtered["role_description"].fillna("") + ". " +
                  filtered["qualifications"].fillna("")).tolist()
@@ -330,7 +330,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     grid_style = f"grid-template-columns: repeat({num_results}, 1fr);"
     grid_html = f'<div class="comparison-grid" style="{grid_style}">'
 
-    # CONFIGURAÇÃO DAS SEÇÕES: NOVAS COLUNAS INCLUÍDAS AQUI
+    # CONFIGURAÇÃO DAS SEÇÕES: MANTENDO A REFERÊNCIA EM SNAKE_CASE
     sections_config = [
         ("🧭 Sub Job Family Description", "sub_job_family_description", "#95a5a6"),
         ("🧠 Job Profile Description", "job_profile_description", "#e91e63"),
