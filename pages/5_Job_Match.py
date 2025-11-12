@@ -9,8 +9,7 @@ from pathlib import Path
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sentence_transformers import SentenceTransformer
-# Importar data_loader e ui_components
-from utils.data_loader import load_excel_data 
+from utils.data_loader import load_excel_data
 from utils.ui_components import lock_sidebar
 from utils.ui import setup_sidebar
 import re
@@ -140,42 +139,39 @@ setup_sidebar()
 lock_sidebar()
 
 # ===========================================================
-# 3. FUNÇÕES AUXILIARES (INCLUÍDA A SANITIZAÇÃO DE COLUNAS)
+# 3. FUNÇÕES AUXILIARES E CARREGAMENTO DE DADOS E MODELO
 # ===========================================================
 
 # Funções auxiliares (re-incluídas aqui para garantir que o código funcione como uma página Standalone)
-
 def sanitize_columns(df):
     """Converte nomes de colunas para snake_case e remove caracteres especiais."""
     cols = {}
     for col in df.columns:
-        # Substitui espaços, barras e traços por underscore
         new_col = re.sub(r'[ /-]+', '_', col.strip())
-        # Remove quaisquer outros caracteres não alfanuméricos ou underscore
         new_col = re.sub(r'[^\w_]', '', new_col).lower()
         cols[col] = new_col
     return df.rename(columns=cols)
-
-def load_data_sanitized():
-    """Carrega os dados e aplica a sanitização de colunas."""
-    # Assume que load_excel_data retorna um dicionário de DataFrames
-    data = load_excel_data()
-    
-    # Aplicar sanitização na leitura e renomear Global Grade para Global Grade Num
-    df_jobs = sanitize_columns(data.get("job_profile", pd.DataFrame())).fillna("")
-    df_levels = sanitize_columns(data.get("level_structure", pd.DataFrame())).fillna("")
-    
-    if "global_grade" in df_jobs.columns:
-        df_jobs["global_grade_num"] = pd.to_numeric(df_jobs["global_grade"], errors="coerce").fillna(0).astype(int)
-    
-    return df_jobs, df_levels
-
 
 @st.cache_resource
 def load_model():
     return SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 
-df, df_levels = load_data_sanitized() # Usando a função atualizada
+@st.cache_data
+def load_data():
+    """Carrega os dados, aplica a sanitização e cria a coluna Global Grade Num."""
+    data = load_excel_data()
+    
+    # 1. Aplicar Sanitização
+    df_jobs = sanitize_columns(data.get("job_profile", pd.DataFrame())).fillna("")
+    df_levels = sanitize_columns(data.get("level_structure", pd.DataFrame())).fillna("")
+    
+    # 2. Renomear e Calcular Global Grade Num (usando nomes sanitizados)
+    if "global_grade" in df_jobs.columns:
+        df_jobs["global_grade_num"] = pd.to_numeric(df_jobs["global_grade"], errors="coerce").fillna(0).astype(int)
+    
+    return df_jobs, df_levels
+
+df, df_levels = load_data()
 model = load_model()
 
 # ===========================================================
@@ -275,7 +271,6 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     # Usando nomes de colunas normalizados para filtragem
     mask = (df["job_family"] == selected_family) & (df["sub_job_family"] == selected_subfamily)
     if allowed_grades:
-        # Usando o novo nome de coluna global_grade_num
         mask &= df["global_grade_num"].isin(allowed_grades) 
     if not mask.any():
         st.error("Nenhum cargo encontrado dentro da família e subfamília informadas.")
@@ -344,7 +339,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         ("🏅 Grade Differentiator", "grade_differentiator", "#ff9800"),
         ("🎓 Qualifications", "qualifications", "#009688"),
         
-        # NOVAS COLUNAS ADICIONADAS (usando snake_case e cor de destaque)
+        # NOVAS COLUNAS ADICIONADAS
         ("📊 Specific parameters / KPIs", "specific_parameters_kpis", "#c0392b"),
         ("💡 Competencies 1", "competencies_1", "#c0392b"),
         ("💡 Competencies 2", "competencies_2", "#c0392b"),
