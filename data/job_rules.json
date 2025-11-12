@@ -1,54 +1,43 @@
 {
   "hierarchy": {
-    "Intern": 1,
-    "Assistant": 2,
-    "Analyst": 3,
-    "Coordinator": 4,
-    "Specialist": 4,
-    "Manager": 5,
-    "Senior Manager": 6,
-    "Director": 7,
-    "Executive Director": 8
+    "Intern": {"level": 1, "career_type": "Operational"},
+    "Assistant": {"level": 2, "career_type": "Operational"},
+    "Analyst": {"level": 3, "career_type": "Professional"},
+    "Specialist": {"level": 3, "career_type": "Professional"},
+    "Coordinator": {"level": 4, "career_type": "Professional"},
+    "Supervisor": {"level": 4, "career_type": "Professional"},
+    "Manager": {"level": 5, "career_type": "Management"},
+    "Senior Manager": {"level": 6, "career_type": "Management"},
+    "Director": {"level": 7, "career_type": "Executive"},
+    "Senior Director": {"level": 8, "career_type": "Executive"},
+    "Vice President": {"level": 9, "career_type": "Executive"}
   },
-  "scope": {
-    "local": 1,
-    "regional": 2,
-    "global": 3
-  },
-  "decision_making": {
-    "operational": 1,
-    "tactical": 2,
-    "strategic": 3
-  },
-  "responsibility": {
-    "individual_contributor": 1,
-    "team_lead": 2,
-    "department_head": 3,
-    "business_unit_lead": 4
-  },
-  "matching_weights": {
-    "keyword_similarity": 0.5,
-    "hierarchy_proximity": 0.3,
-    "scope_alignment": 0.15,
-    "decision_level": 0.05
-  },
-  "hierarchy_rules": [
-    {
-      "if_reports_to": "Coordinator",
-      "max_allowed_level": 4
+  "rules": {
+    "leadership": {
+      "has_team": true,
+      "min_level_for_management": 5
     },
-    {
-      "if_reports_to": "Manager",
-      "max_allowed_level": 5
+    "scope": {
+      "local": 1,
+      "regional": 2,
+      "global": 3
     },
-    {
-      "if_reports_to": "Director",
-      "max_allowed_level": 6
+    "decision_making": {
+      "own_work": 1,
+      "team_process": 2,
+      "department_process": 3,
+      "organization_process": 4
+    },
+    "matching_weights": {
+      "hierarchy_proximity": 0.4,
+      "career_type_match": 0.25,
+      "scope_similarity": 0.2,
+      "keyword_context": 0.15
     }
-  ],
+  },
   "thresholds": {
-    "high_match": 0.65,
-    "medium_match": 0.45,
-    "low_match": 0.25
+    "excellent_match": 0.85,
+    "good_match": 0.7,
+    "weak_match": 0.5
   }
 }
