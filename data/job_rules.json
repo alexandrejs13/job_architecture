@@ -1,74 +1,37 @@
 {
   "hierarchy": {
-    "Intern": 1,
-    "Analyst": 2,
-    "Senior Analyst": 3,
-    "Specialist": 4,
-    "Coordinator": 5,
-    "Supervisor": 6,
-    "Manager": 7,
-    "Senior Manager": 8,
-    "Director": 9,
-    "Executive Director": 10,
-    "VP": 11,
-    "SVP": 12
+    "intern": 0,
+    "assistant": 1,
+    "analyst": 2,
+    "specialist": 3,
+    "coordinator": 4,
+    "supervisor": 4,
+    "manager": 5,
+    "head": 6,
+    "director": 7,
+    "executive": 8,
+    "vp": 9
   },
-
   "leadership_type": {
-    "Individual Contributor": ["Intern", "Analyst", "Senior Analyst", "Specialist"],
-    "Team Leader": ["Coordinator", "Supervisor"],
-    "People Manager": ["Manager", "Senior Manager", "Director"],
-    "Executive": ["Executive Director", "VP", "SVP"]
+    "individual_contributor": [
+      "intern",
+      "assistant",
+      "analyst",
+      "specialist"
+    ],
+    "people_leader": [
+      "coordinator",
+      "supervisor",
+      "manager",
+      "head",
+      "director",
+      "executive",
+      "vp"
+    ]
   },
-
   "scope": {
-    "Local": ["Analyst", "Specialist", "Coordinator"],
-    "Regional": ["Manager", "Senior Manager", "Director"],
-    "Global": ["Executive Director", "VP", "SVP"]
-  },
-
-  "complexity": {
-    "Low": ["Intern", "Analyst"],
-    "Moderate": ["Senior Analyst", "Specialist", "Coordinator"],
-    "High": ["Supervisor", "Manager", "Senior Manager"],
-    "Very High": ["Director", "Executive Director", "VP", "SVP"]
-  },
-
-  "autonomy": {
-    "Supervised": ["Intern", "Analyst"],
-    "Guided": ["Senior Analyst", "Specialist", "Coordinator"],
-    "Independent": ["Supervisor", "Manager", "Senior Manager"],
-    "Strategic": ["Director", "Executive Director", "VP", "SVP"]
-  },
-
-  "team_size": {
-    "0": ["Individual Contributor"],
-    "1-5": ["Coordinator", "Supervisor"],
-    "6-15": ["Manager"],
-    "16-50": ["Senior Manager"],
-    "51-200": ["Director"],
-    "200+": ["Executive Director", "VP", "SVP"]
-  },
-
-  "decision_making": {
-    "Operacional": ["Intern", "Analyst", "Specialist"],
-    "Tático": ["Coordinator", "Supervisor", "Manager"],
-    "Estratégico": ["Senior Manager", "Director", "Executive Director", "VP", "SVP"]
-  },
-
-  "education": {
-    "Ensino Técnico": ["Intern"],
-    "Superior Completo": ["Analyst", "Senior Analyst", "Specialist"],
-    "Pós-Graduação": ["Coordinator", "Supervisor", "Manager"],
-    "MBA": ["Senior Manager", "Director"],
-    "Mestrado/Doutorado": ["Executive Director", "VP", "SVP"]
-  },
-
-  "examples": {
-    "Analyst": "Executa atividades operacionais com orientação próxima. Apoia a equipe em análises, controles e relatórios.",
-    "Specialist": "Atua de forma independente em uma área de expertise técnica. Garante qualidade e padronização dos processos.",
-    "Manager": "Conduz equipes e entrega resultados da área. Responsável por planejamento e controle de recursos.",
-    "Director": "Define estratégias e políticas da unidade. Atua com foco em resultados de longo prazo e integração organizacional.",
-    "VP": "Lidera unidades de negócio ou funções corporativas globais. Foco em governança, estratégia e performance organizacional."
+    "local": ["local"],
+    "regional": ["regional", "latam", "emea"],
+    "global": ["global", "corporate", "worldwide", "international"]
   }
 }
