@@ -235,7 +235,6 @@ grid_style = f"grid-template-columns: repeat({num_results}, 1fr);"
 grid_html = f'<div class="comparison-grid" style="{grid_style}">'
 
 # Configuração das seções com cores
-# TRÊS NOVAS SEÇÕES ADICIONADAS AQUI: KPIs e Competências
 sections_config = [
     ("🧭 Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
     ("🧠 Job Profile Description", "Job Profile Description", "#e91e63"),
@@ -244,7 +243,7 @@ sections_config = [
     ("🏅 Grade Differentiator", "Grade Differentiator", "#ff9800"),
     ("🎓 Qualifications", "Qualifications", "#009688"),
     
-    # NOVAS COLUNAS
+    # NOVAS COLUNAS (Cor de destaque: #c0392b)
     ("📊 Specific parameters / KPIs", "Specific parameters / KPIs", "#c0392b"),
     ("💡 Competencies 1", "Competencies 1", "#c0392b"),
     ("💡 Competencies 2", "Competencies 2", "#c0392b"),
@@ -281,19 +280,20 @@ for card in cards_data:
         {''.join(meta)}
     </div>"""
 
-# 3. Seções de Conteúdo
+# 3. Seções de Conteúdo (LÓGICA ALTERADA PARA EXIBIR SEMPRE A CÉLULA)
 for title, field, color in sections_config:
     for card in cards_data:
-        content = str(card['row'].get(field, '-'))
-        # Pula a célula se o conteúdo estiver vazio/nan
-        if len(content.strip()) < 2 or content.lower() == 'nan':
-            grid_html += f'<div class="grid-cell section-cell" style="border-left-color: transparent; background: transparent; border: none;"></div>'
-        else:
-            grid_html += f"""
-            <div class="grid-cell section-cell" style="border-left-color: {color};">
-                <div class="section-title" style="color: {color};">{title}</div>
-                <div class="section-content">{html.escape(content)}</div>
-            </div>"""
+        # Pega o conteúdo, tratando 'nan' ou vazio como vazio para exibição
+        content = str(card['row'].get(field, '-')).strip()
+        if content.lower() in ('nan', '-'):
+            content = ''
+        
+        # Renderiza a célula SEMPRE (o conteúdo será o texto ou uma string vazia)
+        grid_html += f"""
+        <div class="grid-cell section-cell" style="border-left-color: {color};">
+            <div class="section-title" style="color: {color};">{title}</div>
+            <div class="section-content">{html.escape(content)}</div>
+        </div>"""
 
 # 4. Rodapé
 for card in cards_data:
