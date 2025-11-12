@@ -157,11 +157,13 @@ def load_model():
 
 @st.cache_data
 def load_json_rules():
-    path = Path("job_architecture/data/job_rules.json")
+    # Caminho ajustado para a pasta 'job_architecture/data' se for o caso real
+    # Por enquanto, assumindo que está na mesma estrutura dos arquivos fornecidos
+    path = Path("job_rules.json") 
     if path.exists():
         with open(path, 'r', encoding='utf-8') as f:
             return json.load(f)
-    return {}
+    return {"thresholds": {"weak_match": 0.50}} # Default fallback
 
 @st.cache_data
 def load_data():
@@ -172,7 +174,11 @@ def load_data():
     df_levels = sanitize_columns(data.get("level_structure", pd.DataFrame())).fillna("")
     
     if "global_grade" in df_jobs.columns:
+        # Garante que o GG seja numérico para o filtro hierárquico
         df_jobs["global_grade_num"] = pd.to_numeric(df_jobs["global_grade"], errors="coerce").fillna(0).astype(int)
+    else:
+        # Adiciona coluna de fallback se não existir
+        df_jobs["global_grade_num"] = 0 
     
     return df_jobs, df_levels
 
@@ -180,23 +186,29 @@ df, df_levels = load_data()
 model = load_model()
 JOB_RULES = load_json_rules()
 
-# Mapeamento do GG Máximo do subordinado com base no Cargo Superior
-# O GG Máximo aqui é o TETO permitido, i.e., cargo_candidato.GG < GG_LIMITS_MAP[superior]
+# Mapeamento do GG Máximo do subordinado com base no Cargo Superior (Regra WTW Rígida)
+# O GG Máximo aqui é o TETO permitido, ou seja, cargo_candidato.GG < GG_LIMITS_MAP[superior]
+# Esses valores são baseados na sobreposição de GGs entre níveis (EX/M3/M2/M1/P4/P3/P2)
 GG_LIMITS_MAP = {
-    # Supervisor/Coordenador (M1/P4) tem GGs 11-17. Máximo subordinado é P3/P2 (GG 10-14).
-    "Supervisor": 12,    # GG Máximo = 11 (P2/Analista Pleno)
-    "Coordenador": 12,   # GG Máximo = 11 (P2/Analista Pleno)
+    # Nível Executive/CEO
+    "Presidente / CEO": 24, # Subordinado Max: GG 23 (VP/Diretor Sênior)
+    "Vice-presidente": 21,   # Subordinado Max: GG 20 (Diretor)
+    "Diretor": 18,           # Subordinado Max: GG 17 (Gerente Sênior M3/M4)
     
-    # Gerente (M2/M3) tem GGs 14-19. Máximo subordinado é M1/P4 (GG 11-17).
-    # Se reporta a Gerente, o subordinado mais alto deve ser Coordenador/Especialista (GG < 15)
-    "Gerente": 15,       # GG Máximo = 14 (M1/Coordenador ou P4/Especialista)
+    # Nível Management
+    "Gerente": 15,           # Subordinado Max: GG 14 (Coordenador/Especialista M1/P4)
     
-    # Diretor (E1) tem GGs 18-21. Máximo subordinado é M3/M2 (GG 14-19).
-    "Diretor": 18,       # GG Máximo = 17 (Gerente Sênior M3)
-    
-    # Níveis Executivos
-    "Vice-presidente": 21, 
-    "Presidente / CEO": 23 
+    # Nível Supervisory / Expert
+    "Coordenador": 12,       # Subordinado Max: GG 11 (Analista Pleno/Sênior P2/P3)
+    "Supervisor": 12         # Subordinado Max: GG 11 (Analista Pleno/Sênior P2/P3)
+}
+
+# Mapeamento de GGs por Career Level (Para sugestão otimizada)
+LEVEL_GG_MAPPING = {
+    "W1":list(range(1, 6)), "W2":list(range(5, 9)), "W3":list(range(7, 11)),
+    "P1":list(range(8, 11)), "P2":list(range(10, 13)), "P3":list(range(12, 15)), "P4":list(range(14, 18)),
+    "M1":list(range(11, 15)), "M2":list(range(14, 17)), "M3":list(range(16, 20)),
+    "E1":list(range(18, 22)), "E2":list(range(21, 26))
 }
 
 # ===========================================================
@@ -236,11 +248,15 @@ st.divider()
 st.markdown("### 🧠 Contexto Funcional e Descrição do Cargo")
 
 c1, c2 = st.columns(2)
+# Obtém todas as famílias e subfamílias únicas dos dados
+all_families = sorted(df["job_family"].unique())
 with c1:
-    families = sorted(df["job_family"].unique())
-    selected_family = st.selectbox("📂 Família (Obrigatório)", ["Selecione..."] + families)
+    selected_family = st.selectbox("📂 Família (Obrigatório)", ["Selecione..."] + all_families)
 with c2:
-    subfamilies = sorted(df[df["job_family"] == selected_family]["sub_job_family"].unique()) if selected_family != "Selecione..." else []
+    if selected_family != "Selecione...":
+        subfamilies = sorted(df[df["job_family"] == selected_family]["sub_job_family"].unique())
+    else:
+        subfamilies = []
     selected_subfamily = st.selectbox("📂 Subfamília (Obrigatório)", ["Selecione..."] + subfamilies)
 
 desc_input = st.text_area("📝 Descrição detalhada do cargo (mínimo 50 palavras):", height=200)
@@ -248,47 +264,56 @@ word_count = len(desc_input.strip().split())
 st.caption(f"Contagem de palavras: {word_count} / 50")
 
 # ===========================================================
-# 6. DETECÇÃO DE NÍVEL E MATCHING
+# 6. DETECÇÃO DE NÍVEL E MATCHING (BASEADO EM WTW/GGS)
 # ===========================================================
-LEVEL_GG_MAPPING = {
-    "W1":[1,2,3,4,5],"W2":[5,6,7,8],"W3":[7,8,9,10],
-    "P1":[8,9,10],"P2":[10,11,12],"P3":[12,13,14],"P4":[14,15,16,17],
-    "M1":[11,12,13,14],"M2":[14,15,16],"M3":[16,17,18,19],
-    "E1":[18,19,20,21],"E2":[21,22,23,24,25]
-}
 
-def infer_market_level(superior, lidera, subordinados, abrangencia):
-    # Lógica ajustada para ser CONSERVADORA e evitar sobreposição com o cargo superior.
-    # O filtro hierárquico (GG_LIMITS_MAP) abaixo é a regra RÍGIDA de exclusão.
-    if superior in ["Presidente / CEO", "Vice-presidente"]:
-        return "E1" 
-    if superior == "Diretor" or abrangencia in ["Multipaís", "Global"]:
-        return "M3" 
-    if superior == "Gerente":
-        # Se reporta a Gerente (M2), o cargo é no máximo M1 (Coordenador) ou P4 (Especialista)
-        if lidera == "Sim" and subordinados in ["6-10","11-20","21-50","51-100","100+"]:
-            return "M1" # Sugere Coordenador/Supervisor (GG 11-14)
-        else:
-            return "P3" # Sugere Analista Sênior (GG 12-14)
-    if superior in ["Coordenador","Supervisor"]:
-        # Se reporta a Coordenador/Supervisor (M1/P4), o cargo é Analista Pleno/Júnior (P2/P1)
+def infer_market_level(superior, lidera, abrangencia):
+    """
+    Infernir o nível de carreira WTW (W, P, M, E) baseado em regras hierárquicas e escopo.
+    Esta função é conservadora e o filtro hierárquico rígido (GG_LIMITS_MAP) prevalece.
+    """
+    
+    # 1. Baseado na Hierarquia (Topo da Carreira)
+    if superior in ["Presidente / CEO"]:
+        return "E1" # Diretor ou VP
+    if superior in ["Vice-presidente", "Diretor"]:
+        return "M3" # Gerente Sênior / Head (M3)
+        
+    # 2. Baseado na Abrangência/Escopo
+    if abrangencia in ["Global", "Multipaís"]:
+        # Se reporta a Gerente/Coordenador, mas tem escopo Global/Multipaís, 
+        # sugere um Especialista Sênior (P4) ou M1 (Coordenador)
         if lidera == "Sim":
-             return "W3" # Sugere Líder de Produção (GG 7-10)
-        return "P2" # Sugere Analista Pleno (GG 10-12)
-    return "W2" 
+            return "M1"
+        return "P4" 
+        
+    # 3. Baseado em Liderança e Subordinação
+    if superior == "Gerente":
+        if lidera == "Sim":
+            return "M1" # Supervisor/Coordenador
+        return "P3" # Analista Sênior / Especialista
+        
+    if superior in ["Coordenador", "Supervisor"]:
+        if lidera == "Sim":
+             return "W3" # Líder de Produção/Operacional
+        return "P2" # Analista Pleno / Analista Júnior
+
+    return "W2" # Nível Operacional Padrão (W2)
 
 # ===========================================================
 # 7. EXECUÇÃO DE ANÁLISE (FILTRAGEM HIERÁRQUICA E OTIMIZAÇÃO DO MATCHING)
 # ===========================================================
 if st.button("🔍 Analisar Aderência", type="primary", use_container_width=True):
 
-    if "Selecione..." in [superior,lidera,abrangencia,selected_family,selected_subfamily] or word_count < 50:
-        st.warning("⚠️ Todos os campos obrigatórios devem ser preenchidos corretamente.")
+    # 7.1. Validação de Inputs
+    required_inputs = [superior, lidera, abrangencia, selected_family, selected_subfamily]
+    if "Selecione..." in required_inputs or word_count < 50:
+        st.warning("⚠️ Todos os campos obrigatórios devem ser preenchidos e a descrição deve ter no mínimo 50 palavras.")
         st.stop()
 
-    detected_key = infer_market_level(superior,lidera,subordinados,abrangencia)
+    detected_key = infer_market_level(superior, lidera, abrangencia)
     
-    # 1. Obter o GG Máximo Permitido para o Cargo Subordinado
+    # 7.2. Obter o GG Máximo Permitido (Regra RÍGIDA WTW: Subordinado < Superior)
     max_gg_allowed = GG_LIMITS_MAP.get(superior, 99) 
     
     # Obter os GGs sugeridos pela Banda WTW
@@ -296,32 +321,39 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
 
     st.markdown(f"""
     <div class="ai-insight-box">
-        <div class="ai-insight-title">🤖 Contexto Hierárquico Detectado</div>
-        <strong>Banda sugerida (WTW):</strong> {detected_key} (GGs {allowed_grades_wtw}).<br>
-        <strong>GG Máximo Permitido (Filtro Hierárquico):</strong> O cargo pesquisado deve ter um **Global Grade estritamente menor** que {max_gg_allowed}.
+        <div class="ai-insight-title">🤖 Contexto Hierárquico Detectado (Guia WTW)</div>
+        <strong>Banda de Carreira Sugerida:</strong> {detected_key} (GGs {min(allowed_grades_wtw)}-{max(allowed_grades_wtw)}).<br>
+        <strong>Filtro Hierárquico Rígido:</strong> O cargo pesquisado deve ter um **Global Grade estritamente menor** que **{max_gg_allowed}** (GG < {max_gg_allowed}) para respeitar a hierarquia.
     </div>
     """, unsafe_allow_html=True)
 
-    # 2. Filtragem de Máscara (Family/Subfamily)
+    # 7.3. Aplicação dos Filtros WTW
+    # 1. Filtro de Arquitetura (Família/Subfamília)
     mask = (df["job_family"] == selected_family) & (df["sub_job_family"] == selected_subfamily)
     
-    # Filtro 1 (Hierarquia RÍGIDA): Garante que o GG do cargo pesquisado seja estritamente inferior ao limite do superior.
+    # 2. Filtro Hierárquico RÍGIDO: Garante que o GG do cargo pesquisado seja estritamente inferior ao limite do superior.
     mask &= (df["global_grade_num"] < max_gg_allowed)
     
-    # Filtro 2 (WTW Otimizado): Combina a banda WTW sugerida com o filtro hierárquico.
-    # Apenas aplicamos a banda WTW se ela não anular o filtro hierárquico.
-    # Como a função infer_market_level foi ajustada para ser conservadora, este filtro ajuda a refinar.
+    # 3. Filtro Otimizado de Banda WTW: Refina o resultado para a banda de carreira sugerida.
     if allowed_grades_wtw:
         mask &= df["global_grade_num"].isin(allowed_grades_wtw) 
         
-    if not mask.any():
-        st.error(f"Nenhum cargo encontrado que satisfaça todos os filtros. Verifique se existem cargos com Global Grade no range {allowed_grades_wtw} E GG < {max_gg_allowed} na família selecionada. Seus dados no Excel podem não ter cargos nesse nível hierárquico inferior.")
-        st.stop()
-
-    filtered = df[mask].copy()
     
-    # 3. Otimização do Texto Base para Matching (Ponderação de Fatores WTW)
-    # Incluindo todos os campos relevantes para maior precisão semântica (Competências, KPIs, etc.)
+    filtered = df[mask].copy()
+
+    if filtered.empty:
+        st.error(f"""
+        ❌ **Nenhum Cargo Compatível Encontrado.** <br>
+        O filtro combinado de **Arquitetura (Família/Subfamília)** e **Hierarquia (GG < {max_gg_allowed})** não retornou nenhum resultado. 
+        <br>
+        Isso pode ocorrer se não houverem cargos de nível {detected_key} (GG < {max_gg_allowed}) registrados nesta Família/Subfamília no seu arquivo de dados. 
+        <br>
+        Tente ajustar o **Cargo ao qual reporta** ou a **Família/Subfamília**.
+        """, unsafe_allow_html=True)
+        st.stop()
+    
+    # 7.4. Cálculo de Similaridade (Precisão Semântica)
+    # Incluindo múltiplos campos para aumentar a precisão do match de conteúdo (Guia WTW: Job Content)
     job_texts = (
         filtered["job_profile"].fillna("") + ". " +
         filtered["role_description"].fillna("") + ". " +
@@ -332,12 +364,10 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         filtered["competencies_3"].fillna("")
     ).tolist()
     
-    # Usando o desc_input do usuário como query
     query_emb = model.encode([desc_input], show_progress_bar=False)[0]
     job_emb = model.encode(job_texts, show_progress_bar=False)
     sims_sem = cosine_similarity([query_emb], job_emb)[0]
 
-    # Similaridade por Keyword (TF-IDF)
     tfidf = TfidfVectorizer(max_features=10000, ngram_range=(1,2)).fit(job_texts)
     job_tfidf = tfidf.transform(job_texts)
     query_tfidf = tfidf.transform([desc_input])
@@ -347,16 +377,29 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     sims = 0.75 * sims_sem + 0.25 * sims_kw
     filtered["similarity"] = sims
     top3 = filtered.sort_values("similarity", ascending=False).head(3)
+    
+    best_score = top3.iloc[0]["similarity"] if not top3.empty else 0.0
+    threshold_weak = JOB_RULES.get("thresholds", {}).get("weak_match", 0.50)
+
+    # 7.5. Guardrail de Coerência (Verificação de Incoerência Semântica)
+    if best_score < threshold_weak:
+        st.error(f"""
+        ❌ **Alerta: Incoerência de Conteúdo (Baixa Aderência)**
+        <br>
+        A pontuação do melhor cargo compatível ({best_score*100:.1f}%) está abaixo do limite de Match Fraco ({threshold_weak*100:.0f}%).
+        <br>
+        Isso indica que a sua **Descrição Detalhada do Cargo** não é semanticamente coerente com o conteúdo dos cargos já existentes na **Família/Subfamília ({selected_family}/{selected_subfamily})**. 
+        <br>
+        **Ação Necessária:** Por favor, **refine o texto da descrição** para que ele reflita melhor o conteúdo dos cargos dessa área, ou verifique se a **Família/Subfamília** selecionada está correta.
+        """, unsafe_allow_html=True)
+        st.stop()
+
 
     # ===========================================================
     # 8. GRID FINAL (EXIBIÇÃO)
     # ===========================================================
     st.markdown("---")
     st.header("🏆 Cargos Mais Compatíveis")
-
-    if len(top3) < 1:
-        st.warning("Nenhum resultado encontrado. Tente ajustar a descrição ou filtros.")
-        st.stop()
 
     cards_data = []
     for _, row in top3.iterrows():
@@ -365,6 +408,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         lvl_name = ""
         gg_val = str(row["global_grade"]).strip() 
         
+        # Mapeia o Global Grade para o Level Name (Ex: P4, M2)
         if not df_levels.empty and "global_grade" in df_levels.columns and "level_name" in df_levels.columns:
             match = df_levels[df_levels["global_grade"].astype(str).str.strip() == gg_val]
             if not match.empty:
