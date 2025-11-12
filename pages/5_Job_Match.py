@@ -14,80 +14,16 @@ from utils.ui_components import lock_sidebar
 from utils.ui import setup_sidebar
 import re
 
-# ===========================================================
-# 🔹 Carregamento das regras de negócio da arquitetura de cargos
-# ===========================================================
+# Carrega as regras de correspondência de cargos
 try:
     with open("data/job_rules.json", "r", encoding="utf-8") as f:
         job_rules = json.load(f)
 except FileNotFoundError:
-    st.warning("⚠️ Arquivo de regras `data/job_rules.json` não encontrado. As regras personalizadas não serão aplicadas.")
+    st.warning("⚠️ Arquivo 'data/job_rules.json' não encontrado.")
     job_rules = {}
-except Exception as e:
-    st.error(f"Erro ao carregar `job_rules.json`: {e}")
+except json.JSONDecodeError as e:
+    st.error(f"Erro ao ler 'job_rules.json': {e}")
     job_rules = {}
-
-# ===========================================================
-# 🔹 Função de aplicação de regras de negócio
-# ===========================================================
-def apply_business_rules(input_text, candidate, metadata, job_rules):
-    """Aplica regras de negócio ao cálculo de similaridade entre o texto e o perfil de cargo."""
-    weight = 1.0
-    text = str(input_text).lower()
-    cand = str(candidate).lower()
-
-    # Hierarquia
-    hierarchy = {
-        "auxiliar": 1, "assistente": 2, "analista": 3, "especialista": 4,
-        "coordenador": 5, "supervisor": 5, "gerente": 6,
-        "gerente senior": 7, "diretor": 8, "head": 8
-    }
-
-    def detect_level(txt):
-        for k, v in hierarchy.items():
-            if k in txt:
-                return v
-        return 0
-
-    user_level = detect_level(text)
-    cand_level = detect_level(cand)
-
-    if user_level and cand_level:
-        if cand_level > user_level + 1:
-            weight *= 0.4
-        elif cand_level < user_level - 2:
-            weight *= 0.6
-        elif cand_level == user_level:
-            weight *= 1.1
-
-    # Gestão de equipe
-    if "sem equipe" in text or "individual" in text or "profissional" in text:
-        if any(k in cand for k in ["manager", "gerente", "coordenador"]):
-            weight *= 0.5
-    else:
-        if any(k in cand for k in ["manager", "gerente", "coordenador"]):
-            weight *= 1.1
-
-    # Abrangência
-    if "regional" in text:
-        weight *= 1.1
-    elif "global" in text:
-        weight *= 1.2
-    elif "local" in text:
-        weight *= 0.9
-
-    # Múltiplas áreas
-    if any(x in text for x in ["diversas áreas", "multiplas funções", "abrangência ampla"]):
-        weight *= 1.15
-
-    # Regras adicionais do JSON
-    for rule in job_rules.get("rules", []):
-        keywords = [k.lower() for k in rule.get("keywords", [])]
-        multiplier = rule.get("multiplier", 1.0)
-        if any(k in text for k in keywords):
-            weight *= multiplier
-
-    return weight
 
 # ===========================================================
 # 1. CONFIGURAÇÃO DA PÁGINA
@@ -98,6 +34,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+
 
 # ===========================================================
 # 2. CSS GLOBAL
