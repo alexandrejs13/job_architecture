@@ -15,6 +15,19 @@ from utils.ui import setup_sidebar
 import re
 
 # ===========================================================
+# 🔹 Carregamento das regras de negócio da arquitetura de cargos
+# ===========================================================
+try:
+    with open("data/job_rules.json", "r", encoding="utf-8") as f:
+        job_rules = json.load(f)
+except FileNotFoundError:
+    st.warning("⚠️ Arquivo de regras `data/job_rules.json` não encontrado. As regras personalizadas não serão aplicadas.")
+    job_rules = {}
+except Exception as e:
+    st.error(f"Erro ao carregar `job_rules.json`: {e}")
+    job_rules = {}
+
+# ===========================================================
 # 1. CONFIGURAÇÃO DA PÁGINA
 # ===========================================================
 st.set_page_config(
