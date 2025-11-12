@@ -331,7 +331,7 @@ def infer_market_band(superior, lidera, abrangencia, desc_input):
 # ===========================================================
 if st.button("🔍 Analisar Aderência", type="primary", use_container_width=True):
 
-    # 7.1. Validação de Inputs
+    # 7.1. Validação de Inputs - REFORÇADA PARA EVITAR ERRO NA INICIALIZAÇÃO
     required_inputs = [superior, lidera, abrangencia, selected_family, selected_subfamily]
     if "Selecione..." in required_inputs or word_count < 50:
         st.warning("⚠️ Todos os campos obrigatórios devem ser preenchidos e a descrição deve ter no mínimo 50 palavras.")
@@ -392,7 +392,6 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         st.stop()
     
     # 7.4. Cálculo de Similaridade (Precisão Semântica - 7 Fatores de Graduação)
-    # A precisão é determinada comparando a descrição do usuário (que deve refletir os 7 fatores) com o conteúdo dos jobs.
     job_texts = (
         filtered["job_profile"].fillna("") + ". " +
         filtered["role_description"].fillna("") + ". " +
