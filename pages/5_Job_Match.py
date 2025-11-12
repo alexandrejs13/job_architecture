@@ -28,6 +28,68 @@ except Exception as e:
     job_rules = {}
 
 # ===========================================================
+# 🔹 Função de aplicação de regras de negócio
+# ===========================================================
+def apply_business_rules(input_text, candidate, metadata, job_rules):
+    """Aplica regras de negócio ao cálculo de similaridade entre o texto e o perfil de cargo."""
+    weight = 1.0
+    text = str(input_text).lower()
+    cand = str(candidate).lower()
+
+    # Hierarquia
+    hierarchy = {
+        "auxiliar": 1, "assistente": 2, "analista": 3, "especialista": 4,
+        "coordenador": 5, "supervisor": 5, "gerente": 6,
+        "gerente senior": 7, "diretor": 8, "head": 8
+    }
+
+    def detect_level(txt):
+        for k, v in hierarchy.items():
+            if k in txt:
+                return v
+        return 0
+
+    user_level = detect_level(text)
+    cand_level = detect_level(cand)
+
+    if user_level and cand_level:
+        if cand_level > user_level + 1:
+            weight *= 0.4
+        elif cand_level < user_level - 2:
+            weight *= 0.6
+        elif cand_level == user_level:
+            weight *= 1.1
+
+    # Gestão de equipe
+    if "sem equipe" in text or "individual" in text or "profissional" in text:
+        if any(k in cand for k in ["manager", "gerente", "coordenador"]):
+            weight *= 0.5
+    else:
+        if any(k in cand for k in ["manager", "gerente", "coordenador"]):
+            weight *= 1.1
+
+    # Abrangência
+    if "regional" in text:
+        weight *= 1.1
+    elif "global" in text:
+        weight *= 1.2
+    elif "local" in text:
+        weight *= 0.9
+
+    # Múltiplas áreas
+    if any(x in text for x in ["diversas áreas", "multiplas funções", "abrangência ampla"]):
+        weight *= 1.15
+
+    # Regras adicionais do JSON
+    for rule in job_rules.get("rules", []):
+        keywords = [k.lower() for k in rule.get("keywords", [])]
+        multiplier = rule.get("multiplier", 1.0)
+        if any(k in text for k in keywords):
+            weight *= multiplier
+
+    return weight
+
+# ===========================================================
 # 1. CONFIGURAÇÃO DA PÁGINA
 # ===========================================================
 st.set_page_config(
@@ -38,7 +100,7 @@ st.set_page_config(
 )
 
 # ===========================================================
-# 2. CSS GLOBAL (MESMO PADRÃO DA PÁGINA JOB PROFILE DESCRIPTION)
+# 2. CSS GLOBAL
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
@@ -73,13 +135,7 @@ st.markdown("""
     padding-left: 1rem !important; 
     padding-right: 1rem !important;
 }
-
-/* ============ ESTILO DE GRID IDÊNTICO AO JOB PROFILE DESCRIPTION ============ */
-.comparison-grid {
-    display: grid;
-    gap: 20px;
-    margin-top: 20px;
-}
+.comparison-grid { display: grid; gap: 20px; margin-top: 20px; }
 .grid-cell {
     background: #fff;
     border: 1px solid #e0e0e0;
@@ -92,13 +148,7 @@ st.markdown("""
     border-radius: 12px 12px 0 0;
     border-bottom: none;
 }
-.fjc-title { 
-    font-size: 18px; 
-    font-weight: 800; 
-    color: #2c3e50; 
-    margin-bottom: 2px;
-    min-height: 50px; 
-}
+.fjc-title { font-size: 18px; font-weight: 800; color: #2c3e50; margin-bottom: 2px; min-height: 50px; }
 .fjc-gg-row { display: flex; justify-content: space-between; align-items: center; }
 .fjc-gg { color: #145efc; font-weight: 700; }
 .fjc-score { color: #145efc; font-weight: 700; padding: 4px 10px; border-radius: 12px; font-size: 0.9rem; } 
@@ -171,198 +221,48 @@ df, df_levels = load_data()
 model = load_model()
 
 # ===========================================================
-# 4. CAMPOS DE ENTRADA (WTW)
+# 4. INTERFACE E ANÁLISE
 # ===========================================================
-st.markdown("### 🔧 Parâmetros Hierárquicos e Organizacionais")
+st.markdown("### 🧠 Descrição do Cargo para Análise")
+desc_input = st.text_area("📝 Digite ou cole a descrição do cargo:", height=180)
 
-c1, c2, c3 = st.columns(3)
-with c1:
-    superior = st.selectbox("📋 Cargo ao qual reporta *", [
-        "Selecione...", "Supervisor", "Coordenador", "Gerente", "Diretor", "Vice-presidente", "Presidente / CEO"
-    ])
-with c2:
-    lidera = st.selectbox("👥 Possui equipe? *", ["Selecione...", "Sim", "Não"])
-with c3:
-    abrangencia = st.selectbox("🌍 Abrangência da função *", [
-        "Selecione...", "Local", "Regional (mais de 1 estado)", "Nacional", "Multipaís", "Global"
-    ])
-
-if lidera == "Sim":
-    c4, c5 = st.columns(2)
-    with c4:
-        subordinados = st.selectbox("📈 Nº de subordinados diretos *", [
-            "0-5", "6-10", "11-20", "21-50", "51-100", "100+"
-        ])
-    with c5:
-        multiplas_areas = st.selectbox("🏢 Responsável por múltiplas áreas / funções? *", ["Não", "Sim"])
-else:
-    subordinados = "0"
-    multiplas_areas = "Não"
-
-st.divider()
-
-# ===========================================================
-# 5. CONTEXTO FUNCIONAL E DESCRIÇÃO
-# ===========================================================
-st.markdown("### 🧠 Contexto Funcional e Descrição do Cargo")
-
-c1, c2 = st.columns(2)
-with c1:
-    families = sorted(df["Job Family"].unique())
-    selected_family = st.selectbox("📂 Família (Obrigatório)", ["Selecione..."] + families)
-with c2:
-    subfamilies = sorted(df[df["Job Family"] == selected_family]["Sub Job Family"].unique()) if selected_family != "Selecione..." else []
-    selected_subfamily = st.selectbox("📂 Subfamília (Obrigatório)", ["Selecione..."] + subfamilies)
-
-desc_input = st.text_area("📝 Descrição detalhada do cargo (mínimo 50 palavras):", height=200)
-word_count = len(desc_input.strip().split())
-st.caption(f"Contagem de palavras: {word_count} / 50")
-
-# ===========================================================
-# 6. DETECÇÃO DE NÍVEL E MATCHING
-# ===========================================================
-LEVEL_GG_MAPPING = {
-    "W1":[1,2,3,4,5],"W2":[5,6,7,8],"W3":[7,8,9,10],
-    "P1":[8,9,10],"P2":[10,11,12],"P3":[12,13,14],"P4":[14,15,16,17],
-    "M1":[11,12,13,14],"M2":[14,15,16],"M3":[16,17,18,19],
-    "E1":[18,19,20,21],"E2":[21,22,23,24,25]
-}
-
-def infer_market_level(superior, lidera, subordinados, abrangencia):
-    if superior in ["Presidente / CEO", "Vice-presidente"]:
-        return "E2"
-    if superior == "Diretor" or abrangencia in ["Multipaís", "Global"]:
-        return "E1"
-    if superior == "Gerente":
-        if lidera == "Sim" and subordinados in ["6-10","11-20","21-50","51-100","100+"]:
-            return "M2"
-        else:
-            return "M1"
-    if superior in ["Coordenador","Supervisor"]:
-        return "P4"
-    return "P2"
-
-# ===========================================================
-# 7. EXECUÇÃO DE ANÁLISE
-# ===========================================================
 if st.button("🔍 Analisar Aderência", type="primary", use_container_width=True):
-
-    if "Selecione..." in [superior,lidera,abrangencia,selected_family,selected_subfamily] or word_count < 50:
-        st.warning("⚠️ Todos os campos obrigatórios devem ser preenchidos corretamente.")
+    if len(desc_input.split()) < 50:
+        st.warning("Por favor, insira ao menos 50 palavras.")
         st.stop()
 
-    detected_key = infer_market_level(superior,lidera,subordinados,abrangencia)
-    allowed_grades = LEVEL_GG_MAPPING.get(detected_key, [])
-
-    st.markdown(f"""
-    <div class="ai-insight-box">
-        <div class="ai-insight-title">🤖 Contexto Hierárquico Detectado</div>
-        <strong>Banda sugerida:</strong> {detected_key} — conforme práticas WTW e parâmetros informados.<br>
-        <small>Baseado em: reporte a {superior.lower()}, liderança = {lidera.lower()}, abrangência = {abrangencia.lower()}.</small>
-    </div>
-    """, unsafe_allow_html=True)
-
-    mask = (df["Job Family"] == selected_family) & (df["Sub Job Family"] == selected_subfamily)
-    if allowed_grades:
-        mask &= df["Global Grade Num"].isin(allowed_grades)
-    if not mask.any():
-        st.error("Nenhum cargo encontrado dentro da família e subfamília informadas.")
-        st.stop()
-
-    filtered = df[mask].copy()
-    job_texts = (filtered["Job Profile"].fillna("") + ". " +
-                 filtered["Role Description"].fillna("") + ". " +
-                 filtered["Qualifications"].fillna("")).tolist()
-
+    job_texts = (df["Job Profile"].fillna("") + ". " + df["Role Description"].fillna("") + ". " + df["Qualifications"].fillna("")).tolist()
     job_emb = model.encode(job_texts, show_progress_bar=False)
     query_emb = model.encode([desc_input], show_progress_bar=False)[0]
     sims_sem = cosine_similarity([query_emb], job_emb)[0]
 
-    tfidf = TfidfVectorizer(max_features=10000, ngram_range=(1,2)).fit(job_texts)
+    tfidf = TfidfVectorizer(max_features=10000, ngram_range=(1, 2)).fit(job_texts)
     job_tfidf = tfidf.transform(job_texts)
     query_tfidf = tfidf.transform([desc_input])
     sims_kw = cosine_similarity(query_tfidf, job_tfidf)[0]
 
     sims = 0.75 * sims_sem + 0.25 * sims_kw
-    filtered["similarity"] = sims
-    top3 = filtered.sort_values("similarity", ascending=False).head(3)
 
-    # ===========================================================
-    # 8. GRID FINAL (IDÊNTICO AO JOB PROFILE DESCRIPTION)
-    # ===========================================================
+    # ➕ Aplica regras de negócio no peso de similaridade
+    for i, row in df.iterrows():
+        sims[i] *= apply_business_rules(desc_input, row["Job Profile"], row.to_dict(), job_rules)
+
+    df["similarity"] = sims
+    top3 = df.sort_values("similarity", ascending=False).head(3)
+
     st.markdown("---")
     st.header("🏆 Cargos Mais Compatíveis")
 
-    if len(top3) < 1:
+    if top3.empty:
         st.warning("Nenhum resultado encontrado.")
         st.stop()
 
-    cards_data = []
     for _, row in top3.iterrows():
-        score_val = float(row["similarity"]) * 100
-        score_bg = "#145efc"
-        lvl_name = ""
-        gg_val = str(row["Global Grade"]).strip()
-        if not df_levels.empty and "Global Grade" in df_levels.columns and "Level Name" in df_levels.columns:
-            match = df_levels[df_levels["Global Grade"].astype(str).str.strip() == gg_val]
-            if not match.empty:
-                lvl_name = f"• {match['Level Name'].iloc[0]}"
-        cards_data.append({
-            "row": row,
-            "score_fmt": f"{score_val:.1f}%",
-            "score_bg": score_bg,
-            "lvl": lvl_name
-        })
-
-    num_results = len(cards_data)
-    grid_style = f"grid-template-columns: repeat({num_results}, 1fr);"
-    grid_html = f'<div class="comparison-grid" style="{grid_style}">'
-
-    sections_config = [
-        ("🧭 Sub Job Family Description", "Sub Job Family Description", "#95a5a6"),
-        ("🧠 Job Profile Description", "Job Profile Description", "#e91e63"),
-        ("🏛️ Career Band Description", "Career Band Description", "#673ab7"),
-        ("🎯 Role Description", "Role Description", "#145efc"), 
-        ("🏅 Grade Differentiator", "Grade Differentiator", "#ff9800"),
-        ("🎓 Qualifications", "Qualifications", "#009688")
-    ]
-
-    # 1. Cabeçalho
-    for card in cards_data:
-        grid_html += f"""
-        <div class="grid-cell header-cell">
-            <div class="fjc-title">{html.escape(card['row'].get('Job Profile', '-'))}</div>
-            <div class="fjc-gg-row">
-                <div class="fjc-gg">GG {card['row'].get('Global Grade', '-')} {card['lvl']}</div>
-                <div class="fjc-score">{card['score_fmt']} Match</div>
-            </div>
-        </div>"""
-
-    # 2. Metadados
-    for card in cards_data:
-        d = card['row']
-        meta = []
-        for lbl, col in [("Família","Job Family"),("Subfamília","Sub Job Family"),("Carreira","Career Path"),("Cód","Full Job Code")]:
-            val = str(d.get(col,"") or "-").strip()
-            meta.append(f'<div class="meta-row"><strong>{lbl}:</strong> {html.escape(val)}</div>')
-        grid_html += f'<div class="grid-cell meta-cell">{"".join(meta)}</div>'
-
-    # 3. Seções coloridas
-    for title, field, color in sections_config:
-        for card in cards_data:
-            content = str(card['row'].get(field, '-'))
-            if len(content.strip()) < 2 or content.lower() == 'nan':
-                grid_html += '<div class="grid-cell section-cell" style="border-left-color: transparent; background: transparent; border: none;"></div>'
-            else:
-                grid_html += f"""
-                <div class="grid-cell section-cell" style="border-left-color: {color};">
-                    <div class="section-title" style="color: {color};">{title}</div>
-                    <div class="section-content">{html.escape(content)}</div>
-                </div>"""
-
-    # 4. Rodapé
-    for _ in cards_data:
-        grid_html += '<div class="grid-cell footer-cell"></div>'
-
-    grid_html += '</div>'
-    st.markdown(grid_html, unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="ai-insight-box">
+            <div class="ai-insight-title">🎯 {html.escape(row['Job Profile'])}</div>
+            <b>Similaridade:</b> {row['similarity']*100:.1f}%<br>
+            <b>Global Grade:</b> {row['Global Grade']}<br>
+            <b>Família:</b> {row['Job Family']} | <b>Sub-Família:</b> {row['Sub Job Family']}
+        </div>
+        """, unsafe_allow_html=True)
