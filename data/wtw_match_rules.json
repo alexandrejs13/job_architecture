@@ -61,8 +61,9 @@
       "conselheiro", "instrutor", "expert", "autoridade reconhecida", "define a estratégia dentro da própria disciplina"
     ],
     "M": [
-      "coordena equipe", "supervisiona atividades", "responsabilidade total de supervisão", 
-      "gestão de orçamentos", "define prioridades", "influencia business strategy", "coaching e desenvolvimento", 
+      "supervisor", "coordenador", "líder de equipe", "gerente", "gestor", "coordena equipe", 
+      "supervisiona atividades", "responsabilidade total de supervisão", "gestão de orçamentos", 
+      "define prioridades", "influencia business strategy", "coaching e desenvolvimento", 
       "hiring", "performance reviews", "responsabilidade pelo p&l"
     ],
     "EX": [
