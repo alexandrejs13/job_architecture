@@ -476,8 +476,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     # ===========================================================
     # 8. GRID FINAL (EXIBIÇÃO)
     # ===========================================================
-    st.markdown("---
-")
+    st.markdown("---")
     st.header("🏆 Cargos Mais Compatíveis")
 
     cards_data = []
