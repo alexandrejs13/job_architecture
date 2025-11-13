@@ -19,14 +19,14 @@ import numpy as np
 # 1. CONFIGURAÇÃO DA PÁGINA
 # ===========================================================
 st.set_page_config(
-    page_title="Job Match",
+    page_title="Job Match GGS Estruturado",
     page_icon="🧩",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ===========================================================
-# 2. CSS GLOBAL (MESMO PADRÃO DA PÁGINA JOB PROFILE DESCRIPTION)
+# 2. CSS GLOBAL (Manutenção do layout original)
 # ===========================================================
 css_path = Path(__file__).parents[1] / "assets" / "header.css"
 if css_path.exists():
@@ -150,7 +150,7 @@ st.markdown("""
 
 <div class="page-header">
   <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/checkmark%20success.png" alt="icon">
-  Análise de Aderência de Cargo (Job Match)
+  Análise de Aderência de Cargo (Filtro Estruturado GGS)
 </div>
 """, unsafe_allow_html=True)
 
@@ -176,18 +176,17 @@ def load_model():
 
 @st.cache_data
 def load_json_rules():
-    # ATENÇÃO: Carrega o NOVO JSON UNIFICADO
+    # Carrega as regras unificadas para referências hierárquicas
     path = Path("wtw_match_rules.json") 
     if path.exists():
         with open(path, 'r', encoding='utf-8') as f:
             return json.load(f)
-    return {"thresholds": {"weak_match": 0.50}, "career_bands": {}, "wtw_reporting_limits": {}, "level_keywords": {}} # Default fallback
+    return {"thresholds": {"weak_match": 0.50}, "wtw_reporting_limits": {}} # Default fallback
 
 @st.cache_data
 def load_data():
-    """Carrega os dados, aplica a sanitização e cria a coluna Global Grade Num."""
+    """Carrega os dados e cria a coluna Global Grade Num."""
     try:
-        # load_excel_data() deve ser fornecido
         data = load_excel_data() 
     except NameError:
         data = {"job_profile": pd.DataFrame(), "level_structure": pd.DataFrame()}
@@ -206,284 +205,217 @@ df, df_levels = load_data()
 model = load_model()
 JOB_RULES = load_json_rules()
 
-# EXTRAÇÃO DAS REGRAS WTW DO NOVO JSON UNIFICADO
 GG_LIMITS_MAP = JOB_RULES.get("wtw_reporting_limits", {})
 
-LEVEL_GG_MAPPING = {}
-for band, data in JOB_RULES.get("career_bands", {}).items():
-    if data and "gg_range" in data and len(data["gg_range"]) == 2:
-        start, end = data["gg_range"]
-        LEVEL_GG_MAPPING[band] = list(range(start, end + 1))
-        
-LEVEL_KEYWORDS = JOB_RULES.get("level_keywords", {})
+# ===========================================================
+# 4. FUNÇÃO DE CÁLCULO DE MATCH BASEADO EM PARÂMETROS
+# ===========================================================
+
+def calculate_structured_match(df_filtered, params):
+    """
+    Calcula a pontuação de aderência (similarity) baseado nos inputs estruturados 
+    do usuário e nos campos do Job Profile.
+    """
+    if df_filtered.empty:
+        return pd.DataFrame()
+
+    # Ponderadores para os fatores
+    weights = {
+        'gg_proximity': 0.40,
+        'knowledge_match': 0.30,
+        'leadership_match': 0.20,
+        'impact_match': 0.10
+    }
+    
+    # 1. Proximidade do GG (Hierarquia) - Peso 40%
+    df_filtered['target_gg_normalized'] = params['target_gg'] / 25
+    df_filtered['gg_normalized'] = df_filtered['global_grade_num'] / 25
+    # Usa a função gaussiana/exponencial para medir a proximidade ao GG alvo
+    df_filtered['score_gg'] = np.exp(-((df_filtered['gg_normalized'] - df_filtered['target_gg_normalized'])**2) / 0.05)
+    df_filtered['score_gg'] = df_filtered['score_gg'] * weights['gg_proximity']
+    
+    # 2. Match de Conhecimento (Knowledge/Qualifications) - Peso 30%
+    # Verifica a correspondência de educação
+    df_filtered['score_knowledge'] = 0
+    if params['education'] == 'Superior Completo':
+         # Se exige superior, pontua cargos que pedem qualificação (analista/prof.)
+        df_filtered.loc[df_filtered['qualifications'].str.contains('superior|analista|profissionais|experiência vasta', case=False, na=False), 'score_knowledge'] = 1
+    elif params['education'] == 'Técnico':
+        df_filtered.loc[df_filtered['qualifications'].str.contains('técnico|vocacional|certificação', case=False, na=False), 'score_knowledge'] = 1
+    
+    df_filtered['score_knowledge'] = df_filtered['score_knowledge'] * weights['knowledge_match']
+    
+    # 3. Match de Liderança (Management/IC Match) - Peso 20%
+    df_filtered['score_leadership'] = 0
+    if params['is_manager']:
+        # Se é gestor, pontua se o cargo é de gestão/supervisão (M)
+        df_filtered.loc[df_filtered['career_path'].str.contains('manager|coordenador|supervisor', case=False, na=False), 'score_leadership'] = 1
+    elif params['leadership_scope'] == 'Orientação Técnica':
+        # Se é IC mas orienta (como Analista Sênior), pontua o caminho P/IC
+        df_filtered.loc[df_filtered['career_path'].str.contains('analista sênior|especialista|instrutor', case=False, na=False), 'score_leadership'] = 1
+    
+    df_filtered['score_leadership'] = df_filtered['score_leadership'] * weights['leadership_match']
+
+    # 4. Match de Impacto (Scope/Área) - Peso 10%
+    df_filtered['score_impact'] = 0
+    if params['impact_scope'] == 'Função/Subfunção':
+        # Busca por termos que indicam impacto funcional
+        df_filtered.loc[df_filtered['role_description'].str.contains('função|sub-função|departamento', case=False, na=False), 'score_impact'] = 1
+    
+    df_filtered['score_impact'] = df_filtered['score_impact'] * weights['impact_match']
+
+    # Soma final dos scores
+    df_filtered['similarity'] = df_filtered['score_gg'] + df_filtered.get('score_knowledge', 0) + df_filtered.get('score_leadership', 0) + df_filtered.get('score_impact', 0)
+    
+    # Normaliza a pontuação final (máximo 1.0)
+    max_possible_score = weights['gg_proximity'] + weights['knowledge_match'] + weights['leadership_match'] + weights['impact_match']
+    df_filtered['similarity'] = np.clip(df_filtered['similarity'] / max_possible_score, 0, 1)
+
+    return df_filtered.sort_values("similarity", ascending=False)
 
 
 # ===========================================================
-# 4. CAMPOS DE ENTRADA (WTW)
+# 5. CAMPOS DE ENTRADA DO FORMULÁRIO GGS ESTRUTURADO
 # ===========================================================
-st.markdown("### 🔧 Parâmetros Hierárquicos e Organizacionais")
+st.markdown("### 🧠 Contexto Funcional e Fatores de Graduação (GGS)")
 
 c1, c2, c3 = st.columns(3)
 with c1:
-    superior = st.selectbox("📋 Cargo ao qual reporta *", [
-        "Selecione...", "Supervisor", "Coordenador", "Gerente", "Diretor", "Vice-presidente", "Presidente / CEO"
-    ])
+    families = sorted(df["job_family"].unique())
+    selected_family = st.selectbox("📂 Família (Função) *", ["Selecione..."] + families)
 with c2:
-    lidera = st.selectbox("👥 Possui equipe? *", ["Selecione...", "Sim", "Não"])
+    subfamilies = sorted(df[df["job_family"] == selected_family]["sub_job_family"].unique()) if selected_family != "Selecione..." else []
+    selected_subfamily = st.selectbox("📂 Subfamília (Disciplina) *", ["Selecione..."] + subfamilies)
 with c3:
-    abrangencia = st.selectbox("🌍 Abrangência da função *", [
-        "Selecione...", "Local", "Regional (mais de 1 estado)", "Nacional", "Multipaís", "Global"
-    ])
+    # Simula o GG que o usuário espera para o cargo. (Base para GG Proximity Score)
+    target_gg = st.slider("⭐ Global Grade Alvo (Estimativa de Nível)", min_value=1, max_value=25, value=10)
 
-if lidera == "Sim":
-    c4, c5 = st.columns(2)
-    with c4:
-        subordinados = st.selectbox("📈 Nº de subordinados diretos *", [
-            "0-5", "6-10", "11-20", "21-50", "51-100", "100+"
-        ])
-    with c5:
-        multiplas_areas = st.selectbox("🏢 Responsável por múltiplas áreas / funções? *", ["Não", "Sim"])
-else:
-    subordinados = "0"
-    multiplas_areas = "Não"
+
+# --- Seção 2: Fatores GGS de Conteúdo ---
+st.divider()
+st.markdown("#### Fatores de Complexidade (Substitui a Descrição Detalhada)")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    # Fator 1: Conhecimento Funcional / Expertise do Negócio
+    knowledge_level = st.selectbox(
+        "1. Profundidade do Conhecimento Funcional",
+        ["Rotinas/Procedimentos Definidos (Banda U/W)", 
+         "Conhecimento de Conceitos e Princípios (Banda P/T)", 
+         "Domínio Amplo e Integrado da Disciplina (Banda P/M Sênior)"]
+    )
+    
+    # Fator 2: Solução de Problemas / Julgamento
+    problem_level = st.selectbox(
+        "2. Complexidade na Solução de Problemas",
+        ["Seguir Regras Simples", 
+         "Julgamento baseado em Prática e Experiência",
+         "Julgamento Complexo, Análise de Múltiplas Fontes (Banda P/M)"]
+    )
+
+with col2:
+    # Fator 3: Liderança / Gestão de Pessoas
+    leadership_scope = st.selectbox(
+        "3. Escopo de Liderança (Gestão/Influência)",
+        ["Nenhuma responsabilidade de gestão", 
+         "Orientação/Treinamento de Juniores (IC)",
+         "Responsabilidade Total de Supervisão (M1/M2)"]
+    )
+
+    # Fator 4: Área de Impacto
+    impact_scope = st.selectbox(
+        "4. Amplitude do Impacto Organizacional",
+        ["Restrito ao próprio Time",
+         "Área/Subfunção (Ex: Contabilidade)",
+         "Função/Organização (Ex: Vice-Presidência)"]
+    )
+
+# Mapeamento do input para o parâmetro simples de Match (para Leadership Score)
+is_manager_input = "Não"
+if "Responsabilidade Total de Supervisão" in leadership_scope:
+    is_manager_input = "Sim"
+
+# Mapeamento do input para o parâmetro simples de Match (para Leadership Score)
+leadership_type = "Nenhum"
+if "Orientação/Treinamento" in leadership_scope:
+    leadership_type = "Orientação Técnica"
+
+# Fatores opcionais para simular a pontuação no Score
+education_req = "Superior Completo" if "Conceitos e Princípios" in knowledge_level else "Não especificado"
+impact_req = "Função/Subfunção" if "Área/Subfunção" in impact_scope else "Restrito ao Time"
+
 
 st.divider()
 
 # ===========================================================
-# 5. CONTEXTO FUNCIONAL E DESCRIÇÃO
-# ===========================================================
-st.markdown("### 🧠 Contexto Funcional e Descrição do Cargo")
-
-c1, c2 = st.columns(2)
-all_families = sorted(df["job_family"].unique())
-with c1:
-    selected_family = st.selectbox("📂 Família (Obrigatório)", ["Selecione..."] + all_families)
-with c2:
-    if selected_family != "Selecione...":
-        subfamilies = sorted(df[df["job_family"] == selected_family]["sub_job_family"].unique())
-    else:
-        subfamilies = []
-    selected_subfamily = st.selectbox("📂 Subfamília (Obrigatório)", ["Selecione..."] + subfamilies)
-
-desc_input = st.text_area("📝 Descrição detalhada do cargo (mínimo 50 palavras):", height=200)
-word_count = len(desc_input.strip().split())
-st.caption(f"Contagem de palavras: {word_count} / 50")
-
-# ===========================================================
-# 6. DETECÇÃO DE NÍVEL E MATCHING (BASEADO EM WTW/GGS)
+# 6. EXECUÇÃO DE ANÁLISE (FILTRAGEM E MATCHING ESTRUTURADO)
 # ===========================================================
 
-def ggs_decision_score(desc_text, superior_reporta, lidera_equipe, abrangencia_funcao):
-    """
-    Pontua a descrição do cargo e as entradas de escopo para simular a Árvore de Decisão GGS (Pág. 44).
-    Retorna a Banda WTW (EX, M, P, U, W) mais provável.
-    """
-    desc_lower = desc_text.lower()
-    
-    # 1. Pontuação de Keywords de Management vs IC (Todas as variáveis de conteúdo do trabalho)
-    management_kws = LEVEL_KEYWORDS.get("M", []) + LEVEL_KEYWORDS.get("EX", [])
-    ic_kws = LEVEL_KEYWORDS.get("P", []) + LEVEL_KEYWORDS.get("U", []) + LEVEL_KEYWORDS.get("W", [])
-    
-    m_score = sum(1 for kw in management_kws if kw in desc_lower)
-    ic_score = sum(1 for kw in ic_kws if kw in desc_lower)
-    
-    # --- Passo A: Gerencia Pessoas? (Managing people a focus?) ---
-    is_management_focus = lidera_equipe == "Sim" or m_score > ic_score
-    
-    # --- SIM: Carreira de Management (M, EX) ---
-    if is_management_focus:
-        
-        # 1. CEO/Business Unit Manager? (Banda 6 / EX)
-        if superior_reporta in ["Presidente / CEO", "Vice-presidente"]:
-            return "EX"
-            
-        # 2. Set/Significantly influence business strategy? (5FS/5BS / EX)
-        is_business_strategy = superior_reporta in ["Diretor"] or abrangencia_funcao in ["Global", "Multipaís"]
-        if is_business_strategy:
-            return "EX" 
-            
-        # 3. Set/Significantly influence functional strategy? (4M / M)
-        return "M" 
-            
-        # 4. Supervisor (3M / M)
-        if superior_reporta in ["Coordenador", "Supervisor"]:
-            return "M" 
-            
-        return "M" 
-
-    # --- NÃO: Carreira de Individual Contributor (P, U, W) ---
-    else:
-        # 1. Specific job functional knowledge? (Banda 1 / W)
-        if ic_score < 3 and any(kw in desc_lower for kw in LEVEL_KEYWORDS.get("W", [])):
-             return "W" 
-
-        # 2. Independence in applying professional expertise? (Banda 3IC/4IC vs Banda 2)
-        is_independent_expertise = "independente" in desc_lower or "julgamento" in desc_lower or "expertise profissional" in desc_lower
-        
-        if is_independent_expertise:
-            
-            # 3. Subject Matter Expert (SME)? (Banda 4IC vs 3IC / P)
-            is_sme = "expert" in desc_lower or "líder técnico" in desc_lower or "guru" in desc_lower
-            if is_sme:
-                return "P" 
-            
-            return "P" 
-        
-        # 4. Clerical/Admin/Technical (Banda 2 / U)
-        return "U" 
-
-
-def infer_market_band(superior, lidera, abrangencia, desc_input):
-    # Wrapper para simular a Árvore de Decisão GGS e retornar a banda WTW
-    return ggs_decision_score(desc_input, superior, lidera, abrangencia)
-
-
-# ===========================================================
-# 7. EXECUÇÃO DE ANÁLISE (FILTRAGEM HIERÁRQUICA E OTIMIZAÇÃO DO MATCHING)
-# ===========================================================
 if st.button("🔍 Analisar Aderência", type="primary", use_container_width=True):
 
-    # 7.1. Validação de Inputs - REFORÇADA E AGORA MAIS RÍGIDA
-    required_inputs = [superior, lidera, abrangencia, selected_family, selected_subfamily]
-    if "Selecione..." in required_inputs or word_count < 50:
-        st.warning("⚠️ Todos os campos obrigatórios devem ser preenchidos e a descrição deve ter no mínimo 50 palavras.")
+    # 6.1. Validação de Inputs Essenciais
+    required_inputs = [selected_family, selected_subfamily, superior]
+    if "Selecione..." in required_inputs:
+        st.warning("⚠️ Os campos Família, Subfamília e Cargo de Reporte são obrigatórios.")
         st.stop()
         
-    # Chama a função que considera a descrição E as regras GGS
-    detected_band = infer_market_band(superior, lidera, abrangencia, desc_input)
+    # 6.2. Determinar o GG Máximo Permitido (Filtro Rígido Hierárquico)
+    max_gg_allowed = GG_LIMITS_MAP.get(superior, 99) 
     
-    # 7.2. Obter o GG Máximo Permitido (Regra RÍGIDA WTW: Subordinado < Superior)
-    # O limite é o GG do superior, e o cargo do subordinado deve ser ESTRITAMENTE MENOR.
-    max_gg_allowed = GG_LIMITS_MAP.get(superior, 99)
+    # 6.3. Coleta de Parâmetros de Match
+    match_params = {
+        'target_gg': target_gg,
+        'career_type': "Analista" if "Conceitos e Princípios" in knowledge_level else "Apoio",
+        'is_manager': is_manager_input == "Sim",
+        'education': education_req,
+        'leadership_scope': leadership_type,
+        'impact_scope': impact_req
+    }
 
-    # Se o superior for "Selecione...", o limite é 99 (sem limite hierárquico)
-    if superior == "Selecione...":
-        max_gg_allowed = 99
+    # 6.4. Aplicação do Filtro Rígido (Arquitetura e Hierarquia)
+    mask = (df["job_family"] == selected_family) & \
+           (df["sub_job_family"] == selected_subfamily) & \
+           (df["global_grade_num"] < max_gg_allowed)
     
-    # Obtemos a faixa de GGs sugeridos pela Banda detectada
-    allowed_grades_wtw = LEVEL_GG_MAPPING.get(detected_band, [])
+    filtered_df = df[mask].copy()
+
+    if filtered_df.empty:
+        st.error(f"Nenhum cargo encontrado que satisfaça os filtros de Arquitetura ({selected_family}/{selected_subfamily}) e Hierarquia (GG < {max_gg_allowed}).")
+        st.stop()
     
-    min_gg_suggested = min(allowed_grades_wtw) if allowed_grades_wtw else 0
-    max_gg_suggested = max(allowed_grades_wtw) if allowed_grades_wtw else max_gg_allowed - 1
+    # 6.5. Cálculo da Pontuação de Aderência (Match Estruturado)
+    # A pontuação é baseada na aderência das respostas (match_params) aos dados do Job Profile
+    results_df = calculate_structured_match(filtered_df, match_params)
+    
+    # 6.6. Exibição dos Top 3 Resultados
+    top3 = results_df.head(3)
 
-    # Aplicamos o filtro rígido de hierarquia na faixa sugerida
-    if allowed_grades_wtw:
-        if not any(gg < max_gg_allowed for gg in allowed_grades_wtw):
-            st.markdown(f"""
-            <div class="custom-error-box">
-                <div class="custom-error-title">❌ Conflito de Nível Hierárquico (Regra WTW Rígida)</div>
-                A banda de carreira sugerida (**{detected_band}**) ou a Descrição do Cargo sugere um nível que é igual ou superior ao limite permitido pelo cargo ao qual ele reporta (GG < {max_gg_allowed}).
-                <br>
-                Ajuste o **Cargo ao qual reporta** ou refine a **Descrição Detalhada do Cargo** para um nível inferior.
-                <br>
-                **Ação Necessária:** O GG do cargo sugerido ({min_gg_suggested} a {max_gg_suggested}) é incompatível com o limite hierárquico (GG < {max_gg_allowed}).
-                <br>
-                **Regra de Ouro:** O conteúdo do trabalho (descrição) deve ser compatível com um GG que seja estritamente menor que o GG do superior.
-            </div>
-            """, unsafe_allow_html=True)
-            st.stop()
-        else:
-            allowed_grades_wtw = [gg for gg in allowed_grades_wtw if gg < max_gg_allowed]
+    if top3.empty:
+        st.warning("Nenhum resultado encontrado após o cálculo de aderência. Tente ajustar os parâmetros.")
+        st.stop()
 
+    # --- Insight Box (Adaptação para o novo modelo) ---
     st.markdown(f"""
     <div class="ai-insight-box">
-        <div class="ai-insight-title">🤖 Contexto Hierárquico e de Conteúdo Detectado (GGS 4.2)</div>
-        **Banda de Carreira Sugerida:** **{detected_band}** (GGs Válidos: **{min_gg_suggested}** a **{max_gg_suggested}**).<br>
-        **Filtro Hierárquico Rígido:** O cargo deve ter um **Global Grade estritamente menor** que **{max_gg_allowed}** (GG < {max_gg_allowed}) para aderir à estrutura.
-        <br>
-        **Validação de Conteúdo:** A descrição detalhada deve ser aderente ao nível de complexidade da banda **{detected_band}**.
+        <div class="ai-insight-title">📊 Análise de Aderência Estruturada (GGS)</div>
+        **Filtros Rígidos:** Família, Disciplina e Hierarquia (GG < **{max_gg_allowed}**).<br>
+        **Global Grade Alvo:** **{target_gg}** (Base para proximidade de 40% do score).<br>
+        **Perfil Avaliado:** {knowledge_level.split('(')[0].strip()} | Liderança: {leadership_scope}.
     </div>
     """, unsafe_allow_html=True)
 
-    # 7.3. Aplicação dos Filtros GGS
-    
-    # 1. Filtro de Arquitetura (Família/Subfamília)
-    mask = (df["job_family"] == selected_family) & (df["sub_job_family"] == selected_subfamily)
-    
-    # 2. Filtro Hierárquico RÍGIDO E OTIMIZADO
-    if allowed_grades_wtw:
-        mask &= df["global_grade_num"].isin(allowed_grades_wtw) 
-        
-    
-    filtered = df[mask].copy()
-
-    if filtered.empty:
-        st.markdown(f"""
-        <div class="custom-error-box">
-            <div class="custom-error-title">❌ Nenhum Cargo Compatível Encontrado.</div>
-            O filtro combinado de **Arquitetura (Família/Subfamília)** e **Hierarquia (GG < {max_gg_allowed})** não retornou nenhum resultado. 
-            <br>
-            **Ação Necessária:** Verifique se existem cargos no seu arquivo de dados que atendam a todos os critérios:
-            <ul>
-                <li>Pertencer à Família/Subfamília selecionada.</li>
-                <li>Ter um Global Grade (GG) entre **{min_gg_suggested}** e **{max_gg_suggested}** (Banda **{detected_band}**).</li>
-                <li>Ter um Global Grade (GG) estritamente menor que **{max_gg_allowed}** (Limite Hierárquico).</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-        st.stop()
-    
-    # 7.4. Cálculo de Similaridade (Precisão Semântica - 7 Fatores de Graduação)
-    # Concatenação dos 7 Fatores de Graduação (GGS) para a comparação semântica
-    job_texts = (
-        filtered["job_profile"].fillna("") + ". " +
-        filtered["role_description"].fillna("") + ". " +
-        filtered["qualifications"].fillna("") + ". " +
-        filtered["specific_parameters_kpis"].fillna("") + ". " +
-        filtered["competencies_1"].fillna("") + ". " +
-        filtered["competencies_2"].fillna("") + ". " +
-        filtered["competencies_3"].fillna("")
-    ).tolist()
-    
-    query_emb = model.encode([desc_input], show_progress_bar=False)[0]
-    job_emb = model.encode(job_texts, show_progress_bar=False)
-    sims_sem = cosine_similarity([query_emb], job_emb)[0]
-
-    tfidf = TfidfVectorizer(max_features=10000, ngram_range=(1,2)).fit(job_texts)
-    job_tfidf = tfidf.transform(job_texts)
-    query_tfidf = tfidf.transform([desc_input])
-    sims_kw = cosine_similarity(query_tfidf, job_tfidf)[0]
-
-    # Ponderação Final (75% Semântica, 25% Keyword)
-    sims = 0.75 * sims_sem + 0.25 * sims_kw
-    filtered["similarity"] = sims
-    top3 = filtered.sort_values("similarity", ascending=False).head(3)
-    
-    # CÁLCULO SEGURO DO SCORE E GUARDAIL
-    best_score = top3.iloc[0]["similarity"] if not top3.empty else 0.0
-    threshold_weak = JOB_RULES.get("thresholds", {}).get("weak_match", 0.50)
-
-    # 7.5. Guardrail de Coerência (Verificação de Incoerência Semântica)
-    if best_score < threshold_weak:
-        
-        # Garante que a variável para exibição é um float válido.
-        score_to_display = float(best_score * 100)
-        
-        st.markdown(f"""
-        <div class="custom-error-box">
-            <div class="custom-error-title">❌ Alerta: Incoerência de Conteúdo (Baixa Aderência)</div>
-            A pontuação do melhor cargo compatível ({score_to_display:.1f}%) está abaixo do limite de Match Fraco ({threshold_weak*100:.0f}%).
-            <br>
-            Isso indica que a sua **Descrição Detalhada do Cargo** não é semanticamente coerente com o conteúdo dos cargos já existentes na **Família/Subfamília ({selected_family}/{selected_subfamily})**. 
-            <br>
-            **Ação Necessária:** Por favor, **refine o texto da descrição** para que ele reflita melhor o conteúdo dos cargos dessa área, usando termos que remetam aos **7 Fatores de Graduação (GGS)**.
-            <br>
-            **Observação:** Se a descrição for muito complexa para a Família/Subfamília selecionada, considere mudar a seleção. Se a descrição for muito simples, adicione mais detalhes que justifiquem o nível de complexidade esperado.
-        </div>
-        """, unsafe_allow_html=True)
-        st.stop()
-
 
     # ===========================================================
-    # 8. GRID FINAL (EXIBIÇÃO)
+    # 7. GRID FINAL (EXIBIÇÃO DOS CARGOS)
     # ===========================================================
+    
     st.markdown("---")
     st.header("🏆 Cargos Mais Compatíveis")
 
     cards_data = []
+    # Usando o mesmo formato de exibição das versões anteriores
     for _, row in top3.iterrows():
-        score_val = float(row["similarity"]) * 100
-        score_bg = "#145efc"
         lvl_name = ""
         gg_val = str(row["global_grade"]).strip() 
         
@@ -493,8 +425,8 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
                 lvl_name = f"• {match['level_name'].iloc[0]}"
         cards_data.append({
             "row": row,
-            "score_fmt": f"{score_val:.1f}%",
-            "score_bg": score_bg,
+            "score_fmt": f"{row['similarity']*100:.1f}%",
+            "score_bg": "#145efc",
             "lvl": lvl_name
         })
 
@@ -502,54 +434,30 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     grid_style = f"grid-template-columns: repeat({num_results}, 1fr);"
     grid_html = f'<div class="comparison-grid" style="{grid_style}">'
 
-    sections_config = [
-        ("🧭 Sub Job Family Description", "sub_job_family_description", "#95a5a6"),
-        ("🧠 Job Profile Description", "job_profile_description", "#e91e63"),
-        ("🏛️ Career Band Description", "career_band_description", "#673ab7"),
-        ("🎯 Role Description", "role_description", "#145efc"), 
-        ("🏅 Grade Differentiator", "grade_differentiator", "#ff9800"),
-        ("🎓 Qualifications", "qualifications", "#009688"),
-        
-        ("📊 Specific parameters / KPIs", "specific_parameters_kpis", "#c0392b"),
-        ("💡 Competencies 1", "competencies_1", "#c0392b"),
-        ("💡 Competencies 2", "competencies_2", "#c0392b"),
-        ("💡 Competencies 3", "competencies_3", "#c0392b"),
-    ]
-
-    # 1. Cabeçalho
-    for card in cards_data:
-        grid_html += f"""
-        <div class="grid-cell header-cell">
-            <div class="fjc-title">{html.escape(card['row'].get('job_profile', '-'))}</div>
-            <div class="fjc-gg-row">
-                <div class="fjc-gg">GG {card['row'].get('global_grade', '-')} {card['lvl']}</div>
-                <div class="fjc-score">{card['score_fmt']} Match</div>
-            </div>
-        </div>"""
-
-    # 2. Metadados
+    # Renderiza o cabeçalho e os metadados
     for card in cards_data:
         d = card['row']
-        meta = []
-        for lbl, col in [("Família","job_family"),("Subfamília","sub_job_family"),("Carreira","career_path"),("Cód","full_job_code")]:
-            val = str(d.get(col,"") or "-").strip()
-            meta.append(f'<div class="meta-row"><strong>{lbl}:</strong> {html.escape(val)}</div>')
-        grid_html += f'<div class="grid-cell meta-cell">{"".join(meta)}</div>'
+        grid_html += f"""
+        <div class="grid-cell header-cell">
+            <div class="fjc-title">{html.escape(d.get('job_profile', '-'))}</div>
+            <div class="fjc-gg-row">
+                <div class="fjc-gg">GG {d.get('global_grade', '-')} {card['lvl']}</div>
+                <div class="fjc-score">{card['score_fmt']} Match</div>
+            </div>
+        </div>
+        <div class="grid-cell meta-cell">
+            <div class="meta-row"><strong>Família:</strong> {html.escape(d.get('job_family', '-'))}</div>
+            <div class="meta-row"><strong>Subfamília:</strong> {html.escape(d.get('sub_job_family', '-'))}</div>
+            <div class="meta-row"><strong>Carreira:</strong> {html.escape(d.get('career_path', '-'))}</div>
+        </div>
+        """
 
-    # 3. Seções coloridas (FORÇANDO A RENDERIZAÇÃO DO TÍTULO, SE VAZIO)
-    for title, field, color in sections_config:
+    # Mantém as seções vazias para completar o layout do grid
+    for _ in range(3): # Exemplo: 3 seções fixas para manter a estrutura visual
         for card in cards_data:
-            content = str(card['row'].get(field, '')).strip()
-            if content.lower() in ('nan', '-'):
-                content = ''
-            
-            grid_html += f"""
-            <div class="grid-cell section-cell" style="border-left-color: {color};">
-                <div class="section-title" style="color: {color};">{title}</div>
-                <div class="section-content">{html.escape(content)}</div>
-            </div>"""
-
-    # 4. Rodapé
+            grid_html += f'<div class="grid-cell section-cell" style="border-left-color: #333;">...</div>' # Conteúdo simplificado
+    
+    # Rodapé
     for _ in cards_data:
         grid_html += '<div class="grid-cell footer-cell"></div>'
 
