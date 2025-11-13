@@ -176,7 +176,7 @@ def load_model():
 
 @st.cache_data
 def load_json_rules():
-    # Carrega o NOVO JSON UNIFICADO
+    # ATENÇÃO: Carrega o NOVO JSON UNIFICADO
     path = Path("wtw_match_rules.json") 
     if path.exists():
         with open(path, 'r', encoding='utf-8') as f:
@@ -295,35 +295,31 @@ def ggs_decision_score(desc_text, superior_reporta, lidera_equipe, abrangencia_f
         
         # 1. CEO/Business Unit Manager? (Banda 6 / EX)
         if superior_reporta in ["Presidente / CEO", "Vice-presidente"]:
-            # Diretor/VP é um C-Level/Head reportando ao topo ou fazendo parte dele.
             return "EX"
             
         # 2. Set/Significantly influence business strategy? (5FS/5BS / EX)
-        # Se reporta a Diretor/VP (i.e., é Head de Função) E tem escopo estratégico/global
         is_business_strategy = superior_reporta in ["Diretor"] or abrangencia_funcao in ["Global", "Multipaís"]
         if is_business_strategy:
-            return "EX" # Usamos EX para as bandas 5FS/5BS que têm foco estratégico
+            return "EX" 
             
         # 3. Set/Significantly influence functional strategy? (4M / M)
         is_functional_strategy = superior_reporta in ["Gerente"] or "estratégia funcional" in desc_lower or "define políticas operacionais" in desc_lower
         if is_functional_strategy:
-            return "M" # Middle Management (4M)
+            return "M" 
             
         # 4. Supervisor (3M / M)
         if superior_reporta in ["Coordenador", "Supervisor"]:
-            return "M" # Junior Management/Supervisor (3M)
+            return "M" 
             
-        return "M" # Default para M (Middle/Junior Management)
+        return "M" 
 
     # --- NÃO: Carreira de Individual Contributor (P, U, W) ---
     else:
         # 1. Specific job functional knowledge? (Banda 1 / W)
-        # Se a pontuação de IC é muito baixa e há keywords de W (Manual/Júnior Admin)
         if ic_score < 3 and any(kw in desc_lower for kw in LEVEL_KEYWORDS.get("W", [])):
-             return "W" # Banda 1 (Manual/Junior Admin)
+             return "W" 
 
         # 2. Independence in applying professional expertise? (Banda 3IC/4IC vs Banda 2)
-        # Profissionais (P) vs Clerical/Admin/Technical (U)
         is_independent_expertise = "independente" in desc_lower or "julgamento" in desc_lower or "expertise profissional" in desc_lower
         
         if is_independent_expertise:
@@ -331,12 +327,12 @@ def ggs_decision_score(desc_text, superior_reporta, lidera_equipe, abrangencia_f
             # 3. Subject Matter Expert (SME)? (Banda 4IC vs 3IC / P)
             is_sme = "expert" in desc_lower or "líder técnico" in desc_lower or "guru" in desc_lower
             if is_sme:
-                return "P" # Subject Matter Expert (4IC)
+                return "P" 
             
-            return "P" # Professional (3IC)
+            return "P" 
         
         # 4. Clerical/Admin/Technical (Banda 2 / U)
-        return "U" # Business Support/Clerical (Banda 2)
+        return "U" 
 
 
 def infer_market_band(superior, lidera, abrangencia, desc_input):
@@ -359,8 +355,12 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     detected_band = infer_market_band(superior, lidera, abrangencia, desc_input)
     
     # 7.2. Obter o GG Máximo Permitido (Regra RÍGIDA WTW: Subordinado < Superior)
-    # A leitura correta do "superior" deve buscar o limite correto (e.g., 12 para Coordenador)
+    # CORREÇÃO CRÍTICA: Força o limite para 12 se for Coordenador/Supervisor, ignorando o 99.
     max_gg_allowed = GG_LIMITS_MAP.get(superior, 99) 
+    
+    # VERIFICAÇÃO DE OVERRIDE MANUAL PARA CORRIGIR O BUG DO STREAMLIT CLOUD (GG < 99)
+    if superior in ["Coordenador", "Supervisor"] and max_gg_allowed == 99:
+        max_gg_allowed = 12 # Limite correto para Coordenador/Supervisor (GG < 12)
     
     # Obtemos a faixa de GGs sugeridos pela Banda detectada
     allowed_grades_wtw = LEVEL_GG_MAPPING.get(detected_band, [])
@@ -370,7 +370,6 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         allowed_grades_wtw = [gg for gg in allowed_grades_wtw if gg < max_gg_allowed]
         if not allowed_grades_wtw:
             
-            # --- CORREÇÃO DO ERRO DE RENDERIZAÇÃO AQUI (1/2) ---
             # Usando st.markdown para o erro de hierarquia, caso o st.error falhe no ambiente
             st.markdown(f"""
             <div class="custom-error-box">
