@@ -2,129 +2,84 @@
 # pages/2_Job_Families.py
 
 import streamlit as st
+from utils.ui import sidebar_logo_and_title
+from utils.data_loader import load_excel_data
 from pathlib import Path
 import pandas as pd
 
-# IMPORTS CORRETOS (OPÇÃO A)
-from utils.ui import sidebar_logo_and_title
-from utils.data_loader import load_excel_data
-
-# ======================================================================
+# ==========================================================
 # CONFIGURAÇÃO DA PÁGINA
-# ======================================================================
+# ==========================================================
+
 st.set_page_config(
     page_title="Job Families",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ======================================================================
-# SIDEBAR SIG UNIFICADA
-# ======================================================================
-sidebar_logo_and_title(
-    logo_path="assets/SIG_Logo_RGB_Black.png",
-    active_page="Job Families",
-    menu_items=[
-        ("Job Architecture", "governance.png", "1_Job_Architecture.py"),
-        ("Job Families", "people employees.png", "2_Job_Families.py"),
-        ("Job Profile Description", "business review clipboard.png", "3_Job_Profile_Description.py"),
-        ("Job Maps", "globe trade.png", "4_Job_Maps.py"),
-        ("Job Match (GGS)", "checkmark success.png", "5_Job_Match.py"),
-        ("Structure Level", "process.png", "6_Structure_Level.py"),
-        ("Dashboard", "data 2 performance.png", "7_Dashboard.py"),
-    ],
-)
-# ======================================================================
-# CSS GLOBAL SIG
-# ======================================================================
+# Logo SIG na sidebar
+sidebar_logo_and_title("assets/SIG_Logo_RGB_Black.png")
+
+# ==========================================================
+# TÍTULO SIG
+# ==========================================================
+
 st.markdown("""
-<style>
-
-    /* Fundo da página */
-    .main {
-        background-color: #ffffff !important;
-    }
-
-    /* Títulos SIG */
-    .sig-title {
-        background-color: #145efc;
-        color: white;
-        padding: 14px 20px;
-        border-radius: 6px;
-        font-size: 22px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 18px;
-        margin-top: 10px;
-    }
-
-    /* Container minimalista */
-    .sig-container {
-        background-color: #ffffff;
-        border: 1px solid #e5dfd9;
-        padding: 18px 22px;
-        border-radius: 6px;
-        margin-bottom: 20px;
-    }
-
-    /* Botões SIG */
-    .stButton>button {
-        background-color: #145efc !important;
-        color: white !important;
-        border-radius: 6px !important;
-        padding: 8px 16px !important;
-        font-weight: 600 !important;
-        border: none !important;
-    }
-    .stButton>button:hover {
-        background-color: #0f4cd4 !important;
-    }
-
-</style>
+<div class="sig-title">
+    <img src="assets/icons/people employees.png">
+    <span>Job Families</span>
+</div>
 """, unsafe_allow_html=True)
 
-# ======================================================================
-# TÍTULO COM ÍCONE PNG
-# ======================================================================
-icon_path = Path("assets/icons/people employees.png")
+# ==========================================================
+# CARREGAMENTO DO ARQUIVO
+# ==========================================================
 
-st.markdown(
-    f"""
-    <div class="sig-title">
-        <img src="{icon_path.as_posix()}" width="22px">
-        Job Families
+file_path = Path("data/Job Family.xlsx")
+
+if not file_path.exists():
+    st.error("Arquivo 'Job Family.xlsx' não encontrado na pasta data/")
+else:
+    df = pd.read_excel(file_path)
+
+    st.markdown("""
+    <div class="sig-card">
+        <h3>Visão Geral</h3>
+        <p>
+            As Job Families organizam cargos em agrupamentos lógicos de acordo
+            com suas responsabilidades, natureza do trabalho e competências requeridas.
+            Essa estrutura facilita mobilidade, planejamento de carreira e governança
+            organizacional.
+        </p>
+        <p>
+            Utilize a tabela abaixo para visualizar todas as Job Families, Sub-Families
+            e níveis estruturados conforme a metodologia corporativa SIG e alinhamento
+            global WTW.
+        </p>
     </div>
-    """,
-    unsafe_allow_html=True
-)
+    """, unsafe_allow_html=True)
 
-# ======================================================================
-# CARREGAR DADOS
-# ======================================================================
-job_families_path = Path("data/Job Family.xlsx")
-df = load_excel_data(job_families_path)
+    # ==========================================================
+    # TABELA PRINCIPAL
+    # ==========================================================
 
-# ======================================================================
-# CONTEÚDO
-# ======================================================================
+    st.markdown("""
+    <div class="sig-card">
+        <h3>Estrutura de Job Families</h3>
+    </div>
+    """, unsafe_allow_html=True)
 
-st.markdown(
-    """
-<div class="sig-container">
-    <h3>Consulta de Job Families</h3>
-    Utilize a tabela abaixo para explorar as Job Families oficiais do SIG, incluindo:
-    <ul>
-        <li>Famílias de cargo</li>
-        <li>Sub-famílias</li>
-        <li>Descrições gerais</li>
-        <li>Áreas organizacionais</li>
-    </ul>
+    st.dataframe(df, use_container_width=True)
+
+# ==========================================================
+# RODAPÉ
+# ==========================================================
+
+st.markdown("""
+<div class="sig-card">
+    <p style="font-size:14px; color:#666;">
+        Continue navegando para acessar Job Profile Description, Job Maps
+        e a ferramenta de Job Match (GGS).
+    </p>
 </div>
-""",
-    unsafe_allow_html=True
-)
-
-# TABELA
-st.dataframe(df, use_container_width=True)
+""", unsafe_allow_html=True)
