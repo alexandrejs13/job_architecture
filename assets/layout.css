@@ -1,0 +1,11 @@
+/* BLOCK WIDTH */
+.block-container {
+    max-width: 1200px !important;
+    margin: auto;
+    padding-top: 20px !important;
+}
+
+/* BACKGROUND */
+[data-testid="stAppViewContainer"] {
+    background-color: #ffffff;
+}
