@@ -1,13 +1,10 @@
-# -*- coding: utf-8 -*-
-# pages/4_🗺️_Job_Maps.py
-
 import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
-from utils.data_loader import load_excel_data
-from utils.ui_components import section, lock_sidebar 
-from utils.ui import setup_sidebar
 from pathlib import Path
+from job_architecture.utils.data_loader import load_excel_data
+from job_architecture.utils.ui_components import section, lock_sidebar
+from job_architecture.utils.ui import setup_sidebar
 
 # ===========================================================
 # 1. CONFIGURAÇÃO DE PÁGINA E ESTADO
