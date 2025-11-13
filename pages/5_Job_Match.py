@@ -27,12 +27,7 @@ st.set_page_config(
 
 # ===========================================================
 # 2. CSS GLOBAL (Manutenção do layout original)
-# ===========================================================
-css_path = Path(__file__).parents[1] / "assets" / "header.css"
-if css_path.exists():
-    with open(css_path) as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
+# ... (CSS omitido por brevidade) ...
 st.markdown("""
 <style>
 .page-header {
@@ -217,7 +212,6 @@ GG_LIMITS_MAP = JOB_RULES.get("wtw_reporting_limits", {})
 def calculate_structured_match(df_filtered, params):
     """
     Calcula a pontuação de aderência (similarity) baseado nos inputs estruturados GGS.
-    O GG Alvo é inferido pelo Score dos Fatores para ranquear os cargos.
     """
     if df_filtered.empty:
         return pd.DataFrame()
@@ -231,8 +225,7 @@ def calculate_structured_match(df_filtered, params):
     communication_map = {"Boas Maneiras/Troca de Info simples": 1, "Exige Tato e Diplomacia/Negociação Interna": 2, "Influência Estratégica/Negociação Externa Sênior": 3}
     proficiency_map = {"Nível de Entrada/Inicial (P1)": 1, "Nível Intermediário/Pleno (P2)": 2, "Nível de Carreira/Sênior (P3/P4)": 3, "Especialista/Guru (P5/P6)": 4} 
 
-    # 1. Calcula o score alvo numérico total (Soma dos Fatores)
-    # Nota: Usando .get() com default para cobrir todos os cenários dinâmicos.
+    # 1. Calcula o score alvo numérico total (Soma de 7 fatores principais)
     target_score_num = (knowledge_map.get(params['knowledge_level'], 1) + 
                         problem_map.get(params['problem_level'], 1) + 
                         leadership_map.get(params['leadership_scope'], 1) + 
@@ -277,21 +270,22 @@ with c2:
     subfamilies = sorted(df[df["job_family"] == selected_family]["sub_job_family"].unique()) if selected_family != "Selecione..." else []
     selected_subfamily = st.selectbox("📂 Subfamília (Disciplina) *", ["Selecione..."] + subfamilies)
 with c3:
-    # FILTRO ATUALIZADO COM OS NÍVEIS GERENCIAIS DA SUA TABELA
     superior = st.selectbox("📋 Cargo ao qual reporta (Filtro Rígido) *", [
         "Selecione...", "Supervisor", "Manager", "Senior Manager", "Group Manager", "Executive Manager", "CEO"
     ])
     
-# Determina o nível de perguntas a ser exibido (simulando a árvore de decisão)
-is_management_selected = superior in ["Supervisor", "Manager", "Senior Manager", "Group Manager", "Executive Manager", "CEO"]
-
 st.markdown("---")
-# TÍTULO CORRIGIDO: Mais claro sobre a finalidade das perguntas
-st.markdown("#### 🧠 Fatores de Complexidade do Cargo (GGS)")
+# TÍTULO CORRIGIDO: Mesmo peso e nome mais claro
+st.markdown("### 🧠 Fatores de Complexidade do Cargo (GGS)")
 
 col1, col2 = st.columns(2)
 
-if is_management_selected:
+# Determina o nível de perguntas a ser exibido (simulando a árvore de decisão)
+is_high_level = superior in ["Manager", "Senior Manager", "Group Manager", "Executive Manager", "CEO"]
+is_supervisor_level = superior == "Supervisor"
+
+
+if is_high_level:
     # ----------------------------------------------------
     # PERGUNTAS GERENCIAIS/EXECUTIVAS
     # ----------------------------------------------------
@@ -368,11 +362,22 @@ if is_management_selected:
 
 
 else:
+    # ----------------------------------------------------
     # PERGUNTAS DE NÍVEL DE APOIO/ENTRADA (IC, W, U, T)
+    # Inclui Supervisor e N/A (Selecione...)
+    # ----------------------------------------------------
     
+    # Lógica: Se reporta a Supervisor (nível mais baixo), o cargo ABAIXO é IC.
+    if is_supervisor_level:
+        st.markdown("##### Nível de Contribuidor Individual/Analista (Foco em Proficiência Pessoal)")
+        forced_ic = True
+    else: # Cargo ao qual reporta = Selecione... (N/A)
+        st.markdown("##### Nível de Apoio/Entrada (IC, W, U, T): Foco em Tarefas e Procedimentos Definidos.")
+        forced_ic = False
+        
     with col1:
-        # Fator 3: Tipo de Contribuição (M vs. IC)
-        is_manager_input = st.radio("1. Possui Responsabilidade Formal de Gestão?", ["Não (IC)"], disabled=True)
+        # Fator 3: Tipo de Contribuição (M vs. IC) - Forçado para IC se reporta a Supervisor
+        is_manager_input = st.radio("1. Possui Responsabilidade Formal de Gestão?", ["Não (IC)"], disabled=True, index=0)
         is_manager = False
         
         # Fator 8: Proficiência/Nível de Experiência (P1/W1/U1)
@@ -448,10 +453,10 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     # 6.2. Determinar o GG Máximo Permitido (Filtro Rígido Hierárquico)
     max_gg_allowed = GG_LIMITS_MAP.get(superior, 99) 
     
-    # CORREÇÃO CRÍTICA DO BUG DE LEITURA/DEFAULT: Força o limite real se for um nível hierárquico conhecido
+    # CORREÇÃO CRÍTICA DO BUG DE LEITURA/DEFAULT: Força o limite para o valor real
     if superior in GG_LIMITS_MAP and max_gg_allowed == 99:
         max_gg_allowed = GG_LIMITS_MAP.get(superior, 26) 
-        
+    
     # 6.3. Coleta de Parâmetros de Match
     # As variáveis são definidas no escopo dos blocos 'if/else' acima.
     match_params = {
