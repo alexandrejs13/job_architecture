@@ -1,0 +1,176 @@
+{
+  "proficiencia": {
+    "label": "Nível de Proficiência Esperado",
+    "description_short": "Mede o domínio técnico e autonomia na execução do trabalho.",
+    "levels": {
+      "entrada": {
+        "title": "Entrada / Inicial",
+        "desc": "Executa rotinas simples, com orientação constante. Não exige experiência prévia.",
+        "career_band": "U",
+        "career_level": "U1",
+        "survey_grade_range": [4, 6]
+      },
+      "intermediario": {
+        "title": "Intermediário",
+        "desc": "Domina processos definidos e resolve problemas moderados com supervisão limitada.",
+        "career_band": "P",
+        "career_level": "P2",
+        "survey_grade_range": [7, 10]
+      },
+      "avancado": {
+        "title": "Avançado",
+        "desc": "Resolve problemas complexos, aplica julgamento técnico e atua como referência interna.",
+        "career_band": "P",
+        "career_level": "P3",
+        "survey_grade_range": [10, 12]
+      },
+      "expert": {
+        "title": "Expert",
+        "desc": "Atua como especialista reconhecido, influencia decisões e define melhores práticas.",
+        "career_band": "P",
+        "career_level": "P5",
+        "survey_grade_range": [12, 15]
+      }
+    }
+  },
+
+  "complexidade_problema": {
+    "label": "Complexidade na Solução de Problemas",
+    "description_short": "Refere-se ao tipo e à profundidade dos desafios enfrentados no trabalho.",
+    "levels": {
+      "simples": {
+        "title": "Seguir Regras Simples",
+        "desc": "Aplica instruções claras e rotinas padronizadas.",
+        "career_band": "U",
+        "career_level": "U1",
+        "survey_grade_range": [4, 6]
+      },
+      "rotina_tecnica": {
+        "title": "Rotinas Técnicas",
+        "desc": "Resolve problemas rotineiros com análise preliminar e aplica conhecimentos práticos.",
+        "career_band": "P",
+        "career_level": "P2",
+        "survey_grade_range": [7, 10]
+      },
+      "interpretativo": {
+        "title": "Análise Interpretativa",
+        "desc": "Resolve problemas variados com base em interpretação de dados e práticas.",
+        "career_band": "P",
+        "career_level": "P3",
+        "survey_grade_range": [10, 12]
+      },
+      "estrategico": {
+        "title": "Problemas Estratégicos",
+        "desc": "Envolve tomada de decisão ampla, definindo prioridades e políticas.",
+        "career_band": "M",
+        "career_level": "M2",
+        "survey_grade_range": [12, 16]
+      }
+    }
+  },
+
+  "expertise_negocio": {
+    "label": "Expertise do Negócio",
+    "description_short": "Conhecimento necessário sobre o funcionamento da área, unidade ou empresa.",
+    "levels": {
+      "restrito": {
+        "title": "Restrito ao Time/Área",
+        "desc": "Entende bem a operação local ou a rotina direta do time.",
+        "career_band": "U",
+        "career_level": "U2",
+        "survey_grade_range": [5, 7]
+      },
+      "cargo": {
+        "title": "Restrito ao Cargo",
+        "desc": "Entende como sua área se relaciona com outras e aplica conceitos mais amplos.",
+        "career_band": "P",
+        "career_level": "P2",
+        "survey_grade_range": [8, 10]
+      },
+      "funcao": {
+        "title": "Visão Funcional",
+        "desc": "Compreende impactos no negócio, processos interdependentes e áreas correlatas.",
+        "career_band": "P",
+        "career_level": "P3",
+        "survey_grade_range": [10, 12]
+      },
+      "organizacional": {
+        "title": "Visão Integrada da Organização",
+        "desc": "Compreende impactos amplos e toma decisões com visão estratégica.",
+        "career_band": "M",
+        "career_level": "M2",
+        "survey_grade_range": [13, 17]
+      }
+    }
+  },
+
+  "area_impacto": {
+    "label": "Área de Impacto",
+    "description_short": "Amplitude da área afetada pelo trabalho.",
+    "levels": {
+      "cargo": {
+        "title": "Restrito ao Cargo",
+        "desc": "Impacto restrito à execução de atividades próprias.",
+        "career_band": "U",
+        "career_level": "U2",
+        "survey_grade_range": [4, 7]
+      },
+      "time": {
+        "title": "Impacto na Equipe",
+        "desc": "Suas ações influenciam diretamente a performance do time.",
+        "career_band": "P",
+        "career_level": "P2",
+        "survey_grade_range": [7, 10]
+      },
+      "area": {
+        "title": "Impacto na Área",
+        "desc": "Decisões influenciam processos funcionais e desempenho da área.",
+        "career_band": "P",
+        "career_level": "P3",
+        "survey_grade_range": [10, 13]
+      },
+      "organizacao": {
+        "title": "Impacto Organizacional",
+        "desc": "Influência estratégica na organização ou em múltiplas áreas/departamentos.",
+        "career_band": "M",
+        "career_level": "M2",
+        "survey_grade_range": [14, 17]
+      }
+    }
+  },
+
+  "lideranca": {
+    "label": "Escopo de Liderança",
+    "description_short": "Nível de responsabilidade formal sobre pessoas.",
+    "levels": {
+      "nenhuma": {
+        "title": "Nenhuma Liderança",
+        "desc": "Não possui responsabilidade formal por pessoas.",
+        "career_band": "P",
+        "career_level": "P1",
+        "survey_grade_range": [7, 9]
+      },
+      "apoio": {
+        "title": "Apoio / Influência",
+        "desc": "Apoia ou influencia atividades de outros sem autoridade formal.",
+        "career_band": "P",
+        "career_level": "P2",
+        "survey_grade_range": [8, 10]
+      },
+      "supervisao": {
+        "title": "Supervisão Direta",
+        "desc": "Coordena atividades de um pequeno time técnico/administrativo.",
+        "career_band": "M",
+        "career_level": "M1",
+        "survey_grade_range": [10, 12]
+      },
+      "gestao": {
+        "title": "Gestão de Pessoas",
+        "desc": "Responsável direto por performance, objetivos, desenvolvimento e resultados.",
+        "career_band": "M",
+        "career_level": "M2",
+        "survey_grade_range": [12, 16]
+      }
+    }
+  }
+}
