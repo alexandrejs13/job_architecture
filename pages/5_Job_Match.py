@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 from pathlib import Path
@@ -9,7 +8,6 @@ from utils.job_match_engine import (
     find_matching_job_profile,
     load_job_profile_dataset
 )
-
 # =========================================================
 # CONFIGURAÇÃO DA PÁGINA
 # =========================================================
