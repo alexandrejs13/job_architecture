@@ -355,12 +355,13 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     detected_band = infer_market_band(superior, lidera, abrangencia, desc_input)
     
     # 7.2. Obter o GG Máximo Permitido (Regra RÍGIDA WTW: Subordinado < Superior)
-    # CORREÇÃO CRÍTICA: Força o limite para 12 se for Coordenador/Supervisor, ignorando o 99.
+    # 7.2. Obter o GG Máximo Permitido (Regra RÍGIDA WTW: Subordinado < Superior)
+    # O limite é o GG do superior, e o cargo do subordinado deve ser ESTRITAMENTE MENOR.
     max_gg_allowed = GG_LIMITS_MAP.get(superior, 99) 
     
-    # VERIFICAÇÃO DE OVERRIDE MANUAL PARA CORRIGIR O BUG DO STREAMLIT CLOUD (GG < 99)
-    if superior in ["Coordenador", "Supervisor"] and max_gg_allowed == 99:
-        max_gg_allowed = 12 # Limite correto para Coordenador/Supervisor (GG < 12)
+    # Se o superior for "Selecione...", o limite é 99 (sem limite hierárquico)
+    if superior == "Selecione...":
+        max_gg_allowed = 99
     
     # Obtemos a faixa de GGs sugeridos pela Banda detectada
     allowed_grades_wtw = LEVEL_GG_MAPPING.get(detected_band, [])
@@ -376,7 +377,11 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
                 <div class="custom-error-title">❌ Conflito de Nível Hierárquico (Regra WTW Rígida)</div>
                 A banda de carreira sugerida (**{detected_band}**) ou a Descrição do Cargo sugere um nível que é igual ou superior ao limite permitido pelo cargo ao qual ele reporta (GG < {max_gg_allowed}).
                 <br>
-                Ajuste o **Cargo ao qual reporta** ou refine a **Descrição Detalhada do Cargo** para um nível inferior.
+	            Ajuste o **Cargo ao qual reporta** ou refine a **Descrição Detalhada do Cargo** para um nível inferior.
+	            <br>
+	            **Ação Necessária:** O GG do cargo sugerido ({min_gg_suggested} a {max_gg_suggested}) é incompatível com o limite hierárquico (GG < {max_gg_allowed}).
+	            <br>
+	            **Regra de Ouro:** O conteúdo do trabalho (descrição) deve ser compatível com um GG que seja estritamente menor que o GG do superior.
             </div>
             """, unsafe_allow_html=True)
             st.stop()
@@ -387,8 +392,10 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     st.markdown(f"""
     <div class="ai-insight-box">
         <div class="ai-insight-title">🤖 Contexto Hierárquico e de Conteúdo Detectado (GGS 4.2)</div>
-        **Banda de Carreira Sugerida:** **{detected_band}** (GGs Válidos: **{min_gg_suggested}** a **{max_gg_suggested}**).<br>
-        **Filtro Hierárquico Rígido:** O cargo deve ter um **Global Grade estritamente menor** que **{max_gg_allowed}** (GG < {max_gg_allowed}) para aderir à estrutura.
+	        **Banda de Carreira Sugerida:** **{detected_band}** (GGs Válidos: **{min_gg_suggested}** a **{max_gg_suggested}**).<br>
+	        **Filtro Hierárquico Rígido:** O cargo deve ter um **Global Grade estritamente menor** que **{max_gg_allowed}** (GG < {max_gg_allowed}) para aderir à estrutura.
+	        <br>
+	        **Validação de Conteúdo:** A descrição detalhada deve ser aderente ao nível de complexidade da banda **{detected_band}**.
     </div>
     """, unsafe_allow_html=True)
 
@@ -405,12 +412,19 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     filtered = df[mask].copy()
 
     if filtered.empty:
-        st.error(f"""
-        ❌ **Nenhum Cargo Compatível Encontrado.** <br>
-        O filtro combinado de **Arquitetura (Família/Subfamília)** e **Hierarquia (GG < {max_gg_allowed})** não retornou nenhum resultado. 
-        <br>
-        Verifique se existem cargos no seu arquivo de dados que atendam a todos os critérios.
-        """, unsafe_allow_html=True)
+	        st.markdown(f"""
+	        <div class="custom-error-box">
+	            <div class="custom-error-title">❌ Nenhum Cargo Compatível Encontrado.</div>
+	            O filtro combinado de **Arquitetura (Família/Subfamília)** e **Hierarquia (GG < {max_gg_allowed})** não retornou nenhum resultado. 
+	            <br>
+	            **Ação Necessária:** Verifique se existem cargos no seu arquivo de dados que atendam a todos os critérios:
+	            <ul>
+	                <li>Pertencer à Família/Subfamília selecionada.</li>
+	                <li>Ter um Global Grade (GG) entre **{min_gg_suggested}** e **{max_gg_suggested}** (Banda **{detected_band}**).</li>
+	                <li>Ter um Global Grade (GG) estritamente menor que **{max_gg_allowed}** (Limite Hierárquico).</li>
+	            </ul>
+	        </div>
+	        """, unsafe_allow_html=True)
         st.stop()
     
     # 7.4. Cálculo de Similaridade (Precisão Semântica - 7 Fatores de Graduação)
@@ -448,16 +462,18 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         # Garante que a variável para exibição é um float válido.
         score_to_display = float(best_score * 100)
         
-        st.markdown(f"""
-        <div class="custom-error-box">
-            <div class="custom-error-title">❌ Alerta: Incoerência de Conteúdo (Baixa Aderência)</div>
-            A pontuação do melhor cargo compatível ({score_to_display:.1f}%) está abaixo do limite de Match Fraco ({threshold_weak*100:.0f}%).
-            <br>
-            Isso indica que a sua **Descrição Detalhada do Cargo** não é semanticamente coerente com o conteúdo dos cargos já existentes na **Família/Subfamília ({selected_family}/{selected_subfamily})**. 
-            <br>
-            **Ação Necessária:** Por favor, **refine o texto da descrição** para que ele reflita melhor o conteúdo dos cargos dessa área, usando termos que remetam aos **7 Fatores de Graduação (GGS)**.
-        </div>
-        """, unsafe_allow_html=True)
+	        st.markdown(f"""
+	        <div class="custom-error-box">
+	            <div class="custom-error-title">❌ Alerta: Incoerência de Conteúdo (Baixa Aderência)</div>
+	            A pontuação do melhor cargo compatível ({score_to_display:.1f}%) está abaixo do limite de Match Fraco ({threshold_weak*100:.0f}%).
+	            <br>
+	            Isso indica que a sua **Descrição Detalhada do Cargo** não é semanticamente coerente com o conteúdo dos cargos já existentes na **Família/Subfamília ({selected_family}/{selected_subfamily})**. 
+	            <br>
+	            **Ação Necessária:** Por favor, **refine o texto da descrição** para que ele reflita melhor o conteúdo dos cargos dessa área, usando termos que remetam aos **7 Fatores de Graduação (GGS)**.
+	            <br>
+	            **Observação:** Se a descrição for muito complexa para a Família/Subfamília selecionada, considere mudar a seleção. Se a descrição for muito simples, adicione mais detalhes que justifiquem o nível de complexidade esperado.
+	        </div>
+	        """, unsafe_allow_html=True)}],path:
         st.stop()
 
 
