@@ -1,22 +1,5 @@
-/* ======================================================
-   PP SIG Flow — Font Import
-   ====================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
 
-@font-face {
-  font-family: 'PP SIG Flow';
-  src: url('./fonts/PPSIGFlow-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'PP SIG Flow';
-  src: url('./fonts/PPSIGFlow-SemiBold.ttf') format('truetype');
-  font-weight: 600;
-  font-style: normal;
-}
-
-/* Define a fonte padrão */
-body {
-  font-family: 'PP SIG Flow', 'Helvetica Neue', Arial, sans-serif;
+html, body, div, span, p, a {
+    font-family: "Source Sans Pro", sans-serif !important;
 }
