@@ -1,1 +1,1 @@
-# Deixa a pasta job_architecture tratada como pacote Python
+job_architecture/__init__.py
