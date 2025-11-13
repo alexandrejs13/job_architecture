@@ -2,9 +2,9 @@
 # pages/1_Job_Architecture.py
 
 import streamlit as st
-from utils.ui import sidebar_logo_and_title
-from utils.data_loader import load_excel_data
+import pandas as pd
 from pathlib import Path
+from utils.ui import sidebar_logo_and_title
 
 # ==========================================================
 # CONFIGURAÇÃO GERAL DA PÁGINA
