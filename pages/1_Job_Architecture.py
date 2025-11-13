@@ -2,7 +2,6 @@
 # pages/1_Job_Architecture.py
 
 import streamlit as st
-import pandas as pd
 from pathlib import Path
 from utils.ui import sidebar_logo_and_title
 
