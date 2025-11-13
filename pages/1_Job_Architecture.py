@@ -1,5 +1,5 @@
 import streamlit as st
-from job_architecture.utils.ui import sidebar_logo_and_title
+from utils.ui import sidebar_logo_and_title
 from pathlib import Path
 
 # ===========================================================
