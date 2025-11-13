@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
 from pathlib import Path
-from utils.ui import sidebar_logo_and_title
+from job_architecture.utils.ui import sidebar_logo_and_title
 
 # ===========================================================
 # 1. CONFIGURAÇÃO DE PÁGINA E ESTADO
