@@ -9,24 +9,11 @@ from pathlib import Path
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sentence_transformers import SentenceTransformer
+from utils.data_loader import load_excel_data
+from utils.ui_components import lock_sidebar
+from utils.ui import setup_sidebar
 import re
 import numpy as np
-
-# --- IMPORTAÇÕES DE UTILIDADE (CAUSA PROVÁVEL DA FALHA) ---
-# Envolver as importações em um try/except para evitar falha fatal se o ambiente não encontrar 'utils'
-try:
-    from utils.data_loader import load_excel_data
-    from utils.ui_components import lock_sidebar
-    from utils.ui import setup_sidebar
-    UTILITY_MODULES_LOADED = True
-except ImportError:
-    # Define funções mock se as utilidades não puderem ser importadas
-    def load_excel_data(): return {"job_profile": pd.DataFrame(), "level_structure": pd.DataFrame()}
-    def setup_sidebar(): pass
-    def lock_sidebar(): pass
-    UTILITY_MODULES_LOADED = False
-# ------------------------------------------------------------
-
 
 # ===========================================================
 # 1. CONFIGURAÇÃO DA PÁGINA
@@ -40,7 +27,12 @@ st.set_page_config(
 
 # ===========================================================
 # 2. CSS GLOBAL (Manutenção do layout original)
-# ... (Código CSS omitido por brevidade) ...
+# ===========================================================
+css_path = Path(__file__).parents[1] / "assets" / "header.css"
+if css_path.exists():
+    with open(css_path) as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
 st.markdown("""
 <style>
 .page-header {
@@ -162,9 +154,12 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Chamadas restauradas para garantir a barra lateral (depende dos módulos utils)
-setup_sidebar()
-lock_sidebar()
+# CORREÇÃO: Chamadas restauradas para garantir a barra lateral
+try:
+    setup_sidebar()
+    lock_sidebar()
+except NameError:
+    pass
 
 # ===========================================================
 # 3. FUNÇÕES AUXILIARES E CARREGAMENTO DE DADOS E MODELO
@@ -181,7 +176,6 @@ def sanitize_columns(df):
 
 @st.cache_resource
 def load_model():
-    # Nota: Se UTILITY_MODULES_LOADED for False, o modelo pode falhar aqui.
     return SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 
 @st.cache_data
@@ -195,7 +189,10 @@ def load_json_rules():
 @st.cache_data
 def load_data():
     """Carrega os dados e cria a coluna Global Grade Num."""
-    data = load_excel_data() 
+    try:
+        data = load_excel_data() 
+    except NameError:
+        data = {"job_profile": pd.DataFrame(), "level_structure": pd.DataFrame()}
 
     df_jobs = sanitize_columns(data.get("job_profile", pd.DataFrame())).fillna("")
     df_levels = sanitize_columns(data.get("level_structure", pd.DataFrame())).fillna("")
@@ -220,6 +217,7 @@ GG_LIMITS_MAP = JOB_RULES.get("wtw_reporting_limits", {})
 def calculate_structured_match(df_filtered, params):
     """
     Calcula a pontuação de aderência (similarity) baseado nos inputs estruturados GGS.
+    O GG Alvo é inferido pelo Score dos Fatores para ranquear os cargos.
     """
     if df_filtered.empty:
         return pd.DataFrame()
@@ -233,7 +231,8 @@ def calculate_structured_match(df_filtered, params):
     communication_map = {"Boas Maneiras/Troca de Info simples": 1, "Exige Tato e Diplomacia/Negociação Interna": 2, "Influência Estratégica/Negociação Externa Sênior": 3}
     proficiency_map = {"Nível de Entrada/Inicial (P1)": 1, "Nível Intermediário/Pleno (P2)": 2, "Nível de Carreira/Sênior (P3/P4)": 3, "Especialista/Guru (P5/P6)": 4} 
 
-    # 1. Calcula o score alvo numérico total (Soma de 7 fatores principais)
+    # 1. Calcula o score alvo numérico total (Soma dos Fatores)
+    # Nota: Usando .get() com default para cobrir todos os cenários dinâmicos.
     target_score_num = (knowledge_map.get(params['knowledge_level'], 1) + 
                         problem_map.get(params['problem_level'], 1) + 
                         leadership_map.get(params['leadership_scope'], 1) + 
@@ -283,24 +282,21 @@ with c3:
         "Selecione...", "Supervisor", "Manager", "Senior Manager", "Group Manager", "Executive Manager", "CEO"
     ])
     
+# Determina o nível de perguntas a ser exibido (simulando a árvore de decisão)
+is_management_selected = superior in ["Supervisor", "Manager", "Senior Manager", "Group Manager", "Executive Manager", "CEO"]
+
 st.markdown("---")
-# TÍTULO CORRIGIDO: Mesmo peso e nome mais claro
-st.markdown("### 🧠 Fatores de Complexidade do Cargo (GGS)")
+# TÍTULO CORRIGIDO: Mais claro sobre a finalidade das perguntas
+st.markdown("#### 🧠 Fatores de Complexidade do Cargo (GGS)")
 
 col1, col2 = st.columns(2)
 
-# Determina o nível de perguntas a ser exibido (simulando a árvore de decisão)
-is_management_selected = superior in ["Supervisor", "Manager", "Senior Manager", "Group Manager", "Executive Manager", "CEO"]
-is_supervisor_level = superior == "Supervisor"
-
-
-# ----------------------------------------------------
-# LÓGICA DO BLOCO SUPERIOR (VISUAL)
-# ----------------------------------------------------
 if is_management_selected:
+    # ----------------------------------------------------
     # PERGUNTAS GERENCIAIS/EXECUTIVAS
+    # ----------------------------------------------------
     
-    # 1. Título da Subseção
+    # Determina o rótulo da subseção
     if superior == "Supervisor":
         st.markdown("##### Nível de Gestão Operacional (Foco em Proficiência Mínima de Gestão)")
     elif superior in ["Manager", "Senior Manager", "Group Manager"]:
@@ -372,14 +368,11 @@ if is_management_selected:
 
 
 else:
-    # ----------------------------------------------------
     # PERGUNTAS DE NÍVEL DE APOIO/ENTRADA (IC, W, U, T)
-    # ----------------------------------------------------
-    st.markdown("##### Nível de Contribuidor Individual/Apoio (IC, W, U, T): Foco em Proficiência Básica.")
     
     with col1:
         # Fator 3: Tipo de Contribuição (M vs. IC)
-        is_manager_input = st.radio("1. Possui Responsabilidade Formal de Gestão?", ["Não (IC)"], disabled=True, index=0)
+        is_manager_input = st.radio("1. Possui Responsabilidade Formal de Gestão?", ["Não (IC)"], disabled=True)
         is_manager = False
         
         # Fator 8: Proficiência/Nível de Experiência (P1/W1/U1)
@@ -406,11 +399,10 @@ else:
         )
     
     with col2:
-        
         # Fator 6: Expertise do Negócio (Visão Externa/Integração) - DEFAULT PARA IC/APOIO
         business_expertise = st.selectbox(
             "5. Expertise do Negócio (Visão e Integração)",
-            ["Restrito ao próprio Time/Área", 
+            ["Restrito ao Time/Área", 
              "Integração com a Subfunção/Função"]
         )
         
@@ -456,7 +448,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     # 6.2. Determinar o GG Máximo Permitido (Filtro Rígido Hierárquico)
     max_gg_allowed = GG_LIMITS_MAP.get(superior, 99) 
     
-    # CORREÇÃO CRÍTICA DO BUG DE LEITURA/DEFAULT: Força o limite para o valor real
+    # CORREÇÃO CRÍTICA DO BUG DE LEITURA/DEFAULT: Força o limite real se for um nível hierárquico conhecido
     if superior in GG_LIMITS_MAP and max_gg_allowed == 99:
         max_gg_allowed = GG_LIMITS_MAP.get(superior, 26) 
         
@@ -566,18 +558,14 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
                 <div class="fjc-score">{card['score_fmt']} Match</div>
             </div>
         </div>
+        <div class="grid-cell meta-cell">
+            <div class="meta-row"><strong>Família:</strong> {html.escape(d.get('job_family', '-'))}</div>
+            <div class="meta-row"><strong>Subfamília:</strong> {html.escape(d.get('sub_job_family', '-'))}</div>
+            <div class="meta-row"><strong>Carreira:</strong> {html.escape(d.get('career_path', '-'))}</div>
+        </div>
         """
 
-    # 2. Metadados
-    for card in cards_data:
-        d = card['row']
-        meta = []
-        for lbl, col in [("Família","job_family"),("Subfamília","sub_job_family"),("Carreira","career_path")]:
-            val = str(d.get(col,"") or "-").strip()
-            meta.append(f'<div class="meta-row"><strong>{lbl}:</strong> {html.escape(val)}</div>')
-        grid_html += f'<div class="grid-cell meta-cell">{"".join(meta)}</div>'
-
-    # 3. Seções de Conteúdo (Exibindo 3 das seções de descrição)
+    # 2. Seções de Conteúdo (Exibindo 3 das seções de descrição)
     for title, field, color in sections_config:
         for card in cards_data:
             content = str(card['row'].get(field, '')).strip()
@@ -590,7 +578,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
                 <div class="section-content">{html.escape(content)}</div>
             </div>"""
     
-    # 4. Rodapé
+    # 3. Rodapé
     for _ in cards_data:
         grid_html += '<div class="grid-cell footer-cell"></div>'
 
