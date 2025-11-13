@@ -45,3 +45,11 @@
 .stButton>button:hover {
     background-color: #0f4cd4 !important;
 }
+
+.sig-card p,
+.sig-card ul,
+.sig-card li,
+.sig-card div,
+.sig-card span {
+    text-align: justify !important;
+}
