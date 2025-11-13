@@ -1,12 +1,9 @@
-# ===========================================================
-# 6_STRUCTURE_LEVEL.PY — VISÃO DE NÍVEIS E BANDAS DE CARREIRA
-# ===========================================================
-
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
-from utils.ui import sidebar_logo_and_title
+from job_architecture.utils.ui import sidebar_logo_and_title
+
 
 # ===========================================================
 # 1. CONFIGURAÇÃO DA PÁGINA
