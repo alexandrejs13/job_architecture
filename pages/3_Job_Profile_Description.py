@@ -3,7 +3,7 @@ import pandas as pd
 import re
 from pathlib import Path
 import html 
-from job_architecture.utils.ui import sidebar_logo_and_title
+from utils.ui import sidebar_logo_and_title
 
 # ===========================================================
 # 1. CONFIGURAÇÃO GERAL
