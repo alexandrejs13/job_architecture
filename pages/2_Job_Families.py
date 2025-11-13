@@ -33,12 +33,7 @@ sidebar_logo_and_title(
         ("Structure Level", "process.png", "6_Structure_Level.py"),
         ("Dashboard", "data 2 performance.png", "7_Dashboard.py"),
     ],
-    icons_path="assets/icons",
-    pilula_color="#145efc",
-    sidebar_bg="#f2efeb",
-    text_color="#000000",
 )
-
 # ======================================================================
 # CSS GLOBAL SIG
 # ======================================================================
