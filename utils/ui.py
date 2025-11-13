@@ -1,144 +1,62 @@
-# -*- coding: utf-8 -*-
 # utils/ui.py
-
 import streamlit as st
 from pathlib import Path
 
-def hide_streamlit_default_menu():
-    """Esconde COMPLETAMENTE o menu nativo do Streamlit."""
-    st.markdown("""
-        <style>
-            /* Remove o menu lateral nativo */
-            section[data-testid="stSidebarNav"] {display: none !important;}
-            .stSidebarNav {display: none !important;}
-            [data-testid="stSidebarNavItems"] {display: none !important;}
+# =========================================================
+#   CONFIGURAÇÃO DO SIDEBAR CORPORATIVO SIG
+# =========================================================
 
-            /* Remove título do menu nativo */
-            .css-1vq4p4l, .css-1d391kg, .css-1oe5cao, header {visibility: hidden !important;}
-        </style>
-    """, unsafe_allow_html=True)
+def inject_global_css():
+    """Carrega o CSS global da pasta assets"""
+    css_files = ["theme.css", "sidebar.css", "layout.css"]
 
-
-def apply_global_css():
-    """Aplica o tema visual SIG em toda a aplicação."""
-    st.markdown("""
-    <style>
-
-        /* Fundo BRANCO da aplicação */
-        [data-testid="stAppViewContainer"] {
-            background-color: white !important;
-        }
-
-        /* Sidebar Sand */
-        section[data-testid="stSidebar"] {
-            background-color: #f2efeb !important;
-            padding-top: 10px;
-        }
-
-        /* Remove padding interno extra */
-        section[data-testid="stSidebar"] > div:first-child {
-            padding-top: 0;
-        }
-
-        /* Estilos do menu SIG */
-        .sig-menu-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 14px;
-            margin: 4px 2px;
-            border-radius: 999px;
-            cursor: pointer;
-            font-size: 15px;
-            color: #000000;
-            text-decoration: none;
-        }
-
-        .sig-menu-item:hover {
-            background-color: rgba(20, 94, 252, 0.12);
-        }
-
-        .sig-menu-item-active {
-            background-color: #145efc !important;
-            color: white !important;
-            font-weight: 600;
-        }
-
-        .sig-menu-item img {
-            width: 22px;
-            height: 22px;
-        }
-
-        /* Logo */
-        .sig-logo-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .sig-logo-container img {
-            width: 140px;
-            margin-top: 10px;
-        }
-
-        /* Título da sidebar */
-        .sig-sidebar-title {
-            text-align: center;
-            font-size: 18px;
-            margin-top: -5px;
-            margin-bottom: 15px;
-            font-weight: 700;
-            color: #000000;
-        }
-
-    </style>
-    """, unsafe_allow_html=True)
+    for css in css_files:
+        css_path = Path("assets") / css
+        if css_path.exists():
+            with open(css_path) as f:
+                st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 
-def sidebar_logo_and_title(
-    logo_path,
-    active_page,
-    menu_items,
-    icons_path="assets/icons"
-):
-    """Renderiza sidebar SIG e habilita navegação real com st.switch_page."""
-    
-    hide_streamlit_default_menu()
-    apply_global_css()
+def sidebar_logo_and_title(logo_path, active_page, menu_items):
+    inject_global_css()
 
+    # SIDEBAR
     with st.sidebar:
-        # Logo SIG
-        logo = Path(logo_path)
-        if logo.exists():
-            st.markdown(
-                f'<div class="sig-logo-container"><img src="{logo.as_posix()}"></div>',
-                unsafe_allow_html=True
-            )
-        else:
-            st.write("SIG")
-
-        # Título
+        # LOGO
         st.markdown(
-            '<div class="sig-sidebar-title">Job Architecture</div>',
-            unsafe_allow_html=True
+            f"""
+            <div class="sig-sidebar-logo-container">
+                <img src="{logo_path}" class="sig-sidebar-logo">
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-        # MENU SIG
-        for label, icon_file, target_page in menu_items:
-            icon_path = Path(icons_path) / icon_file
-            icon_html = f'<img src="{icon_path.as_posix()}">' if icon_path.exists() else ""
+        # Menu Title
+        st.markdown(
+            f"""
+            <div class="sig-sidebar-title">SIG Job Architecture</div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-            is_active = (label == active_page)
+        st.markdown("<hr class='sig-divider'>", unsafe_allow_html=True)
 
-            div_class = "sig-menu-item"
-            if is_active:
-                div_class += " sig-menu-item-active"
+        # MENU ITEMS
+        for label, icon_file, page_script in menu_items:
+            icon_path = f"assets/icons/{icon_file}"
 
-            if st.markdown(
+            is_active = label == active_page
+            active_class = "active-item" if is_active else ""
+
+            st.markdown(
                 f"""
-                <div class="{div_class}" onclick="window.location.href='/{target_page}'">
-                    {icon_html}
-                    {label}
+                <div class="sig-menu-item {active_class}">
+                    <a href="/{page_script}" target="_self" class="sig-menu-link">
+                        <img src="{icon_path}" class="sig-menu-icon">
+                        {label}
+                    </a>
                 </div>
                 """,
-                unsafe_allow_html=True
-            ):
-                st.switch_page(target_page)
+                unsafe_allow_html=True,
+            )
