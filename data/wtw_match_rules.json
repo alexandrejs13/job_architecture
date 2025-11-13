@@ -7,7 +7,7 @@
   "thresholds": {
     "excellent_match": 0.85,
     "good_match": 0.7,
-    "weak_match": 0.5
+    "weak_match": 0.4
   },
 
   "wtw_reporting_limits": {
