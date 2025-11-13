@@ -1,3 +1,5 @@
+
+wtw_match_rules.json
 {
   "metadata": {
     "source": "Willis Towers Watson - Job Matching Guide 2023 / GGS User Guide 4.2",
@@ -15,7 +17,7 @@
     "Presidente / CEO": 25, 
     "Vice-presidente": 21,
     "Diretor": 18,
-    "Gerente": 15,
+    "Gerente": 16,
     "Coordenador": 12,
     "Supervisor": 12
   },
@@ -28,12 +30,12 @@
     },
     "M": {
       "label": "Supervisory / Management (Banda 4M/3M)",
-      "gg_range": [10, 17],
+      "gg_range": [10, 15],
       "description": "Implements organization strategies through effective direction and management of resources. Survey Grade 10-17."
     },
     "P": {
       "label": "Professional (Individual Contributor)",
-      "gg_range": [8, 17],
+      "gg_range": [8, 15],
       "description": "Performs work in a specialized area of expertise requiring college degree or equivalent knowledge. Survey Grade 8-17."
     },
     "U": {
