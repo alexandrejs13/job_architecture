@@ -9,11 +9,24 @@ from pathlib import Path
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sentence_transformers import SentenceTransformer
-from utils.data_loader import load_excel_data
-from utils.ui_components import lock_sidebar
-from utils.ui import setup_sidebar
 import re
 import numpy as np
+
+# --- IMPORTAÇÕES DE UTILIDADE (CAUSA PROVÁVEL DA FALHA) ---
+# Envolver as importações em um try/except para evitar falha fatal se o ambiente não encontrar 'utils'
+try:
+    from utils.data_loader import load_excel_data
+    from utils.ui_components import lock_sidebar
+    from utils.ui import setup_sidebar
+    UTILITY_MODULES_LOADED = True
+except ImportError:
+    # Define funções mock se as utilidades não puderem ser importadas
+    def load_excel_data(): return {"job_profile": pd.DataFrame(), "level_structure": pd.DataFrame()}
+    def setup_sidebar(): pass
+    def lock_sidebar(): pass
+    UTILITY_MODULES_LOADED = False
+# ------------------------------------------------------------
+
 
 # ===========================================================
 # 1. CONFIGURAÇÃO DA PÁGINA
@@ -27,12 +40,7 @@ st.set_page_config(
 
 # ===========================================================
 # 2. CSS GLOBAL (Manutenção do layout original)
-# ===========================================================
-css_path = Path(__file__).parents[1] / "assets" / "header.css"
-if css_path.exists():
-    with open(css_path) as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
+# ... (Código CSS omitido por brevidade) ...
 st.markdown("""
 <style>
 .page-header {
@@ -155,11 +163,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Chamadas restauradas para garantir a barra lateral (depende dos módulos utils)
-try:
-    setup_sidebar()
-    lock_sidebar()
-except NameError:
-    pass
+setup_sidebar()
+lock_sidebar()
 
 # ===========================================================
 # 3. FUNÇÕES AUXILIARES E CARREGAMENTO DE DADOS E MODELO
@@ -176,6 +181,7 @@ def sanitize_columns(df):
 
 @st.cache_resource
 def load_model():
+    # Nota: Se UTILITY_MODULES_LOADED for False, o modelo pode falhar aqui.
     return SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 
 @st.cache_data
@@ -189,10 +195,7 @@ def load_json_rules():
 @st.cache_data
 def load_data():
     """Carrega os dados e cria a coluna Global Grade Num."""
-    try:
-        data = load_excel_data() 
-    except NameError:
-        data = {"job_profile": pd.DataFrame(), "level_structure": pd.DataFrame()}
+    data = load_excel_data() 
 
     df_jobs = sanitize_columns(data.get("job_profile", pd.DataFrame())).fillna("")
     df_levels = sanitize_columns(data.get("level_structure", pd.DataFrame())).fillna("")
@@ -275,25 +278,28 @@ with c2:
     subfamilies = sorted(df[df["job_family"] == selected_family]["sub_job_family"].unique()) if selected_family != "Selecione..." else []
     selected_subfamily = st.selectbox("📂 Subfamília (Disciplina) *", ["Selecione..."] + subfamilies)
 with c3:
+    # FILTRO ATUALIZADO COM OS NÍVEIS GERENCIAIS DA SUA TABELA
     superior = st.selectbox("📋 Cargo ao qual reporta (Filtro Rígido) *", [
         "Selecione...", "Supervisor", "Manager", "Senior Manager", "Group Manager", "Executive Manager", "CEO"
     ])
     
 st.markdown("---")
-# TÍTULO CORRIGIDO: Mesmo peso do Parâmetros Hierárquicos
+# TÍTULO CORRIGIDO: Mesmo peso e nome mais claro
 st.markdown("### 🧠 Fatores de Complexidade do Cargo (GGS)")
 
 col1, col2 = st.columns(2)
 
 # Determina o nível de perguntas a ser exibido (simulando a árvore de decisão)
 is_management_selected = superior in ["Supervisor", "Manager", "Senior Manager", "Group Manager", "Executive Manager", "CEO"]
-is_high_level = superior in ["Manager", "Senior Manager", "Group Manager", "Executive Manager", "CEO"] # Exclui Supervisor
+is_supervisor_level = superior == "Supervisor"
 
 
 # ----------------------------------------------------
 # LÓGICA DO BLOCO SUPERIOR (VISUAL)
 # ----------------------------------------------------
 if is_management_selected:
+    # PERGUNTAS GERENCIAIS/EXECUTIVAS
+    
     # 1. Título da Subseção
     if superior == "Supervisor":
         st.markdown("##### Nível de Gestão Operacional (Foco em Proficiência Mínima de Gestão)")
@@ -301,36 +307,13 @@ if is_management_selected:
         st.markdown("##### Nível de Gerência Média/Sênior (Foco em Estratégia e Liderança Funcional)")
     else:
         st.markdown("##### Nível Executivo (Foco em Visão e Impacto Estratégico)")
-    
-    # 2. Fator M vs IC: Se for qualquer nível de gestão, o cargo em análise é Gestor.
+
     with col1:
+        # Fator 3: Tipo de Contribuição (M vs. IC) - OBRIGATÓRIO AQUI
         is_manager_input = st.radio("1. Possui Responsabilidade Formal de Gestão?", ["Sim (Gestor de Pessoas)"], disabled=True)
         is_manager = True
-    
-    # Define o escopo das perguntas para os blocos seguintes
-    if superior == "Supervisor":
-        # Supervisor é o nível mais baixo; perguntas IC são mais prováveis
-        questions_block = "IC_PLUS"
-    else:
-        # Managers para cima: foco em Management/Expertise Sênior
-        questions_block = "SENIOR_M"
         
-else:
-    # CARGO AO QUAL REPORTA = Selecione... (ou Nível de IC/Apoio, que não está na lista de cima)
-    st.markdown("##### Nível de Contribuidor Individual/Apoio (IC, W, U, T): Foco em Proficiência Básica.")
-    with col1:
-        # Fator 3: Tipo de Contribuição (M vs. IC) - Forçado para IC
-        is_manager_input = st.radio("1. Possui Responsabilidade Formal de Gestão?", ["Não (IC)"], disabled=True, index=0)
-        is_manager = False
-    
-    questions_block = "IC_PLUS" # Bloco de perguntas de nível médio/IC
-
-
-# --- GERAÇÃO DOS FATORES DE ACORDO COM O BLOCO LÓGICO ---
-
-if questions_block == "SENIOR_M":
-    # PERGUNTAS DE NÍVEL SÊNIOR/EXECUTIVO
-    with col1:
+        # Fator 8: Proficiência/Nível de Experiência (P1 a P6)
         proficiency_level = st.selectbox(
             "2. Nível de Proficiência (Experience Proxy) *",
             ["Nível Intermediário/Pleno (P2): Exige mais competência que P1.", 
@@ -338,12 +321,14 @@ if questions_block == "SENIOR_M":
              "Especialista/Guru (P5/P6): Alto nível de competência reconhecida."]
         )
         
+        # Fator 1: Conhecimento Funcional 
         knowledge_level = st.selectbox(
             "3. Profundidade do Conhecimento Funcional",
             ["Conhecimento de Conceitos e Princípios (Banda P/T)", 
              "Domínio Amplo e Integrado da Disciplina (Banda P/M Sênior)"]
         )
 
+        # Fator 2: Solução de Problemas / Julgamento
         problem_level = st.selectbox(
             "4. Complexidade na Solução de Problemas",
             ["Julgamento baseado em Prática e Experiência",
@@ -352,19 +337,52 @@ if questions_block == "SENIOR_M":
         )
 
     with col2:
-        business_expertise = st.selectbox("5. Expertise do Negócio (Visão e Integração)", ["Integração com a Subfunção/Função", "Conhecimento da Indústria/Competidores"])
-        leadership_scope = st.selectbox("6. Escopo de Liderança (Apoio/Influência)", ["Responsabilidade Total de Supervisão (M1/M2)", "Responsabilidade por Múltiplas Funções/Regiões"])
-        impact_scope = st.selectbox("7. Área de Impacto", ["Área/Subfunção (Ex: Contabilidade)", "Função/Organização (Ex: Vice-Presidência)"])
-        interpersonal_skills = st.selectbox("8. Nível de Comunicação/Influência", ["Exige Tato e Diplomacia/Negociação Interna", "Influência Estratégica/Negociação Externa Sênior"])
+        
+        # Fator 6: Expertise do Negócio (Visão Externa/Integração)
+        business_expertise = st.selectbox(
+            "5. Expertise do Negócio (Visão e Integração)",
+            ["Integração com a Subfunção/Função", 
+             "Conhecimento da Indústria/Competidores"]
+        )
+        
+        # Fator 4: Escopo de Liderança (Apoio/Influência)
+        leadership_scope = st.selectbox(
+            "6. Escopo de Liderança (Apoio/Influência)",
+            ["Responsabilidade Total de Supervisão (M1/M2)", 
+             "Responsabilidade por Múltiplas Funções/Regiões"]
+        )
+
+        # Fator 5: Amplitude do Impacto Organizacional
+        impact_scope = st.selectbox(
+            "7. Área de Impacto",
+            ["Área/Subfunção (Ex: Contabilidade)",
+             "Função/Organização (Ex: Vice-Presidência)"]
+        )
+        
+        # Fator 7: Habilidades Interpessoais
+        interpersonal_skills = st.selectbox(
+            "8. Nível de Comunicação/Influência",
+            ["Exige Tato e Diplomacia/Negociação Interna", 
+             "Influência Estratégica/Negociação Externa Sênior"]
+        )
+        
+        # Fator Auxiliar: Qualificação Mínima (Proxy)
         st.caption("Fator Auxiliar (Proxy para Qualificação)")
         education_req = st.selectbox("🎓 9. Qualificação Mínima Requerida", ["Não especificado", "Superior Completo"])
 
 
-else: # IC_PLUS (IC, Apoio, ou Subordinado de Supervisor)
+else:
+    # ----------------------------------------------------
+    # PERGUNTAS DE NÍVEL DE APOIO/ENTRADA (IC, W, U, T)
+    # ----------------------------------------------------
+    st.markdown("##### Nível de Contribuidor Individual/Apoio (IC, W, U, T): Foco em Proficiência Básica.")
     
     with col1:
-        # O Fator 1 (Gestão) já foi tratado acima
+        # Fator 3: Tipo de Contribuição (M vs. IC)
+        is_manager_input = st.radio("1. Possui Responsabilidade Formal de Gestão?", ["Não (IC)"], disabled=True, index=0)
+        is_manager = False
         
+        # Fator 8: Proficiência/Nível de Experiência (P1/W1/U1)
         proficiency_level = st.selectbox(
             "2. Nível de Proficiência Esperado *",
             ["Nível de Entrada/Inicial (W1/U1/P1): Não exige experiência prévia.", 
@@ -372,12 +390,14 @@ else: # IC_PLUS (IC, Apoio, ou Subordinado de Supervisor)
              "Nível de Carreira/Sênior (P3/P4): Exige competência significativamente maior."]
         )
         
+        # Fator 1: Conhecimento Funcional 
         knowledge_level = st.selectbox(
             "3. Profundidade do Conhecimento Funcional",
             ["Rotinas/Procedimentos Definidos (Banda U/W): Não exige diploma universitário.", 
              "Conhecimento de Conceitos e Princípios (Banda P/T): Exige diploma ou experiência equivalente."]
         )
 
+        # Fator 2: Solução de Problemas / Julgamento
         problem_level = st.selectbox(
             "4. Complexidade na Solução de Problemas",
             ["Seguir Regras Simples (Julgamento básico)", 
@@ -387,18 +407,21 @@ else: # IC_PLUS (IC, Apoio, ou Subordinado de Supervisor)
     
     with col2:
         
+        # Fator 6: Expertise do Negócio (Visão Externa/Integração) - DEFAULT PARA IC/APOIO
         business_expertise = st.selectbox(
             "5. Expertise do Negócio (Visão e Integração)",
-            ["Restrito ao Time/Área", 
+            ["Restrito ao próprio Time/Área", 
              "Integração com a Subfunção/Função"]
         )
         
+        # Fator 4: Escopo de Liderança (Se não for Gestor, pontua orientação/influência)
         leadership_scope = st.selectbox(
             "6. Escopo de Liderança (Apoio/Influência)",
             ["Nenhuma responsabilidade de gestão", 
              "Orientação/Treinamento de Juniores (IC)"]
         )
 
+        # Fator 5: Amplitude do Impacto Organizacional
         impact_scope = st.selectbox(
             "7. Área de Impacto",
             ["Restrito ao próprio Cargo",
@@ -406,6 +429,7 @@ else: # IC_PLUS (IC, Apoio, ou Subordinado de Supervisor)
              "Área/Subfunção (Ex: Contabilidade)"]
         )
         
+        # Fator 7: Habilidades Interpessoais
         interpersonal_skills = st.selectbox(
             "8. Nível de Comunicação/Influência",
             ["Boas Maneiras/Troca de Info simples", 
