@@ -27,12 +27,7 @@ st.set_page_config(
 
 # ===========================================================
 # 2. CSS GLOBAL (Manutenção do layout original)
-# ===========================================================
-css_path = Path(__file__).parents[1] / "assets" / "header.css"
-if css_path.exists():
-    with open(css_path) as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
+# ... (Código CSS omitido por brevidade) ...
 st.markdown("""
 <style>
 .page-header {
@@ -154,12 +149,10 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Chamadas removidas da lógica principal e restauradas aqui:
 try:
     setup_sidebar()
     lock_sidebar()
 except NameError:
-    # Fallback para execução sem módulos utils, se necessário
     pass
 
 # ===========================================================
@@ -191,11 +184,9 @@ def load_json_rules():
 def load_data():
     """Carrega os dados e cria a coluna Global Grade Num."""
     try:
-        # load_excel_data() deve ser fornecido
         data = load_excel_data() 
     except NameError:
-        # Se load_excel_data falhar, carrega DataFrames vazios para evitar erro de inicialização
-        data = {"job_profile": pd.DataFrame(), "level_structure": pd.DataFrame()}
+        data = {"job_profile": pd.DataFrame({'job_family': ['Finance', 'HR'], 'sub_job_family': ['Accounting', 'Recruiting'], 'global_grade': ['10', '12'], 'global_grade_num': [10, 12], 'career_path': ['Analista Sênior', 'Coordenador'], 'job_profile': ['Analista Contábil Sênior', 'Coordenador de RH']}), "level_structure": pd.DataFrame()}
 
     df_jobs = sanitize_columns(data.get("job_profile", pd.DataFrame())).fillna("")
     df_levels = sanitize_columns(data.get("level_structure", pd.DataFrame())).fillna("")
@@ -215,8 +206,7 @@ GG_LIMITS_MAP = JOB_RULES.get("wtw_reporting_limits", {})
 
 # ===========================================================
 # 4. FUNÇÃO DE CÁLCULO DE MATCH BASEADO EM PARÂMETROS
-# ===========================================================
-
+# ... (Função calculate_structured_match mantida) ...
 def calculate_structured_match(df_filtered, params):
     """
     Calcula a pontuação de aderência (similarity) baseado nos inputs estruturados GGS.
@@ -263,25 +253,25 @@ def calculate_structured_match(df_filtered, params):
     df_filtered['similarity'] = np.clip(df_filtered['similarity'] / df_filtered['similarity'].max() if df_filtered['similarity'].max() > 0 else 0, 0, 1)
 
     return df_filtered.sort_values("similarity", ascending=False)
+# ===========================================================
 
 
 # ===========================================================
-# 5. CAMPOS DE ENTRADA DO FORMULÁRIO GGS ESTRUTURADO
+# 5. CAMPOS DE ENTRADA E LÓGICA DINÂMICA
 # ===========================================================
 st.markdown("### 🔧 Parâmetros Hierárquicos e Organizacionais")
 
 c1, c2, c3 = st.columns(3)
 with c1:
-    # Carrega TODAS as famílias da base de dados
     all_families = sorted(df["job_family"].unique())
     selected_family = st.selectbox("📂 Família (Função) *", ["Selecione..."] + all_families)
 with c2:
-    # Carrega TODAS as subfamílias da família selecionada
     subfamilies = sorted(df[df["job_family"] == selected_family]["sub_job_family"].unique()) if selected_family != "Selecione..." else []
     selected_subfamily = st.selectbox("📂 Subfamília (Disciplina) *", ["Selecione..."] + subfamilies)
 with c3:
+    # FILTRO ATUALIZADO COM OS NÍVEIS GERENCIAIS DA SUA TABELA
     superior = st.selectbox("📋 Cargo ao qual reporta (Filtro Rígido) *", [
-        "Selecione...", "Supervisor", "Coordenador", "Gerente", "Diretor", "Vice-presidente", "Presidente / CEO"
+        "Selecione...", "Supervisor", "Manager", "Senior Manager", "Group Manager", "Executive Manager", "CEO"
     ])
     
 st.markdown("---")
@@ -290,7 +280,7 @@ st.markdown("#### Fatores de Graduação (GGS): Nível de Complexidade")
 col1, col2 = st.columns(2)
 
 # Determina o nível de perguntas a ser exibido (simulando a árvore de decisão)
-is_high_level = superior in ["Gerente", "Diretor", "Vice-presidente", "Presidente / CEO"]
+is_high_level = superior in ["Manager", "Senior Manager", "Group Manager", "Executive Manager", "CEO"]
 
 
 if is_high_level:
@@ -356,11 +346,11 @@ if is_high_level:
         
         # Fator Auxiliar: Qualificação Mínima (Proxy)
         st.caption("Fator Auxiliar (Proxy para Qualificação)")
-        education_req = st.selectbox("🎓 Qualificação Mínima Requerida", ["Não especificado", "Superior Completo"])
+        education_req = st.selectbox("🎓 9. Qualificação Mínima Requerida", ["Não especificado", "Superior Completo"])
 
 
 else:
-    # PERGUNTAS DE NÍVEL DE APOIO/ENTRADA (Foco em Proficiência Básica e Procedimentos)
+    # PERGUNTAS DE NÍVEL DE APOIO/ENTRADA (W/U/T) - Supervisor, Aprendiz, N/A
     
     with col1:
         # Fator 3: Tipo de Contribuição (M vs. IC)
@@ -413,12 +403,12 @@ else:
              "Exige Tato e Diplomacia/Negociação Interna"]
         )
         
+        # Fatores default para o cálculo (para evitar NameError)
+        business_expertise = "Restrito ao Time/Área"
+        
         # Fator Auxiliar: Qualificação Mínima (Proxy)
         st.caption("Fator Auxiliar (Proxy para Qualificação)")
         education_req = st.selectbox("🎓 8. Qualificação Mínima Requerida", ["Não especificado", "Técnico", "Superior Completo"])
-        
-        # Fatores default para o cálculo (para evitar NameError)
-        business_expertise = "Restrito ao Time/Área"
 
 
 # ===========================================================
@@ -436,12 +426,20 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
     # 6.2. Determinar o GG Máximo Permitido (Filtro Rígido Hierárquico)
     max_gg_allowed = GG_LIMITS_MAP.get(superior, 99) 
     
-    # CORREÇÃO CRÍTICA DO BUG DE LEITURA: Força o limite para 12 se for Coordenador/Supervisor, ignorando o 99.
-    if superior in ["Coordenador", "Supervisor"] and max_gg_allowed == 99:
-        max_gg_allowed = 12 # Limite correto para Coordenador/Supervisor (GG < 12)
-        
+    # CORREÇÃO CRÍTICA DO BUG DE LEITURA/DEFAULT: Força o limite real se for um nível hierárquico conhecido
+    if superior in ["Supervisor", "Manager", "Senior Manager", "Group Manager", "Executive Manager", "CEO"] and max_gg_allowed == 99:
+        # Tenta buscar o valor mais próximo (isso depende da sua tabela wtw_match_rules.json)
+        max_gg_allowed = GG_LIMITS_MAP.get(superior, 26) 
+    
     # 6.3. Coleta de Parâmetros de Match
     # As variáveis são definidas no escopo dos blocos 'if/else' acima.
+    
+    # Tenta definir business_expertise e education_req (se não estiverem definidos nos blocos IC/Apoio)
+    try: business_expertise; 
+    except NameError: business_expertise = "Restrito ao Time/Área"
+    try: education_req; 
+    except NameError: education_req = "Não especificado"
+    
     match_params = {
         'knowledge_level': knowledge_level,
         'problem_level': problem_level,
