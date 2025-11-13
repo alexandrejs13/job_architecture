@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 import re
 from pathlib import Path
-# Importar html é necessário se for usar html.escape
 import html 
+from job_architecture.utils.ui import sidebar_logo_and_title
 
 # ===========================================================
 # 1. CONFIGURAÇÃO GERAL
