@@ -424,6 +424,7 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         st.stop()
     
     # 7.4. Cálculo de Similaridade (Precisão Semântica - 7 Fatores de Graduação)
+    # Concatenação dos 7 Fatores de Graduação (GGS) para a comparação semântica
     job_texts = (
         filtered["job_profile"].fillna("") + ". " +
         filtered["role_description"].fillna("") + ". " +
