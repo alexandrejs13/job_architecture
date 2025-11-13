@@ -2,9 +2,7 @@ import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
 from pathlib import Path
-from job_architecture.utils.data_loader import load_excel_data
-from job_architecture.utils.ui_components import section, lock_sidebar
-from job_architecture.utils.ui import setup_sidebar
+from utils.ui import sidebar_logo_and_title
 
 # ===========================================================
 # 1. CONFIGURAÇÃO DE PÁGINA E ESTADO
