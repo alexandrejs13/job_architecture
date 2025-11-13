@@ -1,201 +1,222 @@
 # -*- coding: utf-8 -*-
+# pages/5_Job_Match.py
+
 import streamlit as st
-import pandas as pd
 from pathlib import Path
-from job_architecture.utils.ui import sidebar_logo_and_title
-from job_architecture.utils.ggs_factors import load_factors, get_applicable_factors
-from job_architecture.utils.job_match_engine import (
-    infer_job_level_from_factors,
-    find_matching_job_profile,
-    load_job_profile_dataset,
-)
+import json
 
-# ============================================
-# CONFIG DA PÁGINA
-# ============================================
+# IMPORTS CORRETOS (OPÇÃO A)
+from utils.ui import sidebar_logo_and_title
+from utils.ggs_factors import load_factors, get_applicable_factors
+from utils.job_match_engine import find_best_match
+
+# =============================================================================
+# CONFIGURAÇÃO DA PÁGINA
+# =============================================================================
 st.set_page_config(
-    page_title="Job Match",
-    page_icon="🧭",
+    page_title="Job Match (GGS)",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="expanded"
 )
 
-# CSS global do header (mesmo padrão das outras páginas)
-css_path = Path(__file__).parents[1] / "assets" / "header.css"
-if css_path.exists():
-    with open(css_path, "r", encoding="utf-8") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+# =============================================================================
+# SIDEBAR SIG UNIFICADA
+# =============================================================================
+sidebar_logo_and_title(
+    logo_path="assets/SIG_Logo_RGB_Black.png",
+    active_page="Job Match (GGS)",
+    menu_items=[
+        ("Job Architecture", "governance.png", "1_Job_Architecture.py"),
+        ("Job Families", "people employees.png", "2_Job_Families.py"),
+        ("Job Profile Description", "business review clipboard.png", "3_Job_Profile_Description.py"),
+        ("Job Maps", "globe trade.png", "4_Job_Maps.py"),
+        ("Job Match (GGS)", "checkmark success.png", "5_Job_Match.py"),
+        ("Structure Level", "process.png", "6_Structure_Level.py"),
+        ("Dashboard", "data 2 performance.png", "7_Dashboard.py"),
+    ],
+    icons_path="assets/icons",
+    pilula_color="#145efc",
+    sidebar_bg="#f2efeb",
+    text_color="#000000",
+)
 
-# Sidebar padrão SIG
-sidebar_logo_and_title()
+# =============================================================================
+# CSS SIG UNIFICADO
+# =============================================================================
+st.markdown("""
+<style>
 
-# Pequeno ajuste de padding
+    body, .main {
+        background-color: #ffffff !important;
+    }
+
+    .sig-title {
+        background-color: #145efc;
+        color: white;
+        padding: 14px 20px;
+        border-radius: 6px;
+        font-size: 22px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+        margin-top: 8px;
+    }
+
+    .sig-container {
+        background-color: #ffffff;
+        border: 1px solid #e5dfd9;
+        padding: 18px 22px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+
+    .accordion-header {
+        background-color: #f2efeb;
+        padding: 10px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        border: 1px solid #dcd6d0;
+    }
+
+    .accordion-body {
+        background-color: white;
+        border-left: 2px solid #145efc;
+        padding: 14px 16px;
+        margin-top: 4px;
+        border-radius: 6px;
+    }
+
+    .stButton>button {
+        background-color: #145efc !important;
+        color: white !important;
+        border-radius: 6px !important;
+        padding: 10px 18px !important;
+        font-weight: 600 !important;
+        border: none !important;
+    }
+    .stButton>button:hover {
+        background-color: #0f4cd4 !important;
+    }
+
+</style>
+""", unsafe_allow_html=True)
+
+# =============================================================================
+# TÍTULO DA PÁGINA
+# =============================================================================
+icon_path = Path("assets/icons/checkmark success.png")
+
 st.markdown(
-    """
-    <style>
-        .block-container {padding-top: 2rem;}
-    </style>
+    f"""
+    <div class="sig-title">
+        <img src="{icon_path.as_posix()}" width="22px">
+        Job Match (GGS)
+    </div>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
 
-# ============================================
-# PATHS DOS ARQUIVOS DE DADOS
-# __file__ = job_architecture/pages/5_Job_Match.py
-# parents[1] = job_architecture/
-# ============================================
-ROOT_DIR = Path(__file__).parents[1]
-DATA_DIR = ROOT_DIR / "data"
+# =============================================================================
+# CARREGAR FATORES WTW GGS
+# =============================================================================
+factors = load_factors("data/wtw_ggs_factors.json")
 
-JOB_PROFILE_XLSX = DATA_DIR / "Job Profile.xlsx"
-GG_FACTORS_JSON = DATA_DIR / "wtw_ggs_factors.json"
+if not factors:
+    st.error("Erro ao carregar os fatores GGS (wtw_ggs_factors.json).")
+    st.stop()
 
-# ============================================
-# CARREGAR DADOS
-# ============================================
-job_profiles = load_job_profile_dataset(JOB_PROFILE_XLSX)
-ggs_factors = load_factors(GG_FACTORS_JSON)
+# =============================================================================
+# SELEÇÃO DO CARGO SUPERIOR (FILTRO RÍGIDO)
+# =============================================================================
+st.markdown("""
+<div class="sig-container">
+<h3>1. Cargo ao qual esta posição reporta</h3>
+Selecione o nível hierárquico que limita automaticamente quais cargos podem ser retornados.
+</div>
+""", unsafe_allow_html=True)
 
-# ============================================
-# CABEÇALHO DA PÁGINA
-# ============================================
-st.title("🔍 Job Match")
-st.write(
-    "Defina a **Família**, **Subfamília**, o **cargo ao qual reporta** "
-    "e os **Fatores GGS**. O sistema irá sugerir o cargo global mais aderente."
-)
-
-st.markdown("---")
-
-# ============================================
-# PARÂMETROS HIERÁRQUICOS
-# ============================================
-col1, col2, col3 = st.columns(3)
-
-familias = sorted(job_profiles["Family"].dropna().unique())
-subfamilias = sorted(job_profiles["Subfamily"].dropna().unique())
-
-reporting_options = [
-    "Aprendiz / Estágio",
-    "Assistente",
-    "Analista",
-    "Especialista",
+report_to_options = [
+    "Apprentice",
+    "Intern",
+    "Assistant",
+    "Analyst",
+    "Senior Analyst",
+    "Coordinator",
     "Supervisor",
-    "Coordenador",
-    "Gerente",
-    "Diretor",
+    "Manager",
+    "Senior Manager",
+    "Director",
+    "Senior Director",
     "VP",
-    "Presidente / CEO",
+    "SVP",
+    "C-Level"
 ]
 
-with col1:
-    selected_family = st.selectbox("Família (Função)", familias)
+report_to = st.selectbox("Selecione o nível hierárquico superior", report_to_options)
 
-with col2:
-    selected_subfamily = st.selectbox("Subfamília (Disciplina)", subfamilias)
+# Carrega fatores válidos de acordo com o supervisor
+applicable_factors = get_applicable_factors(factors, report_to)
 
-with col3:
-    selected_reporting = st.selectbox(
-        "Cargo ao qual reporta (Filtro Rígido)", reporting_options
-    )
+# =============================================================================
+# FORMULÁRIO DOS FATORES GGS (ACCORDION)
+# =============================================================================
+st.markdown("""
+<div class="sig-container">
+<h3>2. Selecione os fatores GGS aplicáveis</h3>
+Escolha um nível para cada fator conforme a realidade do cargo.
+</div>
+""", unsafe_allow_html=True)
 
-st.markdown("### 🧠 Fatores de Complexidade do Cargo (GGS)")
-st.caption(
-    "Abra cada accordion e selecione o nível que melhor descreve o cargo. "
-    "Os textos foram resumidos com base no guia oficial WTW."
-)
+selected_levels = {}
 
-# ============================================
-# FATORES GGS EM ACCORDION
-# ============================================
-applicable_factors = get_applicable_factors(ggs_factors, selected_reporting)
-user_factor_choices = {}
-
-for factor_key, factor_obj in applicable_factors.items():
-    with st.expander(f"**{factor_obj['label']}** — {factor_obj['short_desc']}"):
-        st.caption(factor_obj["short_desc"])
-
-        # Monta as opções com título + descrição resumida
-        level_options = []
-        level_map = {}
-        for level_key, level_data in factor_obj["levels"].items():
-            label = f"{level_data['title']} — {level_data['description']}"
-            level_options.append(label)
-            level_map[label] = level_key
-
-        escolha = st.selectbox(
-            f"Selecione o nível de **{factor_obj['label']}**",
-            level_options,
-            key=f"factor_{factor_key}",
+for factor_name, factor_data in applicable_factors.items():
+    with st.expander(f"📌 {factor_name}"):
+        st.markdown(f"<div class='accordion-body'>{factor_data['description']}</div>", unsafe_allow_html=True)
+        level = st.selectbox(
+            f"Selecione o nível para: {factor_name}",
+            factor_data["levels"],
+            key=factor_name
         )
+        selected_levels[factor_name] = level
 
-        user_factor_choices[factor_key] = level_map[escolha]
+# =============================================================================
+# BOTÃO — EXECUTAR MATCH
+# =============================================================================
+st.markdown("<br>", unsafe_allow_html=True)
+execute = st.button("🔍 Buscar Job Match")
 
-st.markdown("---")
+if not execute:
+    st.stop()
 
-# ============================================
-# BOTÃO DE AÇÃO
-# ============================================
-if st.button("Buscar Job Match", use_container_width=True):
+# =============================================================================
+# EXECUTA MATCH
+# =============================================================================
+with st.spinner("Calculando aderência ao catálogo global SIG..."):
+    match = find_best_match(selected_levels, report_to)
 
-    with st.spinner("Calculando o nível GGS e procurando o melhor cargo..."):
+if not match:
+    st.error("Nenhum match encontrado. Ajuste os fatores.")
+    st.stop()
 
-        # 1) Inferir Career Band / Level / Survey Grade (GG)
-        inferred_level = infer_job_level_from_factors(user_factor_choices, ggs_factors)
+# =============================================================================
+# RESULTADO — MOSTRAR CARGO E DESCRIÇÃO COMPLETA
+# =============================================================================
+matched_title = match["job_title"]
+matched_description = match["description"]
 
-        # 2) Encontrar o cargo mais compatível
-        resultado = find_matching_job_profile(
-            job_profiles,
-            selected_family,
-            selected_subfamily,
-            inferred_level,
-        )
+st.markdown(f"""
+<div class="sig-title">
+    <img src="{icon_path.as_posix()}" width="22px">
+    Cargo Encontrado: {matched_title}
+</div>
+""", unsafe_allow_html=True)
 
-    st.markdown("## 🎯 Resultado do Job Match")
-
-    if resultado is None:
-        st.error(
-            "Nenhum cargo compatível foi encontrado com base nas seleções. "
-            "Tente ajustar alguns fatores de complexidade ou a combinação Família/Subfamília."
-        )
-    else:
-        job = resultado
-
-        # Título + nível
-        st.markdown(f"### **{job['Job Title']}**")
-        st.markdown(
-            f"**Survey Grade (GG):** {job.get('Survey Grade', 'N/A')}  \n"
-            f"**Career Band:** {job.get('Career Band', 'N/A')}  \n"
-            f"**Família:** {job.get('Family', 'N/A')} — "
-            f"**Subfamília:** {job.get('Subfamily', 'N/A')}"
-        )
-
-        st.markdown("---")
-
-        # BLOCO 1 — Job Profile Description
-        st.markdown("### 📌 Job Profile Description")
-        st.write(job.get("Job Profile Description", "—"))
-
-        # BLOCO 2 — Career Band Description
-        st.markdown("### 🧱 Career Band Description")
-        st.write(job.get("Career Band Description", "—"))
-
-        # BLOCO 3 — Main Description
-        st.markdown("### 📝 Main Description")
-        st.write(job.get("Main Description", "—"))
-
-        # BLOCO 4 — Grade Differentiator
-        st.markdown("### 🟦 Grade Differentiator")
-        st.write(job.get("Grade Differentiator", "—"))
-
-        # BLOCO 5 — Qualifications
-        st.markdown("### 🎓 Qualifications")
-        st.write(job.get("Qualifications", "—"))
-
-        # BLOCO 6 — Specific Parameters / KPIs
-        st.markdown("### 🧩 Specific Parameters / KPIs")
-        st.write(job.get("Specific Parameters", "—"))
-
-        # BLOCO 7 — Competencies
-        st.markdown("### 💡 Competencies")
-        st.write(job.get("Competencies", "—"))
+st.markdown(f"""
+<div class="sig-container">
+    <h4>Descrição Completa</h4>
+    <p>{matched_description}</p>
+</div>
+""", unsafe_allow_html=True)
