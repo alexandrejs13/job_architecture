@@ -2,7 +2,7 @@
 import streamlit as st
 import pandas as pd
 from pathlib import Path
-from utils.ui import sidebar_logo_and_title
+from job_architecture.utils.ui import sidebar_logo_and_title
 from job_architecture.utils.ggs_factors import load_factors, get_applicable_factors
 from job_architecture.utils.job_match_engine import (
     infer_job_level_from_factors,
