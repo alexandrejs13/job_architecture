@@ -2,10 +2,9 @@
 # pages/2_Job_Families.py
 
 import streamlit as st
-from utils.ui import sidebar_logo_and_title
-from utils.data_loader import load_excel_data
-from pathlib import Path
 import pandas as pd
+from pathlib import Path
+from utils.ui import sidebar_logo_and_title
 
 # ==========================================================
 # CONFIGURAÇÃO DA PÁGINA
