@@ -176,6 +176,7 @@ def load_model():
 
 @st.cache_data
 def load_json_rules():
+    # Carrega as regras unificadas para referências hierárquicas
     path = Path("wtw_match_rules.json") 
     if path.exists():
         with open(path, 'r', encoding='utf-8') as f:
@@ -218,42 +219,43 @@ def calculate_structured_match(df_filtered, params):
     if df_filtered.empty:
         return pd.DataFrame()
 
-    # Ponderadores para os fatores
-    weights = {
-        'knowledge_level': 0.35,  # Conhecimento
-        'problem_level': 0.30,    # Solução de Problemas
-        'leadership_scope': 0.20, # Liderança
-        'impact_scope': 0.15      # Área de Impacto
-    }
-    
-    # Mapeamento de Nível para um Score Numérico (1 a 3, simulando a progressão GGS)
+    # Mapeamento de Nível para um Score Numérico (1 a 3)
     knowledge_map = {"Rotinas/Procedimentos Definidos (Banda U/W)": 1, "Conhecimento de Conceitos e Princípios (Banda P/T)": 2, "Domínio Amplo e Integrado da Disciplina (Banda P/M Sênior)": 3}
     problem_map = {"Seguir Regras Simples": 1, "Julgamento baseado em Prática e Experiência": 2, "Julgamento Complexo, Análise de Múltiplas Fontes (Banda P/M)": 3}
     leadership_map = {"Nenhuma responsabilidade de gestão": 1, "Orientação/Treinamento de Juniores (IC)": 2, "Responsabilidade Total de Supervisão (M1/M2)": 3}
     impact_map = {"Restrito ao próprio Time": 1, "Área/Subfunção (Ex: Contabilidade)": 2, "Função/Organização (Ex: Vice-Presidência)": 3}
-
-    # 1. Calcula o score alvo numérico baseado nas respostas do usuário (0-12)
-    target_score_num = (knowledge_map[params['knowledge_level']] + problem_map[params['problem_level']] + leadership_map[params['leadership_scope']] + impact_map[params['impact_scope']])
+    expertise_map = {"Time/Área": 1, "Integração Subfunção": 2, "Conhecimento Indústria/Competidores": 3}
+    communication_map = {"Boas Maneiras/Troca de Info simples": 1, "Exige Tato e Diplomacia/Negociação Interna": 2, "Influência Estratégica/Negociação Externa Sênior": 3}
+    proficiency_map = {"Nível de Entrada/Inicial (P1)": 1, "Nível Intermediário/Pleno (P2)": 2, "Nível de Carreira/Sênior (P3/P4)": 3}
     
-    # 2. Infere o GG Alvo (Proxy: Mapeia 0-12 para a faixa de GG mais relevante, ex: 8-17)
-    # Exemplo simples: 12/12 * 9 (range max) + 8 (range min) = GG 17. 
-    inferred_gg = 8 + (target_score_num / 12) * 9 
+    # 1. Calculo o score alvo numérico total (Soma de 7 fatores principais)
+    target_score_num = (knowledge_map.get(params['knowledge_level'], 1) + 
+                        problem_map.get(params['problem_level'], 1) + 
+                        leadership_map.get(params['leadership_scope'], 1) + 
+                        impact_map.get(params['impact_scope'], 1) +
+                        expertise_map.get(params['business_expertise'], 1) +
+                        communication_map.get(params['interpersonal_skills'], 1) +
+                        proficiency_map.get(params['proficiency_level'], 1))
+                        
+    # 2. Defino o GG Inferido (Proxy: Mapeia 7-21 para a faixa de GG mais relevante, ex: 8-25)
+    # Range Total de Pontos: 7 (mínimo) a 21 (máximo)
+    # Mapeamos a pontuação para a faixa de GGs mais comum (8 a 25)
+    inferred_gg = 8 + ((target_score_num - 7) / 14) * 17 
     
-    # 3. Score de Proximidade (Inverso da Distância) - Core do Score (Proximidade ao GG Inferido)
+    # 3. Score de Proximidade (Core do Score)
     df_filtered['target_gg_normalized'] = inferred_gg / 25
     df_filtered['gg_normalized'] = df_filtered['global_grade_num'] / 25
     
+    # Usa a função gaussiana/exponencial para medir a proximidade ao GG Inferido
     df_filtered['score_proximity'] = np.exp(-((df_filtered['gg_normalized'] - df_filtered['target_gg_normalized'])**2) / 0.05)
-    df_filtered['score_proximity'] = df_filtered['score_proximity'] * weights['knowledge_level']
     
-    # 4. Ajuste por Liderança (Management/IC Match) - Ponderação Final
+    # 4. Ajuste por Liderança/IC (Penalidade por mismatch M vs P)
     df_filtered['score_leadership_adjust'] = 1
     if not params['is_manager']:
         # Penaliza cargos de gestão se o usuário selecionou IC
         df_filtered.loc[df_filtered['career_path'].str.contains('manager|coordenador|supervisor', case=False, na=False), 'score_leadership_adjust'] = 0.5
     
-    df_filtered['score_total'] = df_filtered['score_proximity'] * df_filtered['score_leadership_adjust']
-    df_filtered['similarity'] = df_filtered['score_total']
+    df_filtered['similarity'] = df_filtered['score_proximity'] * df_filtered['score_leadership_adjust']
 
     # Normaliza a pontuação final para 0-100%
     df_filtered['similarity'] = np.clip(df_filtered['similarity'] / df_filtered['similarity'].max() if df_filtered['similarity'].max() > 0 else 0, 0, 1)
@@ -285,7 +287,7 @@ st.markdown("#### Fatores de Graduação (Simulando a Avaliação de Complexidad
 col1, col2 = st.columns(2)
 
 with col1:
-    # Fator 1: Conhecimento Funcional 
+    # Fator 1: Profundidade do Conhecimento Funcional
     knowledge_level = st.selectbox(
         "1. Profundidade do Conhecimento Funcional",
         ["Rotinas/Procedimentos Definidos (Banda U/W)", 
@@ -304,7 +306,14 @@ with col1:
     # Fator 3: Tipo de Contribuição (IC vs. Gestor)
     is_manager_input = st.radio("3. Possui Responsabilidade de Gestão?", ["Não (IC)", "Sim (Gestor de Pessoas)"])
     is_manager = is_manager_input == "Sim (Gestor de Pessoas)"
-
+    
+    # Fator 6: Expertise do Negócio (Visão Externa/Integração)
+    business_expertise = st.selectbox(
+        "6. Expertise do Negócio (Visão e Integração)",
+        ["Restrito ao Time/Área", 
+         "Integração com a Subfunção/Função", 
+         "Conhecimento da Indústria/Competidores"]
+    )
 
 with col2:
     # Fator 4: Escopo de Liderança (Se não for Gestor, pontua orientação/influência)
@@ -323,9 +332,21 @@ with col2:
          "Função/Organização (Ex: Vice-Presidência)"]
     )
     
-    # Fator Auxiliar: proxy para qualificação, como no Guia GGS
-    st.caption("Fator Auxiliar: Nível Educacional")
-    education_req = st.selectbox("🎓 Qualificação Mínima", ["Não especificado", "Técnico", "Superior Completo"])
+    # Fator 7: Habilidades Interpessoais
+    interpersonal_skills = st.selectbox(
+        "7. Nível de Comunicação/Influência",
+        ["Boas Maneiras/Troca de Info simples", 
+         "Exige Tato e Diplomacia/Negociação Interna", 
+         "Influência Estratégica/Negociação Externa Sênior"]
+    )
+
+    # Fator 8: Proficiência/Nível de Experiência (Proxy GGS - P1 a P4)
+    proficiency_level = st.selectbox(
+        "8. Nível de Proficiência Esperado (Experience Proxy)",
+        ["Nível de Entrada/Inicial (P1)", 
+         "Nível Intermediário/Pleno (P2)", 
+         "Nível de Carreira/Sênior (P3/P4)"]
+    )
     
 
 # ===========================================================
@@ -354,7 +375,9 @@ if st.button("🔍 Analisar Aderência", type="primary", use_container_width=Tru
         'leadership_scope': leadership_scope,
         'impact_scope': impact_scope,
         'is_manager': is_manager,
-        'education': education_req
+        'business_expertise': business_expertise,
+        'interpersonal_skills': interpersonal_skills,
+        'proficiency_level': proficiency_level
     }
 
     # 6.4. Aplicação do Filtro Rígido (Arquitetura e Hierarquia)
