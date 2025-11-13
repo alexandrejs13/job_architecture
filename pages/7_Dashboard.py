@@ -2,166 +2,132 @@
 # pages/7_Dashboard.py
 
 import streamlit as st
-from pathlib import Path
 import pandas as pd
-
-# IMPORT CORRETO (OPÇÃO A)
+from pathlib import Path
 from utils.ui import sidebar_logo_and_title
 
-# =============================================================================
+# ==========================================================
 # CONFIGURAÇÃO DA PÁGINA
-# =============================================================================
+# ==========================================================
+
 st.set_page_config(
     page_title="Dashboard",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# =============================================================================
-# SIDEBAR SIG UNIFICADA
-# =============================================================================
-sidebar_logo_and_title(
-    logo_path="assets/SIG_Logo_RGB_Black.png",
-    active_page="Dashboard",
-    menu_items=[
-        ("Job Architecture", "governance.png", "1_Job_Architecture.py"),
-        ("Job Families", "people employees.png", "2_Job_Families.py"),
-        ("Job Profile Description", "business review clipboard.png", "3_Job_Profile_Description.py"),
-        ("Job Maps", "globe trade.png", "4_Job_Maps.py"),
-        ("Job Match (GGS)", "checkmark success.png", "5_Job_Match.py"),
-        ("Structure Level", "process.png", "6_Structure_Level.py"),
-        ("Dashboard", "data 2 performance.png", "7_Dashboard.py"),
-    ],
-)
+# Logo SIG no topo da sidebar
+sidebar_logo_and_title("assets/SIG_Logo_RGB_Black.png")
 
-# =============================================================================
-# CSS SIG UNIFICADO
-# =============================================================================
+# ==========================================================
+# TÍTULO SIG
+# ==========================================================
+
 st.markdown("""
-<style>
-
-    .main {
-        background-color: #ffffff !important;
-    }
-
-    .sig-title {
-        background-color: #145efc;
-        color: white;
-        padding: 14px 20px;
-        border-radius: 6px;
-        font-size: 22px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 20px;
-        margin-top: 10px;
-    }
-
-    .sig-container {
-        background-color: #ffffff;
-        border: 1px solid #e5dfd9;
-        padding: 18px 22px;
-        border-radius: 6px;
-        margin-bottom: 22px;
-    }
-
-    .metric-box {
-        background-color: #ffffff;
-        border: 1px solid #e5dfd9;
-        border-radius: 8px;
-        padding: 16px;
-        text-align: center;
-        margin-bottom: 14px;
-    }
-
-    .metric-value {
-        font-size: 28px;
-        font-weight: 700;
-        color: #145efc;
-        margin-bottom: 4px;
-    }
-
-    .metric-label {
-        font-size: 14px;
-        color: #555;
-    }
-
-</style>
-""", unsafe_allow_html=True)
-
-# =============================================================================
-# TÍTULO COM ÍCONE
-# =============================================================================
-icon_path = Path("assets/icons/data 2 performance.png")
-
-st.markdown(
-    f"""
-    <div class="sig-title">
-        <img src="{icon_path.as_posix()}" width="22px">
-        Dashboard
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# =============================================================================
-# CARREGAMENTO DE DADOS NECESSÁRIOS
-# =============================================================================
-try:
-    df_families = pd.read_excel("data/Job Family.xlsx")
-    df_levels = pd.read_excel("data/Level Structure.xlsx")
-    df_profiles = pd.read_excel("data/Job Profile.xlsx")
-except Exception:
-    df_families = df_levels = df_profiles = None
-
-# =============================================================================
-# MÉTRICAS PRINCIPAIS
-# =============================================================================
-st.markdown("<div class='sig-container'><h3>Métricas Consolidadas</h3></div>", unsafe_allow_html=True)
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.markdown("<div class='metric-box'>", unsafe_allow_html=True)
-    st.markdown("<div class='metric-value'>✔️</div>", unsafe_allow_html=True)
-    st.markdown("<div class='metric-label'>Aplicação SIG Ativa</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-with col2:
-    total_families = len(df_families["Family"].unique()) if df_families is not None else "-"
-    st.markdown("<div class='metric-box'>", unsafe_allow_html=True)
-    st.markdown(f"<div class='metric-value'>{total_families}</div>", unsafe_allow_html=True)
-    st.markdown("<div class='metric-label'>Job Families</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-with col3:
-    total_profiles = len(df_profiles) if df_profiles is not None else "-"
-    st.markdown("<div class='metric-box'>", unsafe_allow_html=True)
-    st.markdown(f"<div class='metric-value'>{total_profiles}</div>", unsafe_allow_html=True)
-    st.markdown("<div class='metric-label'>Perfis de Cargo</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-# =============================================================================
-# TABELAS OPCIONAIS
-# =============================================================================
-st.markdown("""
-<div class="sig-container">
-<h3>Dados Consolidados</h3>
-Selecione abaixo qual conjunto de dados deseja visualizar.
+<div class="sig-title">
+    <img src="assets/icons/data 2 performance.png">
+    <span>Dashboard</span>
 </div>
 """, unsafe_allow_html=True)
 
-option = st.selectbox(
-    "Selecione o dataset:",
-    ["Job Families", "Job Profiles", "Structure Levels"]
-)
+# ==========================================================
+# SEÇÃO 1 – VISÃO GERAL
+# ==========================================================
 
-if option == "Job Families" and df_families is not None:
-    st.dataframe(df_families, use_container_width=True)
+st.markdown("""
+<div class="sig-card">
+    <h3>Visão Consolidada da Arquitetura de Cargos</h3>
+    <p>
+        Este painel resume informações essenciais relacionadas à Arquitetura de Cargos 
+        da SIG, incluindo dados de Job Families, Job Profiles, Níveis Organizacionais 
+        (Structure Level) e lógica de Job Match (GGS).
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
-elif option == "Job Profiles" and df_profiles is not None:
-    st.dataframe(df_profiles, use_container_width=True)
+# ==========================================================
+# SEÇÃO 2 – INDICADORES SIMPLES
+# ==========================================================
 
-elif option == "Structure Levels" and df_levels is not None:
-    st.dataframe(df_levels, use_container_width=True)
+# Carregamento dos arquivos Excel
+jf_path = Path("data/Job Family.xlsx")
+jp_path = Path("data/Job Profile.xlsx")
+ls_path = Path("data/Level Structure.xlsx")
+
+try:
+    jf_df = pd.read_excel(jf_path)
+    jp_df = pd.read_excel(jp_path)
+    ls_df = pd.read_excel(ls_path)
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        <div class="sig-card">
+            <h3>Job Families</h3>
+            <p style="font-size: 32px; font-weight: 700; color:#145efc;">{}</p>
+        </div>
+        """.format(jf_df["Job Family"].nunique()), unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div class="sig-card">
+            <h3>Job Profiles</h3>
+            <p style="font-size: 32px; font-weight: 700; color:#145efc;">{}</p>
+        </div>
+        """.format(jp_df["Job Title"].nunique()), unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div class="sig-card">
+            <h3>Níveis Estruturais</h3>
+            <p style="font-size: 32px; font-weight: 700; color:#145efc;">{}</p>
+        </div>
+        """.format(ls_df["Level"].nunique()), unsafe_allow_html=True)
+
+except Exception as e:
+    st.warning("Não foi possível carregar todos os arquivos necessários para os indicadores.")
+
+# ==========================================================
+# SEÇÃO 3 – TABELAS RESUMO
+# ==========================================================
+
+st.markdown("""
+<div class="sig-card">
+    <h3>Resumo das Job Families</h3>
+</div>
+""", unsafe_allow_html=True)
+
+if 'jf_df' in locals():
+    st.dataframe(jf_df, use_container_width=True)
+
+st.markdown("""
+<div class="sig-card">
+    <h3>Resumo dos Job Profiles</h3>
+</div>
+""", unsafe_allow_html=True)
+
+if 'jp_df' in locals():
+    st.dataframe(jp_df, use_container_width=True)
+
+st.markdown("""
+<div class="sig-card">
+    <h3>Resumo da Estrutura de Níveis</h3>
+</div>
+""", unsafe_allow_html=True)
+
+if 'ls_df' in locals():
+    st.dataframe(ls_df, use_container_width=True)
+
+# ==========================================================
+# RODAPÉ
+# ==========================================================
+
+st.markdown("""
+<div class="sig-card">
+    <p style="font-size:14px; color:#666;">
+        Dashboard consolidado. Continue navegando pelo menu lateral para visualizar
+        Job Families, Job Profiles, Maps, Job Match e Structure Level.
+    </p>
+</div>
+""", unsafe_allow_html=True)
