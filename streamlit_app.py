@@ -1,25 +1,30 @@
 # -*- coding: utf-8 -*-
-"""
-Arquivo principal para Streamlit Cloud.
-
-Este arquivo garante que o pacote job_architecture seja corretamente
-carregado e que o app principal (app.py) seja executado sem erros.
-"""
-
 import streamlit as st
-import sys
 from pathlib import Path
 
-# ===========================================
-# ADICIONA O PACOTE job_architecture AO PYTHON PATH
-# ===========================================
-ROOT_DIR = Path(__file__).resolve().parent / "job_architecture"
-sys.path.append(str(ROOT_DIR))
+# CONFIGURAÇÃO GLOBAL
+st.set_page_config(
+    page_title="Job Architecture",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# ===========================================
-# IMPORTA E EXECUTA O APLICATIVO PRINCIPAL
-# ===========================================
-from job_architecture.app import main
+# CARREGAR CSS
+assets_path = Path(__file__).parent / "assets"
 
-if __name__ == "__main__":
-    main()
+fonts_css = assets_path / "fonts.css"
+theme_css = assets_path / "theme.css"
+
+if fonts_css.exists():
+    with open(fonts_css) as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+if theme_css.exists():
+    with open(theme_css) as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+# PÁGINA INICIAL (HOMEPAGE)
+st.title("🏛️ Job Architecture SIG")
+st.write("Bem-vindo ao sistema de Job Architecture.")
+
+st.info("Use o menu lateral para navegar entre as páginas.")
