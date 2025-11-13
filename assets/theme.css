@@ -1,55 +1,15 @@
-/* ======== SIG GLOBAL THEME ======== */
-
-/* Página branca */
-[data-testid="stAppViewContainer"] {
-    background-color: #ffffff !important;
-}
-
-/* Títulos SIG */
-.sig-title {
-    background-color: #145efc;
-    padding: 14px 20px;
-    border-radius: 8px;
-    color: white;
-    font-size: 22px;
+/* TITLES */
+h1, h2, h3, h4 {
+    font-family: "Source Sans Pro", sans-serif;
     font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 22px;
-    margin-top: 10px;
+    color: #000;
 }
 
-.sig-title img {
-    width: 22px;
-}
-
-/* Containers SIG */
+/* CARDS */
 .sig-card {
-    background-color: #ffffff;
-    border: 1px solid #e5dfd9;
-    border-radius: 8px;
-    padding: 18px 24px;
-    margin-bottom: 20px;
-}
-
-/* Botão SIG */
-.stButton>button {
-    background-color: #145efc !important;
-    color: white !important;
-    border-radius: 6px !important;
-    padding: 10px 18px !important;
-    border: none !important;
-}
-
-.stButton>button:hover {
-    background-color: #0f4cd4 !important;
-}
-
-.sig-card p,
-.sig-card ul,
-.sig-card li,
-.sig-card div,
-.sig-card span {
-    text-align: justify !important;
+    background: #f2f0ed;
+    border-radius: 18px;
+    padding: 22px;
+    border-left: 5px solid #145efc;
+    height: 100%;
 }
