@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 from pathlib import Path
-from job_architecture.utils.ui import sidebar_logo_and_title
+from utils.ui import sidebar_logo_and_title
 
 st.set_page_config(page_title="Job Families", page_icon="📂", layout="wide", initial_sidebar_state="expanded")
 
