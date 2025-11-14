@@ -1,17 +1,19 @@
 /* ===========================
-   FONTES SIG – PP SIG Flow
+   FONTES SIG – PP SIG Flow (CORRIGIDO PARA O CAMINHO RAIZ)
 =========================== */
 
 @font-face {
     font-family: 'PPSIGFlow';
-    src: url('fonts/PPSIGFlow-Regular.ttf') format('truetype');
+    /* Caminho corrigido, supondo que o arquivo TTF está em /assets/ */
+    src: url('PPSIGFlow-Regular.ttf') format('truetype'); 
     font-weight: 400;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'PPSIGFlow';
-    src: url('fonts/PPSIGFlow-SemiBold.ttf') format('truetype');
+    /* Caminho corrigido, supondo que o arquivo TTF está em /assets/ */
+    src: url('PPSIGFlow-SemiBold.ttf') format('truetype');
     font-weight: 600;
     font-style: normal;
 }
