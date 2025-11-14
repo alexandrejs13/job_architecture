@@ -3,7 +3,7 @@ import streamlit as st
 from pathlib import Path
 
 # ===========================================================
-# CARREGAR CSS GLOBAL
+# CARREGAR CSS GLOBAL (fonts, theme, menu)
 # ===========================================================
 assets_path = Path(__file__).parents[1] / "assets"
 
@@ -14,14 +14,15 @@ for css in ["fonts.css", "theme.css", "menu.css"]:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 # ===========================================================
-# TÍTULO PRINCIPAL DA PÁGINA
+# TÍTULO PRINCIPAL — Job Architecture
 # ===========================================================
 st.markdown("""
 <div class="page-main-title" style="
     display:flex;
     align-items:center;
-    gap:18px;
-    margin-top:15px;
+    gap:20px;
+    margin-top:10px;
+    margin-bottom:25px;
 ">
     <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png"
          style="width:75px; height:75px;">
@@ -48,23 +49,24 @@ st.markdown("""
     font-size:16px;
     color:#333;
     line-height:1.55;
+    margin-bottom:30px;
 ">
 
-A <strong>Job Architecture (JA)</strong> é o modelo corporativo que estrutura de forma integrada todas as posições da organização,
-definindo agrupamento de funções, níveis de responsabilidade, critérios de progressão e diferenciais de complexidade.
+A <strong>Job Architecture (JA)</strong> é o modelo corporativo que organiza, de forma integrada, todas as posições da empresa —
+definindo agrupamentos de funções, níveis de responsabilidade, critérios de progressão e diferenciais de complexidade.
 
-Baseada na metodologia global da <strong>Willis Towers Watson (WTW)</strong>, a JA garante 
+Baseada na metodologia global da <strong>Willis Towers Watson (WTW)</strong>, a JA garante
 <strong>equidade interna, consistência organizacional e comparabilidade externa</strong>,
-sustentando decisões estratégicas sobre estrutura, remuneração, carreira e sucessão.
+dando sustentação às decisões estratégicas relacionadas à estrutura organizacional, remuneração, carreira e sucessão.
 
-Mais do que um catálogo de cargos, trata-se de uma <strong>infraestrutura de governança</strong> que conecta o desenho organizacional
-à gestão de talentos, assegurando práticas claras, coerentes e orientadas por propósito.
+Mais do que um catálogo de cargos, trata-se de uma <strong>infraestrutura de governança</strong> que conecta desenho organizacional,
+pessoas e estratégia — garantindo clareza, coerência e sustentabilidade nas decisões da empresa.
 
 </div>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# SUBTÍTULO: PILARES
+# SUBTÍTULO — PILARES
 # ===========================================================
 st.markdown("""
 <h2 style="
@@ -72,16 +74,16 @@ st.markdown("""
     font-size:18px;
     font-weight:600;
     color:#000000;
-    margin-top:40px;
+    margin-top:35px;
+    margin-bottom:18px;
 ">
 Pilares Estruturantes
 </h2>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# CARDS SIG
+# CARDS SIG — cor SIG Sand 1
 # ===========================================================
-
 card_style = """
 background-color:#f2efeb;
 padding:22px;
@@ -95,12 +97,12 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown(f"""
     <div style="{card_style}">
-        <div style="font-family:'PPSIGFlow'; font-size:18px; font-weight:600; color:#145efc;">
+        <div style="font-family:'PPSIGFlow'; font-size:18px; font-weight:600; color:#145efc; margin-bottom:8px;">
             Governança Global
         </div>
         <div style="font-family:'PPSIGFlow'; font-size:16px; color:#333;">
-            Regras universais que asseguram comparabilidade entre países e funções,
-            garantindo integridade organizacional.
+            Princípios e regras universais que asseguram comparabilidade entre países,
+            funções e níveis — garantindo integridade organizacional.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -108,12 +110,12 @@ with col1:
 with col2:
     st.markdown(f"""
     <div style="{card_style}">
-        <div style="font-family:'PPSIGFlow'; font-size:18px; font-weight:600; color:#145efc;">
+        <div style="font-family:'PPSIGFlow'; font-size:18px; font-weight:600; color:#145efc; margin-bottom:8px;">
             Clareza de Carreira
         </div>
         <div style="font-family:'PPSIGFlow'; font-size:16px; color:#333;">
-            Estrutura que define bandas e grades, orientando diferenciação de níveis,
-            progressão e mobilidade.
+            Estrutura que define bandas, níveis e critérios de progressão,
+            oferecendo transparência e mobilidade estruturada.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -121,17 +123,18 @@ with col2:
 with col3:
     st.markdown(f"""
     <div style="{card_style}">
-        <div style="font-family:'PPSIGFlow'; font-size:18px; font-weight:600; color:#145efc;">
+        <div style="font-family:'PPSIGFlow'; font-size:18px; font-weight:600; color:#145efc; margin-bottom:8px;">
             Integração de Sistemas
         </div>
         <div style="font-family:'PPSIGFlow'; font-size:16px; color:#333;">
-            Base estruturada para performance, remuneração, sucessão e benchmarking global.
+            Base única para remuneração, avaliação de desempenho, sucessão,
+            talent review e benchmarking global.
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 # ===========================================================
-# SUBTÍTULO: ESTRUTURA DA ARQUITETURA
+# SUBTÍTULO — ESTRUTURA
 # ===========================================================
 st.markdown("""
 <h2 style="
@@ -140,21 +143,23 @@ st.markdown("""
     font-weight:600;
     color:#000000;
     margin-top:50px;
+    margin-bottom:12px;
 ">
 Estrutura da Arquitetura
 </h2>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# TABELA SIG
+# TABELA SIG FINAL
 # ===========================================================
 st.markdown("""
 <table style="
     width:100%;
     border-collapse:collapse;
-    margin-top:16px;
+    margin-top:12px;
     font-family:'PPSIGFlow';
     font-size:16px;
+    color:#333;
 ">
 
 <thead>
@@ -165,29 +170,29 @@ st.markdown("""
 </tr>
 </thead>
 
-<tbody style="color:#333;">
+<tbody>
 
 <tr>
     <td><strong>Job Family</strong></td>
-    <td>Agrupa funções com competências similares.</td>
+    <td>Agrupa funções com competências similares e natureza comum.</td>
     <td>Finanças, Engenharia, RH</td>
 </tr>
 
 <tr>
     <td><strong>Sub-Job Family</strong></td>
-    <td>Diferencia especializações dentro da Job Family.</td>
+    <td>Especializações específicas dentro de cada Job Family.</td>
     <td>Contabilidade, Engenharia de Processo</td>
 </tr>
 
 <tr>
     <td><strong>Career Band</strong></td>
-    <td>Nível hierárquico e escopo de influência.</td>
+    <td>Representa o escopo hierárquico e amplitude de impacto.</td>
     <td>Profissional, Gerencial, Executivo</td>
 </tr>
 
 <tr>
     <td><strong>Global Grade</strong></td>
-    <td>Diferencia complexidade e contribuição entre níveis.</td>
+    <td>Nível de complexidade, contribuição e responsabilidade.</td>
     <td>GG07, GG09, GG12</td>
 </tr>
 
@@ -220,20 +225,19 @@ st.markdown("""
 <div style="font-family:'PPSIGFlow'; font-size:16px; line-height:1.55; color:#333; text-align:justify;">
 
 <p>
-A <strong>Job Architecture</strong> é o alicerce das práticas de <strong>Gestão de Pessoas e Governança Corporativa</strong>.
-Ela fornece uma linguagem comum para estruturar, comparar e avaliar cargos, promovendo decisões justas e sustentáveis.
+A <strong>Job Architecture</strong> é o alicerce das práticas de <strong>Gestão de Pessoas</strong> e
+<strong>Governança Corporativa</strong>, promovendo decisões alinhadas, justas e sustentáveis.
 </p>
 
 <p>
-Com base em critérios consistentes de complexidade e contribuição, o modelo da WTW permite 
-<strong>equidade interna</strong>, <strong>benchmarking de mercado</strong> e <strong>mapeamento de carreiras</strong>
-de forma padronizada.
+Com base em critérios consistentes, o modelo permite <strong>equidade interna</strong>,
+<strong>benchmarking de mercado</strong> e <strong>mapeamento estruturado de carreiras</strong>.
 </p>
 
 <p>
-Ao integrar estrutura, remuneração e desenvolvimento, a Job Architecture fortalece a conexão entre
-<strong>estratégia de negócios</strong>, <strong>desempenho organizacional</strong> e <strong>evolução profissional</strong>,
-garantindo coerência global e meritocracia.
+Ao integrar estrutura organizacional, remuneração e desenvolvimento, a Job Architecture
+fortalece a conexão entre <strong>estratégia de negócios</strong>, <strong>desempenho organizacional</strong>
+e <strong>evolução profissional</strong>, assegurando coerência e meritocracia.
 </p>
 
 </div>
