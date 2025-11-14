@@ -1,11 +1,10 @@
 /* ===========================
    FONTES SIG – PP SIG Flow
-   CORREÇÃO: O caminho da fonte agora aponta diretamente para a pasta 'assets/'
 =========================== */
 
 @font-face {
     font-family: 'PPSIGFlow';
-    /* Corrigido para carregar o arquivo diretamente da pasta onde está o CSS */
+    /* Mantenha o caminho corrigido, supondo que o arquivo TTF está em /assets/ */
     src: url('PPSIGFlow-Regular.ttf') format('truetype'); 
     font-weight: 400;
     font-style: normal;
@@ -13,13 +12,19 @@
 
 @font-face {
     font-family: 'PPSIGFlow';
-    /* Corrigido para carregar o arquivo diretamente da pasta onde está o CSS */
+    /* Mantenha o caminho corrigido, supondo que o arquivo TTF está em /assets/ */
     src: url('PPSIGFlow-SemiBold.ttf') format('truetype');
     font-weight: 600;
     font-style: normal;
 }
 
 body, * {
-    /* O !important garante que a fonte será usada */
     font-family: "PPSIGFlow", sans-serif !important; 
+}
+
+/* 💥 CORREÇÃO FINAL: Regra específica para H1 no fonts.css 💥 */
+h1.sig-title {
+    font-family: 'PPSIGFlow', sans-serif !important;
+    font-size: 26px !important;
+    font-weight: 600 !important;
 }
