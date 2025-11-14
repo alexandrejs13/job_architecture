@@ -1,5 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
+/* =======================================================
+   PP SIG Flow – Fonte Corporativa SIG
+   ======================================================= */
 
-html, body, div, span, p, a {
-    font-family: "Source Sans Pro", sans-serif !important;
+@font-face {
+    font-family: 'PPSIGFlow';
+    src: url('fonts/PPSIGFlow-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'PPSIGFlow';
+    src: url('fonts/PPSIGFlow-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+
+/* =======================================================
+   Uso global da fonte no Streamlit
+   ======================================================= */
+
+html, body, div, span, input, button, textarea, select {
+    font-family: 'PPSIGFlow', sans-serif !important;
 }
