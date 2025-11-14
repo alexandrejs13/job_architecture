@@ -1,117 +1,78 @@
-/* =======================================================
-   THEME – SIG CORPORATE DESIGN SYSTEM
-   ======================================================= */
+/* ===========================
+   CORES GERAIS SIG
+=========================== */
 
-/* -------------------- */
-/* PALETA CORPORATIVA   */
-/* -------------------- */
 :root {
-    /* Core Colors */
-    --sig-white: #ffffff;
+    --sig-blue: #145efc;
+    --sig-sand1: #f2efeb;
     --sig-black: #000000;
-
-    /* SIG Sky (azul primário) */
-    --sig-sky: #145efc;
-
-    /* SIG Sand (neutros) */
-    --sig-sand-1: #f2f0ed;
-    --sig-sand-2: #e5dfd9;
-    --sig-sand-3: #bfbaB5;
-    --sig-sand-4: #73706d;
-
-    /* SIG Forest (verdes) */
-    --sig-forest-1: #4fa593;
-    --sig-forest-2: #167665;
-    --sig-forest-3: #00493b;
-
-    /* SIG Moss (amarelos) */
-    --sig-moss-1: #f5f073;
-    --sig-moss-2: #c8c846;
-    --sig-moss-3: #a09b05;
-
-    /* SIG Spark (violeta) */
-    --sig-spark: #dca0ff;
 }
 
-/* -------------------- */
-/*	APLICAÇÃO GLOBAL     */
-/* -------------------- */
-
-html, body {
-    font-family: 'PPSIGFlow', sans-serif !important;
-    background-color: var(--sig-white) !important;
-    color: #222222 !important;
+/* ===========================
+   SIDEBAR (SIG SAND 1)
+=========================== */
+[data-testid="stSidebar"] {
+    background-color: var(--sig-sand1) !important;
+    border-right: 1px solid #d9d6d2;
 }
 
-* {
-    font-family: 'PPSIGFlow', sans-serif !important;
+/* ===========================
+   ÁREA PRINCIPAL (BRANCA)
+=========================== */
+[data-testid="stAppViewContainer"] {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+    max-width: 1200px !important;
+    margin: auto !important;
 }
 
-/* -------------------- */
-/*	HYPERLINKS           */
-/* -------------------- */
+/* ===========================
+   TÍTULOS
+=========================== */
 
-a {
-    color: var(--sig-sky) !important;
-    text-decoration: none !important;
+.page-title {
+    font-family: 'PPSIGFlow';
+    font-size: 26px;
+    font-weight: 600;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
-a:hover {
-    text-decoration: underline !important;
+.page-title-icon {
+    width: 64px;
+    height: 64px;
 }
 
-/* -------------------- */
-/*	BARRA DE ROLAGEM     */
-/* -------------------- */
-
-::-webkit-scrollbar {
-    width: 10px;
+.section-title {
+    font-family: 'PPSIGFlow';
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 40px;
+    margin-bottom: 12px;
 }
 
-::-webkit-scrollbar-track {
-    background: var(--sig-sand-1);
+/* ===========================
+   PARÁGRAFOS
+=========================== */
+.section-text {
+    font-size: 16px;
+    color: #000000;
+    line-height: 1.65;
+    text-align: justify;
 }
 
-::-webkit-scrollbar-thumb {
-    background: var(--sig-sky);
-    border-radius: 10px;
+/* ===========================
+   CARDS SIG
+=========================== */
+.sig-card {
+    background-color: #ffffff;
+    border-radius: 18px;
+    border: 1px solid #e8e8e8;
+    padding: 22px;
+    height: 100%;
 }
-
-/* -------------------- */
-/*	INPUTS STREAMLIT     */
-/* -------------------- */
-
-input, textarea, select {
-    border-radius: 14px !important;
-    border: 1px solid #dcdcdc !important;
-    padding: 8px 12px !important;
-    font-size: 15px !important;
-}
-
-input:focus, textarea:focus, select:focus {
-    border: 1px solid var(--sig-sky) !important;
-    box-shadow: 0 0 4px rgba(20, 94, 252, 0.4) !important;
-}
-
-.stSelectbox div[data-baseweb="select"] > div {
-    border-radius: 14px !important;
-}
-
-/* -------------------- */
-/*	ALINHAMENTO JUSTIFICADO */
-/* -------------------- */
-
-p, li, span {
-    text-align: justify !important;
-}
-
-/* -------------------- */
-/*  TÍTULOS PADRÃO SIG   */
-/* -------------------- */
-
-h1, h2, h3, h4 {
-    font-family: 'PPSIGFlow', sans-serif !important;
-    font-weight: 600 !important;
-    color: var(--sig-black) !important;
-}
-
