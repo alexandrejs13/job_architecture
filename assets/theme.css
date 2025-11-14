@@ -1,78 +1,119 @@
-/* ===========================
-   CORES GERAIS SIG
-=========================== */
+/* =========================== */
+/*   PALETA SIG — ESTILO BASE  */
+/* =========================== */
 
 :root {
+    --sig-sand-1: #f2efeb;
+    --sig-sand-2: #e5e3df;
     --sig-blue: #145efc;
-    --sig-sand1: #f2efeb;
-    --sig-black: #000000;
+    --text-dark: #000000;
+    --text-gray: #333333;
 }
 
-/* ===========================
-   SIDEBAR (SIG SAND 1)
-=========================== */
+/* =========================== */
+/*        SIDEBAR FIXO         */
+/* =========================== */
+
 [data-testid="stSidebar"] {
-    background-color: var(--sig-sand1) !important;
-    border-right: 1px solid #d9d6d2;
+    background-color: var(--sig-sand-1) !important;
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+    padding-top: 30px !important;
 }
 
-/* ===========================
-   ÁREA PRINCIPAL (BRANCA)
-=========================== */
+/* OCULTAR “streamlit app” */
+section[data-testid="stSidebarNav"] > div > div:first-child {
+    display: none !important;
+}
+
+/* =========================== */
+/*     LAYOUT DA PÁGINA        */
+/* =========================== */
+
 [data-testid="stAppViewContainer"] {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    padding-left: 40px !important;
+    padding-left: 290px !important;     /* Sidebar 260 + margem */
     padding-right: 40px !important;
-    max-width: 1200px !important;
-    margin: auto !important;
+    background-color: #ffffff !important; /* Página sempre branca */
 }
 
-/* ===========================
-   TÍTULOS
-=========================== */
+/* =========================== */
+/*     MENU SELECIONADO        */
+/* =========================== */
 
-.page-title {
+[data-testid="stSidebarNav"] a {
     font-family: 'PPSIGFlow';
-    font-size: 26px;
-    font-weight: 600;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    gap: 16px;
+    font-size: 16px;
+    color: #000000 !important;
+    padding: 10px 14px !important;
 }
 
-.page-title-icon {
-    width: 64px;
-    height: 64px;
+[data-testid="stSidebarNav"] a:hover {
+    background-color: var(--sig-sand-2) !important;
+    border-radius: 10px;
+}
+
+[data-testid="stSidebarNav"] a[href$="Job_Architecture"] {
+    background-color: var(--sig-blue) !important;
+    color: white !important;
+    border-radius: 10px;
+}
+
+/* =========================== */
+/*    TÍTULOS E SUBTÍTULOS     */
+/* =========================== */
+
+.page-main-title h1 {
+    font-family: 'PPSIGFlow' !important;
+    font-weight: 600 !important;
+    font-size: 26px !important;
 }
 
 .section-title {
-    font-family: 'PPSIGFlow';
-    font-size: 20px;
-    font-weight: 600;
-    margin-top: 40px;
-    margin-bottom: 12px;
-}
-
-/* ===========================
-   PARÁGRAFOS
-=========================== */
-.section-text {
-    font-size: 16px;
+    font-family: 'PPSIGFlow' !important;
+    font-weight: 600 !important;
+    font-size: 20px !important;
     color: #000000;
-    line-height: 1.65;
-    text-align: justify;
+    margin-top: 40px !important;
+    margin-bottom: 16px !important;
 }
 
-/* ===========================
-   CARDS SIG
-=========================== */
+/* =========================== */
+/*          TABELAS SIG        */
+/* =========================== */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table thead {
+    background: var(--sig-blue);
+    color: white;
+}
+
+table th {
+    padding: 12px;
+    text-align: left;
+    font-family: 'PPSIGFlow';
+    font-size: 16px;
+}
+
+table td {
+    padding: 12px;
+    color: #333333;
+    font-family: 'PPSIGFlow';
+}
+
+/* =========================== */
+/*            CARDS            */
+/* =========================== */
+
 .sig-card {
-    background-color: #ffffff;
-    border-radius: 18px;
-    border: 1px solid #e8e8e8;
+    background-color: var(--sig-sand-1);
     padding: 22px;
+    border-radius: 18px;
+    border: 1px solid var(--sig-sand-2);
     height: 100%;
+    font-family: 'PPSIGFlow';
 }
