@@ -1,7 +1,8 @@
-/* =======================================================
-   PP SIG Flow – Fonte Corporativa SIG
-   ======================================================= */
+/* ============================================================
+   FONTES SIG – PPSIGFlow Regular e SemiBold
+   ============================================================ */
 
+/* REGULAR */
 @font-face {
     font-family: 'PPSIGFlow';
     src: url('fonts/PPSIGFlow-Regular.ttf') format('truetype');
@@ -9,6 +10,7 @@
     font-style: normal;
 }
 
+/* SEMIBOLD (BOLD) */
 @font-face {
     font-family: 'PPSIGFlow';
     src: url('fonts/PPSIGFlow-SemiBold.ttf') format('truetype');
@@ -16,10 +18,7 @@
     font-style: normal;
 }
 
-/* =======================================================
-   Uso global da fonte no Streamlit
-   ======================================================= */
-
-html, body, div, span, input, button, textarea, select {
+/* Aplicação global */
+body, html, * {
     font-family: 'PPSIGFlow', sans-serif !important;
 }
