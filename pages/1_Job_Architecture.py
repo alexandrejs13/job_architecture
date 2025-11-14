@@ -3,25 +3,21 @@ import streamlit as st
 from pathlib import Path
 
 # ===========================================================
-# CORREÇÃO: CARREGAR CSS GLOBAL (fonts, theme, menu)
-# Ajustamos o loop para carregar os arquivos que você enviou:
-# 'header.css', 'layout.css', 'styles.css'
-# 'fonts-2.css' (renomeado para 'fonts.css')
-# 'theme-2.css' (renomeado para 'theme.css')
-# 'menu-2.css' (renomeado para 'menu.css')
+# CARREGAR CSS GLOBAL (fonts, theme, menu)
 # ===========================================================
 assets_path = Path(__file__).parents[1] / "assets"
 
-# Corrija os nomes dos arquivos na sua pasta 'assets' para
-# fonts.css, theme.css, menu.css, layout.css, header.css, styles.css
+# Carregamento de todos os arquivos CSS, assegurando que o fonts.css seja carregado
+# no início (embora a ordem não seja estritamente necessária, é boa prática).
 for css in ["fonts.css", "theme.css", "menu.css", "layout.css", "header.css", "styles.css"]:
     css_file = assets_path / css
     if css_file.exists():
         with open(css_file) as f:
+            # O st.markdown é a maneira correta de injetar o CSS no Streamlit
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 # ===========================================================
-# TÍTULO PRINCIPAL — Job Architecture (CORRIGIDO com Classes CSS do theme-2.css)
+# TÍTULO PRINCIPAL — Job Architecture (USANDO CLASSES CORRETAS)
 # ===========================================================
 st.markdown("""
 <div class="sig-title-wrapper">
@@ -54,7 +50,7 @@ pessoas e estratégia — garantindo clareza, coerência e sustentabilidade nas 
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# SUBTÍTULO — PILARES (CORRIGIDO com Classe CSS)
+# SUBTÍTULO — PILARES
 # ===========================================================
 st.markdown("""
 <h2 class="sig-subtitle" style="margin-top:35px;">
@@ -64,9 +60,6 @@ Pilares Estruturantes
 
 # ===========================================================
 # CARDS SIG — cor SIG Sand 1
-# NOTE: O estilo 'card_style' abaixo está em conflito com a classe .sig-card
-# no 'theme-2.css'. Recomendo usar a classe .sig-card, mas mantive o estilo
-# inline original (levemente ajustado) para evitar quebrar o layout.
 # ===========================================================
 card_style = """
 background-color:#f2efeb;
@@ -118,7 +111,7 @@ with col3:
     """, unsafe_allow_html=True)
 
 # ===========================================================
-# SUBTÍTULO — ESTRUTURA (CORRIGIDO com Classe CSS)
+# SUBTÍTULO — ESTRUTURA
 # ===========================================================
 st.markdown("""
 <h2 class="sig-subtitle" style="margin-top:50px;">
@@ -127,7 +120,7 @@ Estrutura da Arquitetura
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# TABELA SIG FINAL (CORRIGIDO com Classe CSS)
+# TABELA SIG FINAL
 # ===========================================================
 st.markdown("""
 <table class="sig-table" style="
@@ -181,7 +174,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# IMPORTÂNCIA ESTRATÉGICA (CORRIGIDO com Classe CSS)
+# IMPORTÂNCIA ESTRATÉGICA
 # ===========================================================
 st.markdown("""
 <h2 class="sig-subtitle" style="margin-top:50px;">
