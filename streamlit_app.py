@@ -2,9 +2,9 @@
 import streamlit as st
 from pathlib import Path
 
-# ============================
-# CONFIGURAÇÃO GLOBAL
-# ============================
+# ===========================================================
+# CONFIGURAÇÃO GLOBAL DO STREAMLIT
+# ===========================================================
 st.set_page_config(
     page_title="Job Architecture",
     page_icon="🏛️",
@@ -12,9 +12,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ============================
-# CARREGAR CSS GLOBAL
-# ============================
+# ===========================================================
+# CARREGAR CSS GLOBAL (SIG)
+# ===========================================================
 assets_path = Path(__file__).parent / "assets"
 css_files = ["fonts.css", "theme.css", "menu.css"]
 
@@ -24,9 +24,25 @@ for css in css_files:
         with open(css_path) as f:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# ============================
-# HOME SIMPLES
-# (O Streamlit multipage cuida do menu lateral sozinho)
-# ============================
-st.title("🏛️ Job Architecture SIG")
-st.write("Use o menu lateral para navegar entre as páginas.")
+# ===========================================================
+# HOME / PÁGINA INICIAL (O STREAMLIT MULTIPAGE CARREGA O RESTO)
+# ===========================================================
+st.markdown("""
+<h1 style="
+    font-family:'PPSIGFlow';
+    font-weight:600;
+    font-size:26px;
+    color:#000;
+">
+    🏛️ Job Architecture SIG
+</h1>
+
+<p style="
+    font-family:'PPSIGFlow';
+    font-size:16px;
+    color:#333;
+">
+Bem-vindo ao sistema corporativo de Job Architecture.  
+Use o menu lateral esquerdo para navegar entre as páginas.
+</p>
+""", unsafe_allow_html=True)
