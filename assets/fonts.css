@@ -1,10 +1,11 @@
 /* ===========================
-   FONTES SIG – PP SIG Flow (CORRIGIDO PARA O CAMINHO RAIZ)
+   FONTES SIG – PP SIG Flow
+   CORREÇÃO: O caminho da fonte agora aponta diretamente para a pasta 'assets/'
 =========================== */
 
 @font-face {
     font-family: 'PPSIGFlow';
-    /* Caminho corrigido, supondo que o arquivo TTF está em /assets/ */
+    /* Corrigido para carregar o arquivo diretamente da pasta onde está o CSS */
     src: url('PPSIGFlow-Regular.ttf') format('truetype'); 
     font-weight: 400;
     font-style: normal;
@@ -12,12 +13,13 @@
 
 @font-face {
     font-family: 'PPSIGFlow';
-    /* Caminho corrigido, supondo que o arquivo TTF está em /assets/ */
+    /* Corrigido para carregar o arquivo diretamente da pasta onde está o CSS */
     src: url('PPSIGFlow-SemiBold.ttf') format('truetype');
     font-weight: 600;
     font-style: normal;
 }
 
 body, * {
-    font-family: "PPSIGFlow", sans-serif !important;
+    /* O !important garante que a fonte será usada */
+    font-family: "PPSIGFlow", sans-serif !important; 
 }
