@@ -1,8 +1,7 @@
-/* ============================================================
-   FONTES SIG – PPSIGFlow Regular e SemiBold
-   ============================================================ */
+/* ===========================
+   FONTES SIG – PP SIG Flow
+=========================== */
 
-/* REGULAR */
 @font-face {
     font-family: 'PPSIGFlow';
     src: url('fonts/PPSIGFlow-Regular.ttf') format('truetype');
@@ -10,7 +9,6 @@
     font-style: normal;
 }
 
-/* SEMIBOLD (BOLD) */
 @font-face {
     font-family: 'PPSIGFlow';
     src: url('fonts/PPSIGFlow-SemiBold.ttf') format('truetype');
@@ -18,7 +16,6 @@
     font-style: normal;
 }
 
-/* Aplicação global */
-body, html, * {
-    font-family: 'PPSIGFlow', sans-serif !important;
+body, * {
+    font-family: "PPSIGFlow", sans-serif !important;
 }
