@@ -3,38 +3,32 @@ import streamlit as st
 from pathlib import Path
 
 # ===========================================================
-# CARREGAR CSS GLOBAL (fonts, theme, menu)
+# CORREÇÃO: CARREGAR CSS GLOBAL (fonts, theme, menu)
+# Ajustamos o loop para carregar os arquivos que você enviou:
+# 'header.css', 'layout.css', 'styles.css'
+# 'fonts-2.css' (renomeado para 'fonts.css')
+# 'theme-2.css' (renomeado para 'theme.css')
+# 'menu-2.css' (renomeado para 'menu.css')
 # ===========================================================
 assets_path = Path(__file__).parents[1] / "assets"
 
-for css in ["fonts.css", "theme.css", "menu.css"]:
+# Corrija os nomes dos arquivos na sua pasta 'assets' para
+# fonts.css, theme.css, menu.css, layout.css, header.css, styles.css
+for css in ["fonts.css", "theme.css", "menu.css", "layout.css", "header.css", "styles.css"]:
     css_file = assets_path / css
     if css_file.exists():
         with open(css_file) as f:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 # ===========================================================
-# TÍTULO PRINCIPAL — Job Architecture
+# TÍTULO PRINCIPAL — Job Architecture (CORRIGIDO com Classes CSS do theme-2.css)
 # ===========================================================
 st.markdown("""
-<div class="page-main-title" style="
-    display:flex;
-    align-items:center;
-    gap:20px;
-    margin-top:10px;
-    margin-bottom:25px;
-">
+<div class="sig-title-wrapper">
     <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png"
-         style="width:75px; height:75px;">
+         class="sig-title-icon">
 
-    <h1 style="
-        font-family:'PPSIGFlow';
-        font-weight:600;
-        font-size:26px;
-        margin:0;
-        padding:0;
-        color:#000000;
-    ">
+    <h1 class="sig-title">
         Job Architecture
     </h1>
 </div>
@@ -44,13 +38,7 @@ st.markdown("""
 # INTRODUÇÃO
 # ===========================================================
 st.markdown("""
-<div style="
-    font-family:'PPSIGFlow';
-    font-size:16px;
-    color:#333;
-    line-height:1.55;
-    margin-bottom:30px;
-">
+<div class="sig-text" style="margin-bottom:30px;">
 
 A <strong>Job Architecture (JA)</strong> é o modelo corporativo que organiza, de forma integrada, todas as posições da empresa —
 definindo agrupamentos de funções, níveis de responsabilidade, critérios de progressão e diferenciais de complexidade.
@@ -66,23 +54,19 @@ pessoas e estratégia — garantindo clareza, coerência e sustentabilidade nas 
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# SUBTÍTULO — PILARES
+# SUBTÍTULO — PILARES (CORRIGIDO com Classe CSS)
 # ===========================================================
 st.markdown("""
-<h2 style="
-    font-family:'PPSIGFlow';
-    font-size:18px;
-    font-weight:600;
-    color:#000000;
-    margin-top:35px;
-    margin-bottom:18px;
-">
+<h2 class="sig-subtitle" style="margin-top:35px;">
 Pilares Estruturantes
 </h2>
 """, unsafe_allow_html=True)
 
 # ===========================================================
 # CARDS SIG — cor SIG Sand 1
+# NOTE: O estilo 'card_style' abaixo está em conflito com a classe .sig-card
+# no 'theme-2.css'. Recomendo usar a classe .sig-card, mas mantive o estilo
+# inline original (levemente ajustado) para evitar quebrar o layout.
 # ===========================================================
 card_style = """
 background-color:#f2efeb;
@@ -97,10 +81,10 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown(f"""
     <div style="{card_style}">
-        <div style="font-family:'PPSIGFlow'; font-size:18px; font-weight:600; color:#145efc; margin-bottom:8px;">
+        <div class="sig-subtitle" style="font-size:18px; color:#145efc; margin-bottom:8px;">
             Governança Global
         </div>
-        <div style="font-family:'PPSIGFlow'; font-size:16px; color:#333;">
+        <div class="sig-text" style="font-size:16px; color:#333;">
             Princípios e regras universais que asseguram comparabilidade entre países,
             funções e níveis — garantindo integridade organizacional.
         </div>
@@ -110,10 +94,10 @@ with col1:
 with col2:
     st.markdown(f"""
     <div style="{card_style}">
-        <div style="font-family:'PPSIGFlow'; font-size:18px; font-weight:600; color:#145efc; margin-bottom:8px;">
+        <div class="sig-subtitle" style="font-size:18px; color:#145efc; margin-bottom:8px;">
             Clareza de Carreira
         </div>
-        <div style="font-family:'PPSIGFlow'; font-size:16px; color:#333;">
+        <div class="sig-text" style="font-size:16px; color:#333;">
             Estrutura que define bandas, níveis e critérios de progressão,
             oferecendo transparência e mobilidade estruturada.
         </div>
@@ -123,10 +107,10 @@ with col2:
 with col3:
     st.markdown(f"""
     <div style="{card_style}">
-        <div style="font-family:'PPSIGFlow'; font-size:18px; font-weight:600; color:#145efc; margin-bottom:8px;">
+        <div class="sig-subtitle" style="font-size:18px; color:#145efc; margin-bottom:8px;">
             Integração de Sistemas
         </div>
-        <div style="font-family:'PPSIGFlow'; font-size:16px; color:#333;">
+        <div class="sig-text" style="font-size:16px; color:#333;">
             Base única para remuneração, avaliação de desempenho, sucessão,
             talent review e benchmarking global.
         </div>
@@ -134,29 +118,19 @@ with col3:
     """, unsafe_allow_html=True)
 
 # ===========================================================
-# SUBTÍTULO — ESTRUTURA
+# SUBTÍTULO — ESTRUTURA (CORRIGIDO com Classe CSS)
 # ===========================================================
 st.markdown("""
-<h2 style="
-    font-family:'PPSIGFlow';
-    font-size:18px;
-    font-weight:600;
-    color:#000000;
-    margin-top:50px;
-    margin-bottom:12px;
-">
+<h2 class="sig-subtitle" style="margin-top:50px;">
 Estrutura da Arquitetura
 </h2>
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# TABELA SIG FINAL
+# TABELA SIG FINAL (CORRIGIDO com Classe CSS)
 # ===========================================================
 st.markdown("""
-<table style="
-    width:100%;
-    border-collapse:collapse;
-    margin-top:12px;
+<table class="sig-table" style="
     font-family:'PPSIGFlow';
     font-size:16px;
     color:#333;
@@ -207,22 +181,16 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# IMPORTÂNCIA ESTRATÉGICA
+# IMPORTÂNCIA ESTRATÉGICA (CORRIGIDO com Classe CSS)
 # ===========================================================
 st.markdown("""
-<h2 style="
-    font-family:'PPSIGFlow';
-    font-size:18px;
-    font-weight:600;
-    margin-top:50px;
-    color:#000000;
-">
+<h2 class="sig-subtitle" style="margin-top:50px;">
 Importância Estratégica
 </h2>
 """, unsafe_allow_html=True)
 
 st.markdown("""
-<div style="font-family:'PPSIGFlow'; font-size:16px; line-height:1.55; color:#333; text-align:justify;">
+<div class="sig-text" style="text-align:justify;">
 
 <p>
 A <strong>Job Architecture</strong> é o alicerce das práticas de <strong>Gestão de Pessoas</strong> e
