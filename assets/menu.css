@@ -1,82 +1,35 @@
-/* =======================================================
-   MENU SUPERIOR SIG – ESTILO GLOBAL
-   ======================================================= */
+/* ===========================
+   MENU SUPERIOR SIG
+=========================== */
 
-.navbar {
+.top-menu {
     width: 100%;
-    background-color: #f2f0ed; /* SIG Sand 1 */
+    height: 64px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #ececec;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 32px;
-    border-bottom: 1px solid #d8d5d0;
+    padding: 8px 32px;
     position: sticky;
     top: 0;
     z-index: 999;
 }
 
-.navbar-logo img {
-    height: 42px;
+.sig-logo {
+    height: 38px;
 }
 
-.navbar-links {
-    display: flex;
-    gap: 24px;
-    align-items: center;
-}
-
-.navbar-links a {
-    font-family: 'PPSIGFlow', sans-serif !important;
-    font-size: 16px;
-    font-weight: 400;
-    color: #000000;
-    text-decoration: none;
-    padding: 8px 18px;
-    border-radius: 24px;
-    transition: all 0.25s ease;
-}
-
-/* Estado HOVER */
-.navbar-links a:hover {
-    background-color: rgba(20, 94, 252, 0.12);
-}
-
-/* Aba ATIVA (pílula azul SIG) */
-.navbar-links a.active {
+.menu-pill {
+    padding: 6px 18px;
     background-color: #145efc;
+    border-radius: 20px;
     color: white !important;
-    font-weight: 600;
+    text-decoration: none;
+    font-size: 14px;
+    margin-right: 8px;
 }
 
-/* ===========================
-   Mobile
-   =========================== */
-
-.navbar-toggle {
-    display: none;
-}
-
-@media (max-width: 880px) {
-    .navbar-links {
-        display: none;
-    }
-
-    .navbar-toggle {
-        display: block;
-        cursor: pointer;
-    }
-}
-
-/* Menu mobile */
-.mobile-menu {
-    display: none;
-    flex-direction: column;
-    background: #f2f0ed;
-    padding: 16px;
-    border-bottom: 1px solid #e0ded8;
-}
-
-.mobile-menu a {
-    padding: 12px 0;
-    font-size: 16px;
+.menu-pill:hover {
+    opacity: 0.8;
 }
