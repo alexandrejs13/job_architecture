@@ -1,41 +1,44 @@
 # -*- coding: utf-8 -*-
-# pages/1_Job_Architecture.py
-
 import streamlit as st
 from pathlib import Path
-from utils.ui import sidebar_logo_and_title
 
-# ==========================================================
-# CONFIGURAÇÃO
-# ==========================================================
-
+# =================================================================
+# CONFIGURAÇÃO DA PÁGINA
+# =================================================================
 st.set_page_config(
     page_title="Job Architecture",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Sidebar SIG com logo
-sidebar_logo_and_title("assets/SIG_Logo_RGB_Black.png")
+# =================================================================
+# CARREGAR CSS GLOBAL
+# =================================================================
+assets_path = Path(__file__).parents[1] / "assets"
 
-# ==========================================================
-# TÍTULO SIG
-# ==========================================================
+for css_file in ["fonts.css", "theme.css", "layout.css"]:
+    css_path = assets_path / css_file
+    if css_path.exists():
+        with open(css_path) as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+# =================================================================
+# TÍTULO COM ICONE
+# =================================================================
 
 st.markdown("""
-<div class="sig-title">
-    <img src="assets/icons/governance.png">
+<div class="page-header-sig">
+    <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png">
     <span>Job Architecture — Fundamentos e Governança</span>
 </div>
 """, unsafe_allow_html=True)
 
-# ==========================================================
-# CONTEÚDO 1 — CONCEITO CENTRAL (CONTEÚDO ORIGINAL)
-# ==========================================================
+# =================================================================
+# DESCRIÇÃO INICIAL
+# =================================================================
 
 st.markdown("""
-<div class="sig-card">
-<div style="text-align: justify;">
+<div class="content-block">
 
 A <strong>Job Architecture (JA)</strong> é o modelo corporativo que estrutura de forma integrada todas as posições da organização, 
 definindo a lógica de agrupamento de funções, níveis de responsabilidade, critérios de progressão e diferenciais de complexidade.
@@ -48,127 +51,121 @@ Mais do que um catálogo de cargos, trata-se de uma <strong>infraestrutura de go
 à gestão de talentos, assegurando que as práticas de gestão de pessoas sejam <strong>claras, coerentes e orientadas por propósito.</strong>
 
 </div>
-</div>
 """, unsafe_allow_html=True)
 
-# ==========================================================
-# CONTEÚDO 2 — PILARES (CONTEÚDO ORIGINAL + SIG CARDS)
-# ==========================================================
+# =================================================================
+# PILARES ESTRUTURANTES (CARDS)
+# =================================================================
 
-st.markdown("""
-<div class="sig-card">
-    <h3>Pilares Estruturantes</h3>
-</div>
-""", unsafe_allow_html=True)
+st.markdown("""<h2 class="section-title">Pilares Estruturantes</h2>""", unsafe_allow_html=True)
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3 = st.columns(3, gap="large")
 
 with col1:
     st.markdown("""
     <div class="sig-card">
-        <strong style="color:#145efc; font-size:1.1rem;">Governança Global</strong>
-        <p>
-        Define princípios, critérios e regras universais para a criação, atualização e manutenção dos cargos, garantindo comparabilidade entre países, funções e níveis organizacionais.  
-        Essa governança assegura que toda posição seja avaliada de acordo com padrões globais e práticas de mercado reconhecidas.
-        </p>
+        <div class="sig-card-title">Governança Global</div>
+        <div class="sig-card-text">
+        Define princípios, critérios e regras universais para a criação, atualização e manutenção dos cargos, garantindo comparabilidade entre países, funções e níveis organizacionais.
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
 with col2:
     st.markdown("""
     <div class="sig-card">
-        <strong style="color:#145efc; font-size:1.1rem;">Clareza de Carreira</strong>
-        <p>
-        Cada cargo é vinculado a um <strong>Career Band</strong> e <strong>Global Grade</strong>, refletindo o escopo de atuação, 
-        o grau de autonomia e a natureza da contribuição.  
-        Essa estrutura fornece visibilidade sobre oportunidades de progressão, diferenciação de níveis e mobilidade lateral.
-        </p>
+        <div class="sig-card-title">Clareza de Carreira</div>
+        <div class="sig-card-text">
+        Cada cargo é vinculado a um <strong>Career Band</strong> e <strong>Global Grade</strong>, oferecendo visibilidade sobre progressão, mobilidade e diferenciação de níveis.
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
 with col3:
     st.markdown("""
     <div class="sig-card">
-        <strong style="color:#145efc; font-size:1.1rem;">Integração de Sistemas</strong>
-        <p>
-        A Job Architecture serve como base única para processos de <strong>Remuneração, Performance, Talent Review e Benchmarking</strong>.  
-        Garante decisões integradas e sustentadas por critérios globais.
-        </p>
+        <div class="sig-card-title">Integração de Sistemas</div>
+        <div class="sig-card-text">
+        Sustenta processos de Remuneração, Performance, Talent Review e Benchmarking. Garante consistência entre estruturas e governança global.
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-# ==========================================================
-# CONTEÚDO 3 — ESTRUTURA DA ARQUITETURA (TABELA ORIGINAL)
-# ==========================================================
+# =================================================================
+# ESTRUTURA DA ARQUITETURA (TABELA)
+# =================================================================
+
+st.markdown("""<h2 class="section-title">Estrutura da Arquitetura</h2>""", unsafe_allow_html=True)
 
 st.markdown("""
-<div class="sig-card">
-    <h3>Estrutura da Arquitetura</h3>
+<div class="content-block">
 
-    A arquitetura é composta por cinco elementos integrados, formando um modelo organizacional padronizado e comparável globalmente:
+A arquitetura é composta por cinco elementos integrados, formando um modelo organizacional padronizado e comparável globalmente.
 
-    <br><br>
+<br><br>
 
-    <table style="width:100%; border-collapse: collapse;">
-        <tr>
-            <th style="border-bottom:2px solid #145efc; text-align:left; padding:8px;">Elemento</th>
-            <th style="border-bottom:2px solid #145efc; text-align:left; padding:8px;">Propósito</th>
-            <th style="border-bottom:2px solid #145efc; text-align:left; padding:8px;">Exemplo</th>
-        </tr>
+<table class="sig-table">
+    <tr>
+        <th>Elemento</th>
+        <th>Propósito</th>
+        <th>Exemplo</th>
+    </tr>
 
-        <tr>
-            <td style="padding:8px;"><strong>Job Family</strong></td>
-            <td style="padding:8px;">Agrupa funções com competências similares e natureza de trabalho comum.</td>
-            <td style="padding:8px;">Finanças, Engenharia, RH</td>
-        </tr>
+    <tr>
+        <td><strong>Job Family</strong></td>
+        <td>Agrupa funções com competências similares e natureza de trabalho comum.</td>
+        <td>Finanças, Engenharia, RH</td>
+    </tr>
 
-        <tr>
-            <td style="padding:8px;"><strong>Sub-Job Family</strong></td>
-            <td style="padding:8px;">Distingue especializações técnicas dentro de cada Job Family.</td>
-            <td style="padding:8px;">Contabilidade, Engenharia de Processo</td>
-        </tr>
+    <tr>
+        <td><strong>Sub-Job Family</strong></td>
+        <td>Distingue especializações dentro de cada Job Family.</td>
+        <td>Contabilidade, Engenharia de Processo</td>
+    </tr>
 
-        <tr>
-            <td style="padding:8px;"><strong>Career Band</strong></td>
-            <td style="padding:8px;">Representa o nível hierárquico e o escopo de influência.</td>
-            <td style="padding:8px;">Profissional, Gerencial, Executivo</td>
-        </tr>
+    <tr>
+        <td><strong>Career Band</strong></td>
+        <td>Representa o nível hierárquico e escopo de influência.</td>
+        <td>Profissional, Gerencial, Executivo</td>
+    </tr>
 
-        <tr>
-            <td style="padding:8px;"><strong>Global Grade</strong></td>
-            <td style="padding:8px;">Diferencia complexidade e contribuição entre níveis.</td>
-            <td style="padding:8px;">GG07, GG09, GG12</td>
-        </tr>
+    <tr>
+        <td><strong>Global Grade</strong></td>
+        <td>Diferencia complexidade e contribuição entre os níveis.</td>
+        <td>GG07, GG09, GG12</td>
+    </tr>
 
-        <tr>
-            <td style="padding:8px;"><strong>Generic Profile</strong></td>
-            <td style="padding:8px;">Descrição corporativa de referência do nível.</td>
-            <td style="padding:8px;">“Finance Specialist”, “HR Manager”</td>
-        </tr>
-    </table>
+    <tr>
+        <td><strong>Generic Profile</strong></td>
+        <td>Descrição corporativa de referência do nível.</td>
+        <td>“Finance Specialist”, “HR Manager”</td>
+    </tr>
+</table>
+
 </div>
 """, unsafe_allow_html=True)
 
-# ==========================================================
-# CONTEÚDO 4 — IMPORTÂNCIA ESTRATÉGICA (ORIGINAL)
-# ==========================================================
+# =================================================================
+# IMPORTÂNCIA ESTRATÉGICA
+# =================================================================
+
+st.markdown("""<h2 class="section-title">Importância Estratégica</h2>""", unsafe_allow_html=True)
 
 st.markdown("""
-<div class="sig-card">
-    <h3>Importância Estratégica</h3>
+<div class="content-block">
 
-    <p>
-    A <strong>Job Architecture</strong> é o alicerce das práticas de <strong>Gestão de Pessoas e Governança Corporativa</strong>.  
-    Ela fornece uma linguagem comum para estruturar, comparar e avaliar cargos, promovendo decisões justas e sustentáveis.
-    </p>
+<p>
+A <strong>Job Architecture</strong> é o alicerce das práticas de <strong>Gestão de Pessoas e Governança Corporativa</strong>.  
+Ela fornece uma linguagem comum para estruturar, comparar e avaliar cargos, promovendo decisões justas e sustentáveis.
+</p>
 
-    <p>
-    Com base em critérios consistentes de complexidade e contribuição, o modelo da WTW permite <strong>equidade interna, benchmarking de mercado e mapeamento de carreiras</strong> de forma padronizada.
-    </p>
+<p>
+Com base em critérios consistentes de complexidade e contribuição, o modelo da WTW permite <strong>equidade interna, benchmarking de mercado e mapeamento de carreiras</strong> de forma padronizada.
+</p>
 
-    <p>
-    Ao integrar estrutura organizacional, remuneração e desenvolvimento, a Job Architecture fortalece a conexão entre <strong>estratégia de negócios, desempenho organizacional e evolução profissional</strong>, garantindo coerência global e meritocracia.
-    </p>
+<p>
+Ao integrar estrutura organizacional, remuneração e desenvolvimento, a Job Architecture fortalece a conexão entre <strong>estratégia de negócios, desempenho organizacional e evolução profissional</strong>, garantindo coerência global e meritocracia.
+</p>
 
 </div>
 """, unsafe_allow_html=True)
