@@ -1,24 +1,80 @@
-/* ================================
-   FONTES SIG
-================================ */
-body, p, div, span {
-    font-family: 'PPSIGFlow', sans-serif !important;
-    font-size: 16px !important;
-    color: #000000;
+/* =========================================
+   PALETA SIG
+========================================= */
+:root {
+    --sig-sand-1: #f2efeb;
+    --sig-blue: #145efc;
+    --text-dark: #000000;
+    --text-gray: #333333;
 }
 
-/* Subtítulos (H2 / H3) */
-.sig-subtitle {
-    font-family: 'PPSIGFlow', sans-serif !important;
-    font-weight: 600 !important;
-    font-size: 18px !important;
-    margin: 30px 0 10px 0 !important;
+/* =========================================
+   BLOCO PRINCIPAL (CONTEÚDO DA PÁGINA)
+========================================= */
+.block-container {
+    max-width: 100% !important;
+    width: calc(100% - 300px) !important;  /* Sidebar 260 + margem */
+    padding-left: 20px !important;
+    padding-right: 40px !important;
+    background: #ffffff !important;
+}
+
+/* Evita a página "esticando" infinitamente */
+[data-testid="stAppViewContainer"] {
+    background-color: #ffffff !important;
+}
+
+/* =========================================
+   SIDEBAR FIXO E NÃO REDIMENSIONÁVEL
+========================================= */
+[data-testid="stSidebar"] {
+    background-color: var(--sig-sand-1) !important;
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+    resize: none !important;
+    overflow: hidden !important;
+    padding-top: 10px !important;
+}
+
+/* =========================================
+   OCULTAR "streamlit app"
+========================================= */
+section[data-testid="stSidebarNav"] > div > div:first-child {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* =========================================
+   MENU NATIVO — FORMATO PÍLULA AZUL
+========================================= */
+[data-testid="stSidebarNav"] a {
+    display: block;
+    padding: 10px 16px !important;
+    margin-bottom: 6px !important;
+    border-radius: 999px !important;
+    font-family: "PPSIGFlow", sans-serif !important;
+    font-size: 14px !important;
     color: #000000 !important;
 }
 
-/* ================================
-   TÍTULO PRINCIPAL DA PÁGINA
-================================ */
+[data-testid="stSidebarNav"] a:hover {
+    background-color: #dfdad4 !important;
+}
+
+/* Item ativo */
+[data-testid="stSidebarNav"] a[aria-current="page"] {
+    background-color: var(--sig-blue) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+/* =========================================
+   TÍTULO PRINCIPAL E SUBTÍTULOS
+========================================= */
 .sig-title-wrapper {
     display: flex;
     align-items: center;
@@ -27,97 +83,66 @@ body, p, div, span {
 }
 
 .sig-title-icon {
-    width: 2cm;      /* 2×2 cm reais */
+    width: 2cm;
     height: 2cm;
     object-fit: contain;
 }
 
 .sig-title {
     font-family: 'PPSIGFlow', sans-serif !important;
+    font-size: 26px !important;
     font-weight: 600 !important;
-    font-size: 26px !important;   /* PADRÃO PEDIDO */
-    margin: 0 !important;
-    padding: 0 !important;
-    color: #000000 !important;
+    margin: 0;
+    padding: 0;
 }
 
-/* ================================
-   TEXTOS
-================================ */
+.sig-subtitle {
+    font-family: 'PPSIGFlow', sans-serif !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    margin-top: 32px;
+    margin-bottom: 12px;
+}
+
+/* =========================================
+   TEXTO GERAL
+========================================= */
 .sig-text {
+    font-family: 'PPSIGFlow', sans-serif !important;
     font-size: 16px !important;
-    line-height: 1.6 !important;
-    color: #000000 !important;
-    margin-bottom: 18px !important;
+    color: var(--text-gray) !important;
+    line-height: 1.6;
 }
 
-/* ================================
-   CARDS (PILARES, BLOCOS, ETC)
-================================ */
+/* =========================================
+   CARDS SIG
+========================================= */
 .sig-card {
     background: #ffffff;
-    border-radius: 16px;        /* SIG usa cantos bem arredondados */
-    padding: 18px 20px;
-    border-left: 5px solid #145efc; /* detalhe SIG Sky */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.07);
-    min-height: 210px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
+    border-radius: 16px;
+    border-left: 4px solid var(--sig-blue);
+    padding: 18px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    height: 100%;
 }
 
-/* Título dentro dos cards */
-.sig-card-title {
-    font-family: 'PPSIGFlow', sans-serif !important;
-    font-weight: 600;
-    font-size: 18px !important;
-    margin-bottom: 8px !important;
-    color: #145efc !important;
-}
-
-/* ================================
-   TABELA DA “ESTRUTURA DA ARQUITETURA”
-================================ */
+/* =========================================
+   TABELA
+========================================= */
 .sig-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 10px;
-    margin-bottom: 30px;
 }
 
 .sig-table th {
-    background: #145efc;
+    background: var(--sig-blue);
     color: white;
-    font-family: 'PPSIGFlow', sans-serif !important;
-    font-weight: 600 !important;
     padding: 12px;
-    font-size: 16px;
-    border: none;
+    font-family: 'PPSIGFlow';
 }
 
 .sig-table td {
-    background: white;
     padding: 12px;
-    font-size: 16px;
-    border-bottom: 1px solid #e0e0e0;
-}
-
-/* ================================
-   RESPONSIVIDADE GLOBAL
-================================ */
-@media (max-width: 900px) {
-    .sig-title-wrapper {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
-
-    .sig-title-icon {
-        width: 60px;
-        height: 60px;
-    }
-
-    .sig-title {
-        font-size: 22px !important;
-    }
+    border-bottom: 1px solid #cccccc;
 }
