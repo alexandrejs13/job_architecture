@@ -17,9 +17,15 @@ for css in ["fonts.css", "theme.css", "menu.css"]:
 # TÍTULO PRINCIPAL DA PÁGINA
 # ===========================================================
 st.markdown("""
-<div class="page-main-title">
+<div class="page-main-title" style="
+    display:flex;
+    align-items:center;
+    gap:18px;
+    margin-top:15px;
+">
     <img src="https://raw.githubusercontent.com/alexandrejs13/job_architecture/main/assets/icons/governance.png"
          style="width:75px; height:75px;">
+
     <h1 style="
         font-family:'PPSIGFlow';
         font-weight:600;
@@ -28,7 +34,7 @@ st.markdown("""
         padding:0;
         color:#000000;
     ">
-        Job Architecture — Fundamentos e Governança
+        Job Architecture
     </h1>
 </div>
 """, unsafe_allow_html=True)
@@ -61,13 +67,15 @@ Mais do que um catálogo de cargos, trata-se de uma <strong>infraestrutura de go
 # SUBTÍTULO: PILARES
 # ===========================================================
 st.markdown("""
-<h2 class="section-title" style="
+<h2 style="
     font-family:'PPSIGFlow';
-    font-size:20px;
+    font-size:18px;
     font-weight:600;
     color:#000000;
     margin-top:40px;
-">Pilares Estruturantes</h2>
+">
+Pilares Estruturantes
+</h2>
 """, unsafe_allow_html=True)
 
 # ===========================================================
@@ -126,9 +134,9 @@ with col3:
 # SUBTÍTULO: ESTRUTURA DA ARQUITETURA
 # ===========================================================
 st.markdown("""
-<h2 class="section-title" style="
+<h2 style="
     font-family:'PPSIGFlow';
-    font-size:20px;
+    font-size:18px;
     font-weight:600;
     color:#000000;
     margin-top:50px;
@@ -138,7 +146,7 @@ Estrutura da Arquitetura
 """, unsafe_allow_html=True)
 
 # ===========================================================
-# TABELA SIG CORRIGIDA
+# TABELA SIG
 # ===========================================================
 st.markdown("""
 <table style="
@@ -197,9 +205,9 @@ st.markdown("""
 # IMPORTÂNCIA ESTRATÉGICA
 # ===========================================================
 st.markdown("""
-<h2 class="section-title" style="
+<h2 style="
     font-family:'PPSIGFlow';
-    font-size:20px;
+    font-size:18px;
     font-weight:600;
     margin-top:50px;
     color:#000000;
