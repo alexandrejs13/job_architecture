@@ -1,19 +1,20 @@
 /* ===========================
    FONTES SIG – PP SIG Flow
+   SOLUÇÃO FINAL: Caminho corrigido para corresponder à estrutura de pastas.
 =========================== */
 
 @font-face {
     font-family: 'PPSIGFlow';
-    /* Mantenha o caminho corrigido, supondo que o arquivo TTF está em /assets/ */
-    src: url('PPSIGFlow-Regular.ttf') format('truetype'); 
+    /* 🚨 O caminho correto é 'fonts/nome-do-arquivo.ttf' */
+    src: url('fonts/PPSIGFlow-Regular.ttf') format('truetype'); 
     font-weight: 400;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'PPSIGFlow';
-    /* Mantenha o caminho corrigido, supondo que o arquivo TTF está em /assets/ */
-    src: url('PPSIGFlow-SemiBold.ttf') format('truetype');
+    /* 🚨 O caminho correto é 'fonts/nome-do-arquivo.ttf' */
+    src: url('fonts/PPSIGFlow-SemiBold.ttf') format('truetype');
     font-weight: 600;
     font-style: normal;
 }
@@ -22,7 +23,7 @@ body, * {
     font-family: "PPSIGFlow", sans-serif !important; 
 }
 
-/* 💥 CORREÇÃO FINAL: Regra específica para H1 no fonts.css 💥 */
+/* Regra de forçagem para o H1 (mantida para garantir a aplicação do estilo) */
 h1.sig-title {
     font-family: 'PPSIGFlow', sans-serif !important;
     font-size: 26px !important;
